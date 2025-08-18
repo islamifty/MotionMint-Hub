@@ -4,10 +4,12 @@
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useState } from "react";
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -18,13 +20,13 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
   saveNextcloudSettings,
   saveBKashSettings,
   savePipraPaySettings,
+  verifyNextcloudConnection,
 } from "./actions";
 import {
   Form,
@@ -59,6 +61,7 @@ type PipraPayFormValues = z.infer<typeof pipraPaySchema>;
 
 export default function SettingsPage() {
   const { toast } = useToast();
+  const [isTestingConnection, setIsTestingConnection] = useState(false);
 
   const nextcloudForm = useForm<NextcloudFormValues>({
     resolver: zodResolver(nextcloudSchema),
@@ -91,6 +94,35 @@ export default function SettingsPage() {
         variant: "destructive",
         title: "Error",
         description: `Failed to save ${formName} settings. Please try again.`,
+      });
+    }
+  };
+  
+  const handleTestConnection = async () => {
+    const isValid = await nextcloudForm.trigger();
+    if (!isValid) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: "Please fill in all Nextcloud fields before testing.",
+      });
+      return;
+    }
+    
+    setIsTestingConnection(true);
+    const result = await verifyNextcloudConnection(nextcloudForm.getValues());
+    setIsTestingConnection(false);
+
+    if (result.success) {
+      toast({
+        title: "Success",
+        description: result.message,
+      });
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Connection Failed",
+        description: result.message,
       });
     }
   };
@@ -169,10 +201,17 @@ export default function SettingsPage() {
                       </FormItem>
                     )}
                   />
-                  <Button type="submit" disabled={nextcloudForm.formState.isSubmitting}>
-                    {nextcloudForm.formState.isSubmitting ? "Saving..." : "Save Nextcloud Settings"}
-                  </Button>
                 </CardContent>
+                <CardFooter>
+                    <div className="flex gap-2">
+                        <Button type="submit" disabled={nextcloudForm.formState.isSubmitting}>
+                            {nextcloudForm.formState.isSubmitting ? "Saving..." : "Save Nextcloud Settings"}
+                        </Button>
+                        <Button type="button" variant="outline" onClick={handleTestConnection} disabled={isTestingConnection}>
+                            {isTestingConnection ? "Testing..." : "Test Connection"}
+                        </Button>
+                    </div>
+                </CardFooter>
               </form>
             </Form>
           </Card>
