@@ -36,13 +36,13 @@ export function getFirebaseAdmin(): FirebaseAdmin {
   let serviceAccount: admin.ServiceAccount;
 
   try {
-    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-      serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-    } else {
-      throw new Error("FIREBASE_SERVICE_ACCOUNT environment variable is not set.");
+    const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT;
+    if (!serviceAccountString) {
+        throw new Error("FIREBASE_SERVICE_ACCOUNT environment variable is not set or is empty.");
     }
+    serviceAccount = JSON.parse(serviceAccountString);
   } catch (e) {
-    console.error('Failed to parse FIREBASE_SERVICE_ACCOUNT.', e);
+    console.error('Failed to parse FIREBASE_SERVICE_ACCOUNT. Make sure it is a valid JSON string.', e);
     throw new Error("Firebase Admin SDK credentials are not set or are invalid.");
   }
 

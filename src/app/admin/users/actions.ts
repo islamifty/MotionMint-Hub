@@ -23,12 +23,13 @@ export async function getUsers(currentUserEmail?: string | null): Promise<User[]
 
         const allUsers: User[] = userRecords.users.map((userRecord: UserRecord) => {
             const firestoreUser = firestoreUsers.get(userRecord.uid);
+            const name = userRecord.displayName || firestoreUser?.name || userRecord.email || 'N/A';
             return { 
                 id: userRecord.uid,
-                name: userRecord.displayName || firestoreUser?.name || userRecord.email || '',
+                name: name,
                 email: userRecord.email || '',
                 role: firestoreUser?.role || 'user',
-                initials: firestoreUser?.initials || (userRecord.displayName || userRecord.email || 'U').substring(0,2).toUpperCase(),
+                initials: firestoreUser?.initials || name.substring(0,2).toUpperCase(),
                 avatarUrl: userRecord.photoURL || undefined
             };
         });
@@ -52,7 +53,6 @@ export async function makeUserClient(user: User) {
         const userSnap = await userRef.get();
 
         if (!userSnap.exists) {
-            // If the user doc doesn't exist, create it. This can happen if a user was created in Auth but not Firestore.
             await userRef.set({
                 name: user.name,
                 email: user.email,
