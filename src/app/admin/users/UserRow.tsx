@@ -16,7 +16,7 @@ export function UserRow({ user: initialUser }: { user: User }) {
   const [isLoading, setIsLoading] = useState(false);
 
   const isClient = user.role === 'client';
-  const isAdmin = adminEmails.includes(user.email);
+  const isAdmin = user.role === 'admin';
 
   const handleMakeClient = async () => {
     setIsLoading(true);

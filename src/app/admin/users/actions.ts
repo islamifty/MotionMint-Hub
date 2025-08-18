@@ -24,7 +24,7 @@ export async function getUsers(currentUserEmail?: string | null): Promise<User[]
                 id: doc.id,
                 name: data.name || '',
                 email: data.email || '',
-                role: adminEmails.includes(data.email) ? 'admin' : (data.role || 'user'),
+                role: data.role || 'user',
                 initials: data.initials || ''
             } as User;
         });
@@ -32,7 +32,6 @@ export async function getUsers(currentUserEmail?: string | null): Promise<User[]
         return firestoreUsers;
     } catch (error) {
         console.error("Error fetching users from server action: ", error);
-        // If Firestore fails, return an empty array to prevent a crash.
         return [];
     }
 }
@@ -53,7 +52,7 @@ export async function makeUserClient(user: User) {
         } 
         
         const userData = userSnap.data();
-        if (userData?.role === 'client' || adminEmails.includes(user.email)) {
+        if (userData?.role === 'client' || userData?.role === 'admin') {
             return { success: false, message: "This user is already a client or an admin." };
         }
         await userRef.update({ role: 'client' });
