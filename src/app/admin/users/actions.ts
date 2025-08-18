@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { getFirebaseAdmin } from '@/lib/firebase-admin';
 import type { User, Client } from '@/types';
 import { clients } from "@/lib/data";
+import type { UserRecord } from "firebase-admin/auth";
 
 const adminEmails = ["admin@motionflow.com", "mdiftekharulislamifty@gmail.com"];
 
@@ -15,21 +16,26 @@ export async function getUsers(currentUserEmail?: string | null): Promise<User[]
     }
     
     try {
-        const { db } = getFirebaseAdmin();
+        const { auth, db } = getFirebaseAdmin();
+        const userRecords = await auth.listUsers();
+        
         const usersCollection = db.collection("users");
-        const userSnapshot = await usersCollection.get();
-        const firestoreUsers = userSnapshot.docs.map(doc => {
-            const data = doc.data();
+        const userDocsSnapshot = await usersCollection.get();
+        const firestoreUsers = new Map(userDocsSnapshot.docs.map(doc => [doc.id, doc.data()]));
+
+        const allUsers: User[] = userRecords.users.map((userRecord: UserRecord) => {
+            const firestoreUser = firestoreUsers.get(userRecord.uid);
             return { 
-                id: doc.id,
-                name: data.name || '',
-                email: data.email || '',
-                role: data.role || 'user',
-                initials: data.initials || ''
-            } as User;
+                id: userRecord.uid,
+                name: userRecord.displayName || userRecord.email || '',
+                email: userRecord.email || '',
+                role: firestoreUser?.role || 'user',
+                initials: firestoreUser?.initials || (userRecord.displayName || userRecord.email || 'U').substring(0,2).toUpperCase(),
+                avatarUrl: userRecord.photoURL || undefined
+            };
         });
         
-        return firestoreUsers;
+        return allUsers;
     } catch (error) {
         console.error("Error fetching users from server action: ", error);
         return [];
@@ -48,15 +54,20 @@ export async function makeUserClient(user: User) {
         const userSnap = await userRef.get();
 
         if (!userSnap.exists) {
-            return { success: false, message: "User does not exist in the database." };
-        } 
-        
-        const userData = userSnap.data();
-        if (userData?.role === 'client' || userData?.role === 'admin') {
-            return { success: false, message: "This user is already a client or an admin." };
+            // If the user doc doesn't exist, create it. This can happen if a user was created in Auth but not Firestore.
+            await userRef.set({
+                name: user.name,
+                email: user.email,
+                initials: user.initials,
+                role: 'client'
+            });
+        } else {
+             const userData = userSnap.data();
+             if (userData?.role === 'client' || userData?.role === 'admin') {
+                return { success: false, message: "This user is already a client or an admin." };
+             }
+             await userRef.update({ role: 'client' });
         }
-        await userRef.update({ role: 'client' });
-
 
         const existingClient = clients.find(c => c.email === user.email);
         if (!existingClient) {

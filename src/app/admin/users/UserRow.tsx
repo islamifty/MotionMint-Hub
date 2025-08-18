@@ -38,8 +38,8 @@ export function UserRow({ user: initialUser }: { user: User }) {
 
   return (
     <TableRow>
-      <TableCell className="font-medium">{user.name || user.email}</TableCell>
-      <TableCell>{user.email}</TableCell>
+      <TableCell className="font-medium">{user.name || user.email || 'N/A'}</TableCell>
+      <TableCell>{user.email || 'No email provided'}</TableCell>
       <TableCell className="capitalize">{user.role}</TableCell>
       <TableCell>
         <Button
