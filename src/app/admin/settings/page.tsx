@@ -27,6 +27,7 @@ import {
   saveBKashSettings,
   savePipraPaySettings,
   verifyNextcloudConnection,
+  verifyBKashConnection,
 } from "./actions";
 import {
   Form,
@@ -80,7 +81,8 @@ function fileToBase64(file: File): Promise<string> {
 
 export default function SettingsPage() {
   const { toast } = useToast();
-  const [isTestingConnection, setIsTestingConnection] = useState(false);
+  const [isTestingNextcloud, setIsTestingNextcloud] = useState(false);
+  const [isTestingBKash, setIsTestingBKash] = useState(false);
   const { branding, setBranding } = useBranding();
 
   const nextcloudForm = useForm<NextcloudFormValues>({
@@ -137,7 +139,7 @@ export default function SettingsPage() {
     }
   };
   
-  const handleTestConnection = async () => {
+  const handleTestNextcloudConnection = async () => {
     const isValid = await nextcloudForm.trigger();
     if (!isValid) {
       toast({
@@ -148,9 +150,38 @@ export default function SettingsPage() {
       return;
     }
     
-    setIsTestingConnection(true);
+    setIsTestingNextcloud(true);
     const result = await verifyNextcloudConnection(nextcloudForm.getValues());
-    setIsTestingConnection(false);
+    setIsTestingNextcloud(false);
+
+    if (result.success) {
+      toast({
+        title: "Success",
+        description: result.message,
+      });
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Connection Failed",
+        description: result.message,
+      });
+    }
+  };
+
+  const handleTestBKashConnection = async () => {
+    const isValid = await bKashForm.trigger();
+    if (!isValid) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: "Please fill in all bKash fields before testing.",
+      });
+      return;
+    }
+
+    setIsTestingBKash(true);
+    const result = await verifyBKashConnection(bKashForm.getValues());
+    setIsTestingBKash(false);
 
     if (result.success) {
       toast({
@@ -276,8 +307,8 @@ export default function SettingsPage() {
                         <Button type="submit" disabled={nextcloudForm.formState.isSubmitting}>
                             {nextcloudForm.formState.isSubmitting ? "Saving..." : "Save Nextcloud Settings"}
                         </Button>
-                        <Button type="button" variant="outline" onClick={handleTestConnection} disabled={isTestingConnection}>
-                            {isTestingConnection ? "Testing..." : "Test Connection"}
+                        <Button type="button" variant="outline" onClick={handleTestNextcloudConnection} disabled={isTestingNextcloud}>
+                            {isTestingNextcloud ? "Testing..." : "Test Connection"}
                         </Button>
                     </div>
                 </CardFooter>
@@ -349,10 +380,17 @@ export default function SettingsPage() {
                       </FormItem>
                     )}
                   />
-                  <Button type="submit" disabled={bKashForm.formState.isSubmitting}>
-                    {bKashForm.formState.isSubmitting ? "Saving..." : "Save bKash Settings"}
-                  </Button>
                 </CardContent>
+                 <CardFooter>
+                    <div className="flex gap-2">
+                        <Button type="submit" disabled={bKashForm.formState.isSubmitting}>
+                            {bKashForm.formState.isSubmitting ? "Saving..." : "Save bKash Settings"}
+                        </Button>
+                        <Button type="button" variant="outline" onClick={handleTestBKashConnection} disabled={isTestingBKash}>
+                            {isTestingBKash ? "Testing..." : "Test Connection"}
+                        </Button>
+                    </div>
+                </CardFooter>
               </form>
             </Form>
           </Card>

@@ -42,6 +42,22 @@ export async function verifyNextcloudConnection(data: unknown) {
     }
 }
 
+export async function verifyBKashConnection(data: unknown) {
+    const result = bKashSchema.safeParse(data);
+    if (!result.success) {
+        return { success: false, message: 'Invalid credentials provided.' };
+    }
+
+    // This is a mock verification. In a real app, you would make an API call
+    // to a bKash endpoint (e.g., to get an auth token) to verify credentials.
+    console.log('Verifying bKash credentials (mock):', result.data);
+    
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    return { success: true, message: 'bKash connection successful! (This is a mock response)' };
+}
+
 
 export async function saveNextcloudSettings(data: unknown) {
     const result = nextcloudSchema.safeParse(data);
