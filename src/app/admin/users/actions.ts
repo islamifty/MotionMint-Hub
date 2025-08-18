@@ -2,12 +2,10 @@
 'use server';
 
 import { revalidatePath } from "next/cache";
-import { getFirebaseAdmin } from '@/lib/firebase-admin';
+import { getFirebaseAdmin, adminEmails } from '@/lib/firebase-admin';
 import type { User, Client } from '@/types';
 import { clients } from "@/lib/data";
 import type { UserRecord } from "firebase-admin/auth";
-
-const adminEmails = ["admin@motionflow.com", "mdiftekharulislamifty@gmail.com"];
 
 export async function getUsers(currentUserEmail?: string | null): Promise<User[]> {
     if (!currentUserEmail || !adminEmails.includes(currentUserEmail)) {
@@ -27,7 +25,7 @@ export async function getUsers(currentUserEmail?: string | null): Promise<User[]
             const firestoreUser = firestoreUsers.get(userRecord.uid);
             return { 
                 id: userRecord.uid,
-                name: userRecord.displayName || userRecord.email || '',
+                name: userRecord.displayName || firestoreUser?.name || userRecord.email || '',
                 email: userRecord.email || '',
                 role: firestoreUser?.role || 'user',
                 initials: firestoreUser?.initials || (userRecord.displayName || userRecord.email || 'U').substring(0,2).toUpperCase(),

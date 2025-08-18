@@ -1,9 +1,7 @@
 
-import { getFirebaseAdmin } from "@/lib/firebase-admin";
+import { getFirebaseAdmin, adminEmails } from "@/lib/firebase-admin";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
-
-const adminEmails = ["admin@motionflow.com", "mdiftekharulislamifty@gmail.com"];
 
 export async function POST(request: NextRequest) {
   const { idToken } = await request.json();

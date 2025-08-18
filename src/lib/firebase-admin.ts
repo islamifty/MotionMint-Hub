@@ -4,6 +4,9 @@ import type { Auth, DecodedIdToken } from 'firebase-admin/auth';
 import type { Firestore } from 'firebase-admin/firestore';
 import { cookies } from 'next/headers';
 
+// Centralized list of admin emails. This is the single source of truth.
+export const adminEmails = ["admin@motionflow.com", "mdiftekharulislamifty@gmail.com"];
+
 interface FirebaseAdmin {
   auth: Auth;
   db: Firestore;

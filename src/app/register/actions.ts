@@ -1,11 +1,9 @@
 
 'use server';
 
-import { getFirebaseAdmin } from '@/lib/firebase-admin';
+import { getFirebaseAdmin, adminEmails } from '@/lib/firebase-admin';
 import type { User } from '@/types';
 import { revalidatePath } from "next/cache";
-
-const adminEmails = ["admin@motionflow.com", "mdiftekharulislamifty@gmail.com"];
 
 export async function addNewUser(userData: {id: string, name: string, email: string}) {
     const isAdmin = adminEmails.includes(userData.email);
