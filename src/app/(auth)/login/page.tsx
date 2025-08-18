@@ -20,6 +20,8 @@ import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/shared/Logo";
 import { useToast } from "@/hooks/use-toast";
 
+const adminEmails = ["admin@motionflow.com", "mdiftekharulislamifty@gmail.com"];
+
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -41,7 +43,7 @@ export default function LoginPage() {
       });
 
       // Simple role-based redirection
-      if (user.email === "admin@motionflow.com") {
+      if (user.email && adminEmails.includes(user.email)) {
         router.push("/admin/dashboard");
       } else {
         router.push("/client/dashboard");

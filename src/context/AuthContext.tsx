@@ -18,6 +18,8 @@ const AuthContext = createContext<AuthContextType>({
 
 export const useAuth = () => useContext(AuthContext);
 
+const adminEmails = ["admin@motionflow.com", "mdiftekharulislamifty@gmail.com"];
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -27,7 +29,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (user) {
         // This is where you would fetch user profile from Firestore/DB
         // For now, we'll create a mock user object
-        const isClient = user.email !== 'admin@motionflow.com';
+        const isClient = user.email ? !adminEmails.includes(user.email) : true;
         const appUser: User = {
             id: user.uid,
             name: user.displayName || user.email || "User",
