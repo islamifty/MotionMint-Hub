@@ -2,6 +2,7 @@ import {
     File,
     PlusCircle,
   } from "lucide-react"
+  import Link from "next/link"
   
   import { Button } from "@/components/ui/button"
   import {
@@ -40,11 +41,13 @@ import {
                         Export
                         </span>
                     </Button>
-                    <Button size="sm" className="h-8 gap-1">
+                    <Button size="sm" className="h-8 gap-1" asChild>
+                      <Link href="/admin/projects/new">
                         <PlusCircle className="h-3.5 w-3.5" />
                         <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                         Add Project
                         </span>
+                      </Link>
                     </Button>
                 </div>
             </div>
