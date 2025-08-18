@@ -97,6 +97,8 @@ export async function addProject(formData: FormData) {
 
     } catch (error) {
         console.error("Project creation failed:", error);
+        // Return a plain, serializable error object.
+        // Do not pass the original `error` object, as it may contain non-serializable properties.
         return { success: false, error: { formErrors: ["Failed to upload video. Please check Nextcloud credentials and configuration."], fieldErrors: {} }};
     }
 }
