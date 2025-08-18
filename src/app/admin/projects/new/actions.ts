@@ -3,7 +3,8 @@
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { createClient, type WebDAVClient } from 'webdav';
-import { projects, clients as allClients } from '@/lib/data';
+import { readDb, writeDb } from '@/lib/db';
+import type { Project } from '@/types';
 
 const projectSchema = z.object({
   title: z.string().min(1, "Project title is required."),
@@ -70,9 +71,11 @@ export async function addProject(formData: FormData) {
         }
         
         const fileUrl = `${nextcloudUrl}/files/${nextcloudUser}${filePath}`;
-        const clientInfo = allClients.find(c => c.id === result.data.clientId);
+        
+        const db = readDb();
+        const clientInfo = db.clients.find(c => c.id === result.data.clientId);
 
-        const newProject = {
+        const newProject: Project = {
             id: `proj-${Date.now()}`,
             ...result.data,
             expiryDate: result.data.expiryDate.toISOString(),
@@ -83,7 +86,8 @@ export async function addProject(formData: FormData) {
             previewVideoUrl: fileUrl,
             finalVideoUrl: fileUrl
         };
-        projects.unshift(newProject);
+        db.projects.unshift(newProject);
+        writeDb(db);
 
         revalidatePath('/admin/projects');
         revalidatePath('/admin/dashboard');
