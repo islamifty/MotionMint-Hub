@@ -5,7 +5,7 @@ import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
-import { CalendarIcon, ArrowLeft } from "lucide-react";
+import { CalendarIcon, ArrowLeft, Upload } from "lucide-react";
 import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
@@ -54,6 +54,7 @@ const projectSchema = z.object({
   expiryDate: z.date({
     required_error: "An expiry date is required.",
   }),
+  videoFile: z.any().optional(), // Allow file upload
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
@@ -72,6 +73,10 @@ export default function NewProjectPage() {
   });
 
   const onSubmit: SubmitHandler<ProjectFormValues> = async (data) => {
+    // In a real app, you would handle the file upload here.
+    // For now, we'll just pass the data along.
+    console.log("File to upload:", data.videoFile);
+    
     const result = await addProject(data);
     if (result.success) {
       toast({
@@ -130,6 +135,33 @@ export default function NewProjectPage() {
                           {...field}
                         />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="videoFile"
+                  render={({ field: { onChange, value, ...rest } }) => (
+                    <FormItem>
+                      <FormLabel>Project Video</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                            <Input
+                                type="file"
+                                accept="video/*"
+                                className="pl-12"
+                                onChange={(e) => {
+                                    onChange(e.target.files ? e.target.files[0] : null);
+                                }}
+                                {...rest}
+                            />
+                            <Upload className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        </div>
+                      </FormControl>
+                      <FormDescription>
+                        Upload the video file for this project. This will be stored in Nextcloud.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

@@ -9,6 +9,7 @@ const projectSchema = z.object({
   clientId: z.string().min(1, "Please select a client."),
   amount: z.coerce.number().min(0, "Amount must be a positive number."),
   expiryDate: z.date(),
+  videoFile: z.any().optional(), // Allow file upload
 });
 
 export async function addProject(data: unknown) {
@@ -18,9 +19,8 @@ export async function addProject(data: unknown) {
         return { success: false, error: result.error.flatten() };
     }
     
+    // In a real app, you would handle the file upload to Nextcloud here.
     console.log('Adding new project:', result.data);
-    // In a real application, you would save this to a database.
-    // Here we just log it and simulate success.
     
     // Example of adding to in-memory data (won't persist across requests on serverless env):
     /*
@@ -31,7 +31,7 @@ export async function addProject(data: unknown) {
         paymentStatus: 'pending',
         orderId: `ORD-${Date.now()}`,
         createdAt: new Date().toISOString(),
-        previewVideoUrl: 'https://placehold.co/1280x720.png',
+        previewVideoUrl: 'https://placehold.co/1280x720.png', // This would come from the Nextcloud upload
     }
     projects.push(newProject);
     */
