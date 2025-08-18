@@ -4,7 +4,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // By default, deny all reads and writes.
-    // Server-side access with the Admin SDK is not affected by these rules.
+    // Server-side code using the Admin SDK will bypass these rules.
     match /{document=**} {
       allow read, write: if false;
     }

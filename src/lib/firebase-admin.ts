@@ -9,60 +9,70 @@ interface FirebaseAdmin {
   db: Firestore;
 }
 
+// Singleton instance of Firebase Admin
 let firebaseAdmin: FirebaseAdmin | null = null;
 
-function initializeFirebaseAdmin(): FirebaseAdmin {
+/**
+ * Initializes and returns a singleton instance of the Firebase Admin SDK.
+ * This ensures that the SDK is initialized only once per server instance.
+ */
+export function getFirebaseAdmin(): FirebaseAdmin {
+  if (firebaseAdmin) {
+    return firebaseAdmin;
+  }
+
   if (admin.apps.length > 0) {
     const defaultApp = admin.app();
-    return {
+    firebaseAdmin = {
       auth: defaultApp.auth(),
       db: defaultApp.firestore(),
     };
+    return firebaseAdmin;
   }
+  
+  let serviceAccount: admin.ServiceAccount;
 
-  let serviceAccount: admin.ServiceAccount | undefined;
-  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-    try {
+  try {
+    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
       serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-    } catch (e) {
-      console.error('Failed to parse FIREBASE_SERVICE_ACCOUNT.', e);
-      throw new Error("Firebase Admin SDK credentials are not set or are invalid in environment variables.");
+    } else {
+      throw new Error("FIREBASE_SERVICE_ACCOUNT environment variable is not set.");
     }
-  } else {
-    console.warn("FIREBASE_SERVICE_ACCOUNT environment variable is not set.");
-    throw new Error("Firebase Admin SDK credentials are not set in the environment variables.");
+  } catch (e) {
+    console.error('Failed to parse FIREBASE_SERVICE_ACCOUNT.', e);
+    throw new Error("Firebase Admin SDK credentials are not set or are invalid.");
   }
 
   const app = admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
   });
-  
-  return {
+
+  firebaseAdmin = {
     auth: app.auth(),
     db: app.firestore(),
   };
-}
 
-export function getFirebaseAdmin(): FirebaseAdmin {
-  if (!firebaseAdmin) {
-    firebaseAdmin = initializeFirebaseAdmin();
-  }
   return firebaseAdmin;
 }
 
+/**
+ * Verifies the session cookie and returns the decoded token if valid.
+ * This is the centralized function for server-side user authentication.
+ */
 export async function getAuthenticatedUser(): Promise<DecodedIdToken | null> {
-  const session = cookies().get("session")?.value || "";
+  const session = cookies().get("session")?.value;
   if (!session) {
     return null;
   }
 
   try {
     const { auth } = getFirebaseAdmin();
-    // Use 'false' to prevent checking for revocation, for performance.
-    const decodedClaims = await auth.verifySessionCookie(session, false);
+    // Use 'true' to check if the cookie is revoked
+    const decodedClaims = await auth.verifySessionCookie(session, true); 
     return decodedClaims;
   } catch (error) {
-    console.error("Error verifying session cookie:", error);
+    // Session cookie is invalid or expired.
+    // console.error("Error verifying session cookie:", error);
     return null;
   }
 }

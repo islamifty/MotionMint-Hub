@@ -10,7 +10,6 @@ const adminEmails = ["admin@motionflow.com", "mdiftekharulislamifty@gmail.com"];
 
 export async function getUsers(currentUserEmail?: string | null): Promise<User[]> {
     if (!currentUserEmail || !adminEmails.includes(currentUserEmail)) {
-        // Only allow admins to fetch the user list.
         console.log("Permission denied: User is not an admin or not logged in.");
         return [];
     }
