@@ -1,4 +1,3 @@
-
 'use server';
 
 import { z } from 'zod';
@@ -54,7 +53,7 @@ export async function addProject(formData: FormData) {
             password: nextcloudPassword,
         });
 
-        const projectsDir = '/MotionFlowProjects';
+        const projectsDir = '/MotionMintHubProjects';
         if (!await client.exists(projectsDir)) {
             await client.createDirectory(projectsDir);
         }

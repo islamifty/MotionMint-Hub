@@ -4,7 +4,7 @@ export const users: { [key: string]: User } = {
   "user-1": {
     id: "user-1",
     name: "Admin User",
-    email: "admin@motionflow.com",
+    email: "admin@motionminthub.com",
     role: "admin",
     initials: "AU",
   },

@@ -9,8 +9,6 @@ import {
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +20,7 @@ import {
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { UserNav } from "@/components/shared/UserNav";
 import { users } from "@/lib/data";
+import { Logo } from "@/components/shared/Logo";
 
 
 export default function AdminLayout({
@@ -45,11 +44,11 @@ export default function AdminLayout({
             <SheetContent side="left" className="sm:max-w-xs">
               <nav className="grid gap-6 text-lg font-medium">
                 <Link
-                  href="#"
-                  className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
+                  href="/admin/dashboard"
+                  className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full text-lg font-semibold text-primary-foreground md:text-base"
                 >
-                  <PanelLeft className="h-5 w-5 transition-all group-hover:scale-110" />
-                  <span className="sr-only">MotionFlow</span>
+                  <Logo />
+                  <span className="sr-only">MotionMint Hub</span>
                 </Link>
                 <Link
                   href="/admin/dashboard"

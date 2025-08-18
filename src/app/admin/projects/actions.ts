@@ -1,4 +1,3 @@
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -29,8 +28,8 @@ export async function deleteProjects(projectIds: string[]) {
 
         for (const project of projectsToDelete) {
             // Extract the file path from the URL.
-            // Example URL: http://.../files/user/MotionFlowProjects/12345-video.mp4
-            // We need the path: /MotionFlowProjects/12345-video.mp4
+            // Example URL: http://.../files/user/MotionMintHubProjects/12345-video.mp4
+            // We need the path: /MotionMintHubProjects/12345-video.mp4
             try {
                 const url = new URL(project.previewVideoUrl);
                 const pathParts = url.pathname.split('/');
