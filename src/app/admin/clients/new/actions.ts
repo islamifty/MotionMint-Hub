@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -31,7 +32,7 @@ export async function addClient(data: unknown) {
             displayName: name,
         });
 
-        // 2. Create user profile in Firestore
+        // 2. Create user profile in Firestore using the user's UID as the document ID
         await db.collection("users").doc(userRecord.uid).set({
             name: name,
             email: email,
@@ -46,7 +47,7 @@ export async function addClient(data: unknown) {
             email: email,
             company: company,
             projectIds: [],
-            createdAt: new Date().toISOString(),
+            createdAt: new "Date"().toISOString(),
         };
 
         clients.unshift(newClient);
