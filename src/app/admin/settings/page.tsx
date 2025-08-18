@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useForm, type SubmitHandler } from "react-hook-form";
@@ -39,6 +38,8 @@ import {
 } from "@/components/ui/form";
 import { useBranding } from "@/context/BrandingContext";
 import { Upload } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Terminal } from "lucide-react";
 
 const nextcloudSchema = z.object({
   nextcloudUrl: z.string().url({ message: "Please enter a valid URL." }),
@@ -119,22 +120,18 @@ export default function SettingsPage() {
     });
   }, [branding, brandingForm]);
 
-  const handleSave = async (
-    action: (data: any) => Promise<any>,
-    data: any,
-    formName: string
-  ) => {
-    const result = await action(data);
+  const onNextcloudSubmit = async (data: NextcloudFormValues) => {
+    const result = await saveNextcloudSettings(data);
     if (result.success) {
       toast({
         title: "Settings Saved",
-        description: `${formName} settings have been successfully updated.`,
+        description: result.message || "Nextcloud settings have been successfully updated.",
       });
     } else {
       toast({
         variant: "destructive",
         title: "Error",
-        description: `Failed to save ${formName} settings. Please try again.`,
+        description: result.message || "Failed to save Nextcloud settings.",
       });
     }
   };
@@ -197,12 +194,39 @@ export default function SettingsPage() {
     }
   };
 
-  const onNextcloudSubmit: SubmitHandler<NextcloudFormValues> = (data) =>
-    handleSave(saveNextcloudSettings, data, "Nextcloud");
-  const onBKashSubmit: SubmitHandler<BKashFormValues> = (data) =>
-    handleSave(saveBKashSettings, data, "bKash");
-  const onPipraPaySubmit: SubmitHandler<PipraPayFormValues> = (data) =>
-    handleSave(savePipraPaySettings, data, "PipraPay");
+  const onBKashSubmit: SubmitHandler<BKashFormValues> = async (data) =>
+    {
+      const result = await saveBKashSettings(data);
+      if (result.success) {
+        toast({
+          title: "Settings Saved",
+          description: "bKash settings have been successfully updated.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to save bKash settings. Please try again.",
+        });
+      }
+    };
+
+  const onPipraPaySubmit: SubmitHandler<PipraPayFormValues> = async (data) =>
+  {
+    const result = await savePipraPaySettings(data);
+    if (result.success) {
+      toast({
+        title: "Settings Saved",
+        description: "PipraPay settings have been successfully updated.",
+      });
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to save PipraPay settings. Please try again.",
+      });
+    }
+  };
 
   const onBrandingSubmit: SubmitHandler<BrandingFormValues> = async (data) => {
     try {
@@ -315,6 +339,13 @@ export default function SettingsPage() {
               </form>
             </Form>
           </Card>
+           <Alert className="mt-4">
+              <Terminal className="h-4 w-4" />
+              <AlertTitle>Important Note</AlertTitle>
+              <AlertDescription>
+                After saving your Nextcloud settings, you must manually restart the development server for the changes to take effect.
+              </AlertDescription>
+            </Alert>
         </TabsContent>
 
         <TabsContent value="bkash">

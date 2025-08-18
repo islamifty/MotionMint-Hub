@@ -1,8 +1,11 @@
-
 'use server';
 
 import { z } from 'zod';
 import { createClient, type WebDAVClient } from 'webdav';
+import fs from 'fs/promises';
+import path from 'path';
+import 'dotenv/config';
+
 
 const nextcloudSchema = z.object({
     nextcloudUrl: z.string().url(),
@@ -64,16 +67,52 @@ export async function saveNextcloudSettings(data: unknown) {
     if (!result.success) {
         return { success: false, error: result.error.flatten() };
     }
-    // In a real app, you would save these to a secure store.
-    // For this prototype, we are using environment variables.
-    // Note: In a real production environment, you would need a more robust way to manage and restart the server
-    // for environment variable changes to take effect.
-    process.env.NEXTCLOUD_URL = result.data.nextcloudUrl;
-    process.env.NEXTCLOUD_USER = result.data.username;
-    process.env.NEXTCLOUD_PASSWORD = result.data.appPassword;
-    
-    console.log('Saved Nextcloud settings to environment variables.');
-    return { success: true };
+
+    const envFilePath = path.join(process.cwd(), '.env');
+
+    try {
+        let envFileContent = '';
+        try {
+            envFileContent = await fs.readFile(envFilePath, 'utf-8');
+        } catch (error: any) {
+            if (error.code !== 'ENOENT') {
+                throw error;
+            }
+        }
+
+        const { nextcloudUrl, username, appPassword } = result.data;
+        
+        const settings = {
+            NEXTCLOUD_URL: nextcloudUrl,
+            NEXTCLOUD_USER: username,
+            NEXTCLOUD_PASSWORD: appPassword,
+        };
+
+        let newEnvContent = envFileContent;
+
+        for (const [key, value] of Object.entries(settings)) {
+            const regex = new RegExp(`^${key}=.*$`, 'm');
+            const settingLine = `${key}="${value}"`;
+            if (regex.test(newEnvContent)) {
+                newEnvContent = newEnvContent.replace(regex, settingLine);
+            } else {
+                newEnvContent += `\n${settingLine}`;
+            }
+        }
+
+        await fs.writeFile(envFilePath, newEnvContent.trim());
+
+        // Update current process's env vars
+        process.env.NEXTCLOUD_URL = nextcloudUrl;
+        process.env.NEXTCLOUD_USER = username;
+        process.env.NEXTCLOUD_PASSWORD = appPassword;
+
+        console.log('Saved Nextcloud settings to .env file.');
+        return { success: true, message: "Settings saved successfully. Please restart the development server for changes to take full effect." };
+    } catch (error) {
+        console.error('Failed to save Nextcloud settings to .env file:', error);
+        return { success: false, message: 'Failed to save settings to .env file.' };
+    }
 }
 
 export async function saveBKashSettings(data: unknown) {
