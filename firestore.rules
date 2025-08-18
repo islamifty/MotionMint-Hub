@@ -2,21 +2,33 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  
-    function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
-    }
-
+    // Helper function to check if the requesting user is an admin.
+    // It safely checks if the user document exists and if their role is 'admin'.
     function isAdmin() {
-      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      let uid = request.auth.uid;
+      return uid != null && exists(/databases/$(database)/documents/users/$(uid)) &&
+             get(/databases/$(database)/documents/users/$(uid)).data.role == 'admin';
     }
 
     match /users/{userId} {
-      // Allow new users to create their own profile document
-      allow create: if isOwner(userId);
-      
-      // Allow users to read/update their own data, and admins to read all user data
-      allow read, update: if isOwner(userId) || isAdmin();
+      // READ:
+      // Allow a user to read their own document.
+      // Allow an admin to read any user document.
+      allow read: if request.auth.uid == userId || isAdmin();
+
+      // CREATE:
+      // Allow a user to create their own user document.
+      // This is crucial for the sign-up process.
+      allow create: if request.auth.uid == userId;
+
+      // UPDATE:
+      // Allow a user to update their own document.
+      // Allow an admin to update any user document (e.g., to change their role).
+      allow update: if request.auth.uid == userId || isAdmin();
+
+      // DELETE:
+      // Only allow admins to delete user documents.
+      allow delete: if isAdmin();
     }
   }
 }

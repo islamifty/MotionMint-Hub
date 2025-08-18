@@ -2,7 +2,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { db } from '@/lib/firebase';
 import { clients } from '@/lib/data';
 import type { Client, User } from '@/types';
@@ -12,16 +12,32 @@ export async function makeUserClient(user: User) {
         if (!user) {
             return { success: false, message: "User not found." };
         }
+        
+        const userRef = doc(db, "users", user.id);
+        const userSnap = await getDoc(userRef);
+
+        if (!userSnap.exists()) {
+            return { success: false, message: "User profile does not exist in the database." };
+        }
+
+        const userData = userSnap.data();
+
+        if (userData.role === 'client' || userData.role === 'admin') {
+            return { success: false, message: "This user is already a client or an admin." };
+        }
 
         const existingClient = clients.find(c => c.email === user.email);
         if (existingClient) {
-            return { success: false, message: "This user is already a client." };
+            // If they are already in the mock client list, just update their role in Firestore
+             await updateDoc(userRef, {
+                role: 'client'
+            });
+            revalidatePath('/admin/users');
+            return { success: true, message: `${user.name}'s role has been updated to client.` };
         }
         
-        // This part still uses the in-memory `clients` array for the demo.
-        // In a full implementation, you would write to a 'clients' collection in Firestore.
         const newClient: Client = {
-            id: `client-${Date.now()}`,
+            id: user.id, // Use the user's auth UID as the client ID for consistency
             name: user.name,
             email: user.email,
             projectIds: [],
@@ -31,7 +47,6 @@ export async function makeUserClient(user: User) {
         clients.unshift(newClient);
 
         // Update the user's role in Firestore
-        const userRef = doc(db, "users", user.id);
         await updateDoc(userRef, {
             role: 'client'
         });
@@ -43,6 +58,6 @@ export async function makeUserClient(user: User) {
 
     } catch (error) {
         console.error("Failed to make user a client:", error);
-        return { success: false, message: "An unexpected error occurred." };
+        return { success: false, message: "An unexpected error occurred. Check server logs and Firestore rules." };
     }
 }
