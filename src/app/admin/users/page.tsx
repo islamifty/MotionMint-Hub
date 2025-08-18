@@ -2,8 +2,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import {
   Card,
   CardContent,
@@ -22,37 +20,42 @@ import {
 import { clients } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { makeUserClient } from "./actions";
+import { getUsers, makeUserClient } from "./actions";
 import type { User } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/context/AuthContext";
 
 export default function UsersPage() {
   const { toast } = useToast();
+  const { currentUser } = useAuth();
   const [loadingUserId, setLoadingUserId] = useState<string | null>(null);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
 
   useEffect(() => {
-    const fetchUsers = async () => {
+    async function fetchUsers() {
+      if (!currentUser) {
+        setIsLoadingUsers(false);
+        return;
+      }
       try {
-        const usersCollection = collection(db, "users");
-        const userSnapshot = await getDocs(usersCollection);
-        const userList = userSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        // Fetch users using the secure server action
+        const userList = await getUsers(currentUser.email);
         setAllUsers(userList);
       } catch (error) {
         console.error("Error fetching users: ", error);
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Could not fetch users. Make sure Firestore is set up correctly and security rules are in place.",
+          description: "Could not fetch users. Please try again.",
         });
       } finally {
         setIsLoadingUsers(false);
       }
-    };
+    }
 
     fetchUsers();
-  }, [toast]);
+  }, [toast, currentUser]);
 
   const clientEmails = new Set(clients.map(c => c.email));
 

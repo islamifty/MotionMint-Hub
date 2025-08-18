@@ -2,29 +2,21 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  
-    // Function to check if the requesting user is an admin.
-    // It reads the user's own profile document to check their role.
-    function isAdmin() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    
+    // Helper functions
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
     }
 
     match /users/{userId} {
-      // CREATE: Allow a new user to create their own user document.
-      allow create: if request.auth.uid == userId;
+      // CREATE: Any authenticated user can create their own user document.
+      allow create: if request.auth != null && request.resource.id == request.auth.uid;
 
-      // READ:
-      // Allow an admin to read any user document (for the user list).
-      // Allow a user to read their own document.
-      allow read: if isAdmin() || request.auth.uid == userId;
+      // READ, UPDATE: Only the document owner can read or update their own data.
+      allow read, update: if isOwner(userId);
       
-      // UPDATE:
-      // Allow an admin to update any user's role (to make them a client).
-      // Allow a user to update their own profile information (if needed in the future).
-      allow update: if isAdmin() || request.auth.uid == userId;
-      
-      // DELETE: Only admins can delete users.
-      allow delete: if isAdmin();
+      // DELETE: No one can delete a user document through the client SDK for safety.
+      allow delete: if false;
     }
   }
 }

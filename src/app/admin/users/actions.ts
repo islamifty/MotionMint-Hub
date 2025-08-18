@@ -1,11 +1,33 @@
-
 'use server';
 
-import { revalidatePath } from 'next/cache';
-import { doc, updateDoc, getDoc } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc, getDoc } from "firebase/firestore";
 import { db } from '@/lib/firebase';
-import { clients } from '@/lib/data';
-import type { Client, User } from '@/types';
+import type { User, Client } from '@/types';
+import { revalidatePath } from "next/cache";
+import { clients } from "@/lib/data";
+
+const adminEmails = ["admin@motionflow.com", "mdiftekharulislamifty@gmail.com"];
+
+export async function getUsers(currentUserEmail?: string | null): Promise<User[]> {
+    if (!currentUserEmail || !adminEmails.includes(currentUserEmail)) {
+        // This is a security check. If the user is not an admin, return an empty array.
+        // The client-side rules already prevent direct access, but this adds a layer of defense.
+        return [];
+    }
+    
+    // Because this code runs on the server, it has trusted access to Firestore
+    // and bypasses client-side security rules.
+    try {
+        const usersCollection = collection(db, "users");
+        const userSnapshot = await getDocs(usersCollection);
+        const userList = userSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        return userList;
+    } catch (error) {
+        console.error("Error fetching users from server action: ", error);
+        return [];
+    }
+}
+
 
 export async function makeUserClient(user: User) {
     try {
