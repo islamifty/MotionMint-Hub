@@ -47,7 +47,7 @@ export async function addClient(data: unknown) {
             email: email,
             company: company,
             projectIds: [],
-            createdAt: new "Date"().toISOString(),
+            createdAt: new Date().toISOString(),
         };
 
         clients.unshift(newClient);
