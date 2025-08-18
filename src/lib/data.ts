@@ -1,7 +1,4 @@
 
-'use server';
-
-import { revalidatePath } from 'next/cache';
 import type { Client, Project, User } from "@/types";
 
 export const allUsers: User[] = [
@@ -112,13 +109,3 @@ export const projects: Project[] = [
     amount: 3000,
   },
 ];
-
-export async function addNewUser(userData: {id: string, name: string, email: string}) {
-    const newUser: User = {
-        ...userData,
-        role: "user",
-        initials: (userData.name || userData.email).substring(0,2).toUpperCase(),
-    };
-    allUsers.unshift(newUser);
-    revalidatePath('/admin/users');
-}

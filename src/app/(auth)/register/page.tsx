@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { addNewUser } from "@/lib/data";
+import { addNewUser } from "./actions";
 
 import { Button } from "@/components/ui/button";
 import {
