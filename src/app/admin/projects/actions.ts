@@ -13,7 +13,6 @@ export async function deleteProjects(projectIds: string[]) {
     } = process.env;
 
     if (!nextcloudUrl || !nextcloudUser || !nextcloudPassword) {
-        // Since we are proceeding with in-memory deletion, we can treat this as a warning.
         console.warn("Nextcloud credentials are not configured. Cannot delete files, but will delete project entries.");
     } else {
         try {
@@ -41,18 +40,20 @@ export async function deleteProjects(projectIds: string[]) {
             }
         } catch (error) {
             console.error("Failed to connect to Nextcloud during project deletion:", error);
-            // We can decide to stop or continue. Let's continue with in-memory deletion.
         }
     }
 
-
     try {
         const initialCount = projects.length;
-        const newProjects = projects.filter(p => !projectIds.includes(p.id));
         
-        // This simulates the data mutation for the demo
-        projects.length = 0;
-        Array.prototype.push.apply(projects, newProjects);
+        // Find indices of projects to delete
+        const indicesToDelete = projectIds.map(id => projects.findIndex(p => p.id === id));
+
+        // Remove from projects array by index to mutate the original array
+        indicesToDelete
+            .filter(index => index !== -1)
+            .sort((a, b) => b - a) // Sort in descending order
+            .forEach(index => projects.splice(index, 1));
         
         if (projects.length === initialCount - projectIds.length) {
             revalidatePath('/admin/projects');
