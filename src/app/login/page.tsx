@@ -20,8 +20,6 @@ import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/shared/Logo";
 import { useToast } from "@/hooks/use-toast";
 
-const adminEmails = ["admin@motionflow.com", "mdiftekharulislamifty@gmail.com"];
-
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -40,20 +38,25 @@ export default function LoginPage() {
       const idToken = await user.getIdToken();
 
       // Set session cookie via API route
-      await fetch('/api/login', {
+      const response = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken }),
       });
 
+      if (!response.ok) {
+        throw new Error('Failed to create session.');
+      }
+
+      const { isAdmin } = await response.json();
 
       toast({
         title: "Login Successful",
         description: "Redirecting to your dashboard.",
       });
 
-      // Simple role-based redirection
-      if (user.email && adminEmails.includes(user.email)) {
+      // Role-based redirection decided by the server
+      if (isAdmin) {
         router.push("/admin/dashboard");
       } else {
         router.push("/client/dashboard");

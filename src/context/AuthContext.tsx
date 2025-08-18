@@ -28,13 +28,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const unsubscribe = onAuthStateChanged(auth, (user: FirebaseUser | null) => {
       if (user) {
         // This is where you would fetch user profile from Firestore/DB
-        // For now, we'll create a mock user object
+        // For now, we'll create a user object based on the auth state
         const isAdmin = user.email ? adminEmails.includes(user.email) : false;
         const appUser: User = {
             id: user.uid,
             name: user.displayName || user.email || "User",
             email: user.email!,
-            role: isAdmin ? 'admin' : 'user', // Default new signups to 'user'
+            role: isAdmin ? 'admin' : 'user',
             initials: (user.displayName || user.email || 'U').substring(0,2).toUpperCase(),
         };
         setCurrentUser(appUser);

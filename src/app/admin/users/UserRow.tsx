@@ -8,13 +8,15 @@ import { useToast } from "@/hooks/use-toast";
 import { makeUserClient } from "./actions";
 import type { User } from "@/types";
 
+const adminEmails = ["admin@motionflow.com", "mdiftekharulislamifty@gmail.com"];
+
 export function UserRow({ user: initialUser }: { user: User }) {
   const { toast } = useToast();
   const [user, setUser] = useState(initialUser);
   const [isLoading, setIsLoading] = useState(false);
 
   const isClient = user.role === 'client';
-  const isAdmin = user.role === 'admin';
+  const isAdmin = adminEmails.includes(user.email);
 
   const handleMakeClient = async () => {
     setIsLoading(true);
@@ -48,7 +50,7 @@ export function UserRow({ user: initialUser }: { user: User }) {
           onClick={handleMakeClient}
           disabled={isClient || isLoading || isAdmin}
         >
-          {isLoading ? "Processing..." : (isClient ? "Already a Client" : "Make Client")}
+          {isLoading ? "Processing..." : (isClient ? "Already a Client" : (isAdmin ? "Admin User" : "Make Client"))}
         </Button>
       </TableCell>
     </TableRow>

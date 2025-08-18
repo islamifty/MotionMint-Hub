@@ -10,6 +10,7 @@ const adminEmails = ["admin@motionflow.com", "mdiftekharulislamifty@gmail.com"];
 
 export async function getUsers(currentUserEmail?: string | null): Promise<User[]> {
     if (!currentUserEmail || !adminEmails.includes(currentUserEmail)) {
+        // Only allow admins to fetch the user list.
         return [];
     }
     
@@ -23,7 +24,7 @@ export async function getUsers(currentUserEmail?: string | null): Promise<User[]
                 id: doc.id,
                 name: data.name || '',
                 email: data.email || '',
-                role: data.role || 'user',
+                role: adminEmails.includes(data.email) ? 'admin' : (data.role || 'user'),
                 initials: data.initials || ''
             } as User;
         });
@@ -52,7 +53,7 @@ export async function makeUserClient(user: User) {
         } 
         
         const userData = userSnap.data();
-        if (userData?.role === 'client' || userData?.role === 'admin') {
+        if (userData?.role === 'client' || adminEmails.includes(user.email)) {
             return { success: false, message: "This user is already a client or an admin." };
         }
         await userRef.update({ role: 'client' });

@@ -15,9 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { getUsers } from "./actions";
-import type { User } from "@/types";
 import { UserRow } from "./UserRow";
-import { auth } from "@/lib/firebase-admin";
 import { getAuthenticatedUser } from "@/lib/get-authenticated-user";
 
 export const dynamic = 'force-dynamic';
