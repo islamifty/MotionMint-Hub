@@ -36,6 +36,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { useBranding } from "@/context/BrandingContext";
+import { Upload } from "lucide-react";
 
 const nextcloudSchema = z.object({
   nextcloudUrl: z.string().url({ message: "Please enter a valid URL." }),
@@ -55,13 +57,31 @@ const pipraPaySchema = z.object({
   apiSecret: z.string().min(1, { message: "API Secret is required." }),
 });
 
+const brandingSchema = z.object({
+    logo: z.any().optional(),
+    primaryColor: z.string(),
+    backgroundColor: z.string(),
+    accentColor: z.string(),
+});
+
 type NextcloudFormValues = z.infer<typeof nextcloudSchema>;
 type BKashFormValues = z.infer<typeof bKashSchema>;
 type PipraPayFormValues = z.infer<typeof pipraPaySchema>;
+type BrandingFormValues = z.infer<typeof brandingSchema>;
+
+function fileToDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+}
 
 export default function SettingsPage() {
   const { toast } = useToast();
   const [isTestingConnection, setIsTestingConnection] = useState(false);
+  const { branding, setBranding } = useBranding();
 
   const nextcloudForm = useForm<NextcloudFormValues>({
     resolver: zodResolver(nextcloudSchema),
@@ -76,6 +96,16 @@ export default function SettingsPage() {
   const pipraPayForm = useForm<PipraPayFormValues>({
     resolver: zodResolver(pipraPaySchema),
     defaultValues: { apiKey: "", apiSecret: "" },
+  });
+
+  const brandingForm = useForm<BrandingFormValues>({
+      resolver: zodResolver(brandingSchema),
+      values: {
+          logo: null,
+          primaryColor: branding.primaryColor,
+          backgroundColor: branding.backgroundColor,
+          accentColor: branding.accentColor,
+      }
   });
 
   const handleSave = async (
@@ -134,6 +164,33 @@ export default function SettingsPage() {
   const onPipraPaySubmit: SubmitHandler<PipraPayFormValues> = (data) =>
     handleSave(savePipraPaySettings, data, "PipraPay");
 
+  const onBrandingSubmit: SubmitHandler<BrandingFormValues> = async (data) => {
+    try {
+        let logoDataUrl = branding.logo;
+        if (data.logo && data.logo[0]) {
+            logoDataUrl = await fileToDataUrl(data.logo[0]);
+        }
+
+        setBranding({
+            logo: logoDataUrl,
+            primaryColor: data.primaryColor,
+            backgroundColor: data.backgroundColor,
+            accentColor: data.accentColor,
+        });
+
+        toast({
+            title: "Branding Saved",
+            description: "Your branding settings have been updated.",
+        });
+    } catch (error) {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to save branding settings.",
+        });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -149,6 +206,7 @@ export default function SettingsPage() {
           <TabsTrigger value="nextcloud">Nextcloud</TabsTrigger>
           <TabsTrigger value="bkash">bKash</TabsTrigger>
           <TabsTrigger value="piprapay">PipraPay</TabsTrigger>
+          <TabsTrigger value="branding">Branding</TabsTrigger>
         </TabsList>
 
         <TabsContent value="nextcloud">
@@ -334,6 +392,94 @@ export default function SettingsPage() {
             </Form>
           </Card>
         </TabsContent>
+
+        <TabsContent value="branding">
+          <Card>
+            <Form {...brandingForm}>
+              <form onSubmit={brandingForm.handleSubmit(onBrandingSubmit)}>
+                <CardHeader>
+                  <CardTitle>Branding</CardTitle>
+                  <CardDescription>
+                    Customize the look and feel of the application.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <FormField
+                    control={brandingForm.control}
+                    name="logo"
+                    render={({ field: { onChange, value, ...rest } }) => (
+                        <FormItem>
+                        <FormLabel>Custom Logo</FormLabel>
+                        <FormControl>
+                            <div className="relative">
+                                <Input
+                                    type="file"
+                                    accept="image/png, image/jpeg, image/svg+xml"
+                                    className="pl-12"
+                                    onChange={(e) => {
+                                        onChange(e.target.files);
+                                    }}
+                                    {...rest}
+                                />
+                                <Upload className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                            </div>
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                         <FormField
+                            control={brandingForm.control}
+                            name="primaryColor"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Primary Color</FormLabel>
+                                <FormControl>
+                                    <Input type="color" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                         <FormField
+                            control={brandingForm.control}
+                            name="backgroundColor"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Background Color</FormLabel>
+                                <FormControl>
+                                    <Input type="color" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                         <FormField
+                            control={brandingForm.control}
+                            name="accentColor"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Accent Color</FormLabel>
+                                <FormControl>
+                                    <Input type="color" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                    </div>
+                </CardContent>
+                <CardFooter>
+                    <Button type="submit" disabled={brandingForm.formState.isSubmitting}>
+                        {brandingForm.formState.isSubmitting ? "Saving..." : "Save Branding"}
+                    </Button>
+                </CardFooter>
+              </form>
+            </Form>
+          </Card>
+        </TabsContent>
+
       </Tabs>
     </div>
   );
