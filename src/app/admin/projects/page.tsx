@@ -86,7 +86,7 @@ const ProjectTable = ({
           <TableCell>
             <Badge variant="outline">{project.paymentStatus}</Badge>
           </TableCell>
-          <TableCell>{format(new Date(project.expiryDate), 'PPP')}</TableCell>
+          <TableCell>{format(new Date(project.expiryDate), "PP")}</TableCell>
           <TableCell className="text-right">${project.amount.toLocaleString()}</TableCell>
         </TableRow>
       ))}
