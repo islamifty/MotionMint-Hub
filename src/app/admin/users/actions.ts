@@ -32,7 +32,7 @@ export async function getUsers(currentUserEmail?: string | null): Promise<User[]
         return combinedUsers;
     } catch (error) {
         console.error("Error fetching users from server action: ", error);
-        // Return mock users if Firestore fails, ensuring the page still renders something.
+        // If Firestore fails, return mock users to prevent a crash.
         return mockUsers;
     }
 }

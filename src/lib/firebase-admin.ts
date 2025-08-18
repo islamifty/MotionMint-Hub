@@ -1,4 +1,3 @@
-
 import * as admin from 'firebase-admin';
 import type { Auth } from 'firebase-admin/auth';
 import type { Firestore } from 'firebase-admin/firestore';
@@ -20,6 +19,7 @@ function initializeFirebaseAdmin(): FirebaseAdmin {
 
   if (process.env.FIREBASE_SERVICE_ACCOUNT) {
     try {
+      // The environment variable is a string, so it needs to be parsed as JSON.
       serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
     } catch (e) {
       console.error('Failed to parse FIREBASE_SERVICE_ACCOUNT. Make sure it is a valid JSON string.', e);
@@ -45,5 +45,9 @@ function initializeFirebaseAdmin(): FirebaseAdmin {
 }
 
 export function getFirebaseAdmin(): FirebaseAdmin {
-  return initializeFirebaseAdmin();
+  // This function ensures that we always get an initialized instance.
+  if (!firebaseAdmin) {
+    return initializeFirebaseAdmin();
+  }
+  return firebaseAdmin;
 }
