@@ -4,7 +4,7 @@
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -94,13 +94,22 @@ export default function SettingsPage() {
 
   const brandingForm = useForm<BrandingFormValues>({
       resolver: zodResolver(brandingSchema),
-      values: {
+      defaultValues: {
           logo: null,
           primaryColor: branding.primaryColor,
           backgroundColor: branding.backgroundColor,
           accentColor: branding.accentColor,
       }
   });
+
+  useEffect(() => {
+    brandingForm.reset({
+        logo: null,
+        primaryColor: branding.primaryColor,
+        backgroundColor: branding.backgroundColor,
+        accentColor: branding.accentColor,
+    });
+  }, [branding, brandingForm]);
 
   const handleSave = async (
     action: (data: any) => Promise<any>,
