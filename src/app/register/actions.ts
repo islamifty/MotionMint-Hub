@@ -1,8 +1,7 @@
 
 'use server';
 
-import { doc, setDoc } from "firebase/firestore"; 
-import { db } from '@/lib/firebase';
+import { getFirebaseAdmin } from '@/lib/firebase-admin';
 import type { User } from '@/types';
 import { revalidatePath } from "next/cache";
 
@@ -18,10 +17,11 @@ export async function addNewUser(userData: {id: string, name: string, email: str
     };
     
     try {
-        // Use the user's UID as the document ID in Firestore for easy lookups.
-        await setDoc(doc(db, "users", userData.id), newUser);
+        // Use the Firebase Admin SDK to create the document on the server.
+        const { db } = getFirebaseAdmin();
+        await db.collection("users").doc(userData.id).set(newUser);
         
-        // Invalidate the cache for the admin users page
+        // Invalidate the cache for the admin users page to show the new user.
         revalidatePath('/admin/users');
 
         return { success: true };
