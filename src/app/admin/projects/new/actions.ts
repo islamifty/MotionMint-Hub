@@ -60,7 +60,7 @@ export async function addProject(formData: FormData) {
         }
 
         const fileName = `${Date.now()}-${videoFile.name}`;
-        const filePath = `${projectsdir}/${fileName}`;
+        const filePath = `${projectsDir}/${fileName}`;
         
         const fileBuffer = Buffer.from(await videoFile.arrayBuffer());
 
