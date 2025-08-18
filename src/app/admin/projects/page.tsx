@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { File, PlusCircle, Trash2 } from "lucide-react";
 import { format } from "date-fns";
@@ -42,6 +42,20 @@ import { projects as initialProjects } from "@/lib/data";
 import type { Project } from "@/types";
 import { deleteProjects } from "./actions";
 import { useToast } from "@/hooks/use-toast";
+
+const ProjectDate = ({ dateString }: { dateString: string }) => {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  return (
+    <>
+      {isClient ? format(new Date(dateString), "PP") : null}
+    </>
+  );
+};
 
 const ProjectTable = ({ 
   projects,
@@ -86,7 +100,9 @@ const ProjectTable = ({
           <TableCell>
             <Badge variant="outline">{project.paymentStatus}</Badge>
           </TableCell>
-          <TableCell>{format(new Date(project.expiryDate), "PP")}</TableCell>
+          <TableCell>
+            <ProjectDate dateString={project.expiryDate} />
+          </TableCell>
           <TableCell className="text-right">${project.amount.toLocaleString()}</TableCell>
         </TableRow>
       ))}
@@ -162,7 +178,7 @@ export default function ProjectsPage() {
               <AlertDialogTrigger asChild>
                 <Button size="sm" variant="destructive" className="h-8 gap-1">
                   <Trash2 className="h-3.5 w-3.5" />
-                  <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                  <span className="sr-only sm:not-sr-only sm:whitespace-rap">
                     Delete ({selectedProjects.length})
                   </span>
                 </Button>
