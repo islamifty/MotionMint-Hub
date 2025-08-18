@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { PlusCircle, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -34,14 +34,21 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { clients as initialClients } from "@/lib/data";
-import { deleteClients } from "./actions";
+import { deleteClients as deleteClientsAction } from "./actions";
 import type { Client } from "@/types";
 
-
 export default function ClientsPage() {
+  // Use the initialClients from data.ts as the source of truth
   const [clients, setClients] = useState<Client[]>(initialClients);
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
   const { toast } = useToast();
+
+  // This effect will re-sync the state if the underlying data changes
+  // which can happen if a user is promoted to a client on another page.
+  useEffect(() => {
+    setClients(initialClients);
+  }, []);
+
 
   const handleSelectionChange = (id: string, checked: boolean) => {
     setSelectedClients((prev) =>
@@ -58,8 +65,9 @@ export default function ClientsPage() {
   };
   
   const handleDelete = async () => {
-    const result = await deleteClients(selectedClients);
+    const result = await deleteClientsAction(selectedClients);
     if (result.success) {
+      // Optimistically update the UI
       setClients((prev) => prev.filter(c => !selectedClients.includes(c.id)));
       setSelectedClients([]);
       toast({
