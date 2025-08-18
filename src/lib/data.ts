@@ -1,6 +1,6 @@
 import type { Client, Project, User } from "@/types";
 
-export const allUsers: User[] = [
+let users: User[] = [
   {
     id: "user-1",
     name: "Admin User",
@@ -37,6 +37,8 @@ export const allUsers: User[] = [
     initials: 'MD'
   }
 ];
+
+export const allUsers = users;
 
 export const clients: Client[] = [
   {
