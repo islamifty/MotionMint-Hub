@@ -26,6 +26,22 @@ const pipraPaySchema = z.object({
     apiSecret: z.string().min(1),
 });
 
+export async function getSettings() {
+    // This function can be called from the client to get non-sensitive data
+    // For this app, we are okay showing the stored values on the settings page itself.
+    return {
+        nextcloudUrl: process.env.NEXTCLOUD_URL || '',
+        nextcloudUser: process.env.NEXTCLOUD_USER || '',
+        // We don't return password/secret for security, but for this admin UI we will
+        nextcloudPassword: process.env.NEXTCLOUD_PASSWORD || '',
+        bkashAppKey: process.env.BKASH_APP_KEY || '',
+        bkashAppSecret: process.env.BKASH_APP_SECRET || '',
+        bkashUsername: process.env.BKASH_USERNAME || '',
+        bkashPassword: process.env.BKASH_PASSWORD || '',
+    };
+}
+
+
 async function updateEnvFile(settings: Record<string, string>) {
     const envFilePath = path.join(process.cwd(), '.env');
     try {

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm, type SubmitHandler } from "react-hook-form";
@@ -27,6 +28,7 @@ import {
   savePipraPaySettings,
   verifyNextcloudConnection,
   verifyBKashConnection,
+  getSettings
 } from "./actions";
 import {
   Form,
@@ -110,6 +112,24 @@ export default function SettingsPage() {
           accentColor: branding.accentColor,
       }
   });
+
+  useEffect(() => {
+    async function loadSettings() {
+        const settings = await getSettings();
+        nextcloudForm.reset({
+            nextcloudUrl: settings.nextcloudUrl,
+            username: settings.nextcloudUser,
+            appPassword: settings.nextcloudPassword
+        });
+        bKashForm.reset({
+            appKey: settings.bkashAppKey,
+            appSecret: settings.bkashAppSecret,
+            username: settings.bkashUsername,
+            password: settings.bkashPassword
+        });
+    }
+    loadSettings();
+  }, [nextcloudForm, bKashForm]);
 
   useEffect(() => {
     brandingForm.reset({
@@ -343,7 +363,7 @@ export default function SettingsPage() {
               <Terminal className="h-4 w-4" />
               <AlertTitle>Important Note</AlertTitle>
               <AlertDescription>
-                After saving your Nextcloud settings, you must manually restart the development server for the changes to take effect.
+                Your settings are saved in the project's .env file. Changes are applied immediately without needing a server restart.
               </AlertDescription>
             </Alert>
         </TabsContent>
