@@ -34,7 +34,6 @@ export async function verifyNextcloudConnection(data: unknown) {
             password: result.data.appPassword,
         });
 
-        // Try to list the contents of the root directory to check the connection
         await client.getDirectoryContents('/');
         return { success: true, message: 'Connection successful!' };
     } catch (error) {
@@ -49,9 +48,15 @@ export async function saveNextcloudSettings(data: unknown) {
     if (!result.success) {
         return { success: false, error: result.error.flatten() };
     }
-    console.log('Saving Nextcloud settings:', result.data);
-    // In a real app, you would save these credentials to a secure database or environment variables.
-    // For this prototype, we are not persisting them.
+    // In a real app, you would save these to a secure store.
+    // For this prototype, we are using environment variables.
+    // Note: In a real production environment, you would need a more robust way to manage and restart the server
+    // for environment variable changes to take effect.
+    process.env.NEXTCLOUD_URL = result.data.nextcloudUrl;
+    process.env.NEXTCLOUD_USER = result.data.username;
+    process.env.NEXTCLOUD_PASSWORD = result.data.appPassword;
+    
+    console.log('Saved Nextcloud settings to environment variables.');
     return { success: true };
 }
 

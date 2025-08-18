@@ -12,16 +12,11 @@ const projectSchema = z.object({
   clientId: z.string().min(1, "Please select a client."),
   amount: z.coerce.number().min(0, "Amount must be a positive number."),
   expiryDate: z.date(),
-  // Nextcloud credentials are now part of the form data
-  nextcloudUrl: z.string().url({ message: "Nextcloud URL is required." }),
-  nextcloudUser: z.string().min(1, { message: "Nextcloud username is required." }),
-  nextcloudPassword: z.string().min(1, { message: "Nextcloud password is required." }),
 });
 
 export async function addProject(formData: FormData) {
     const rawData = Object.fromEntries(formData.entries());
     
-    // Manually handle date and video file
     if (rawData.expiryDate) {
         rawData.expiryDate = new Date(rawData.expiryDate as string);
     }
@@ -37,7 +32,21 @@ export async function addProject(formData: FormData) {
         return { success: false, error: { formErrors: ["A video file is required."], fieldErrors: {} }};
     }
 
-    const { nextcloudUrl, nextcloudUser, nextcloudPassword, ...projectData } = result.data;
+    const { 
+        NEXTCLOUD_URL: nextcloudUrl, 
+        NEXTCLOUD_USER: nextcloudUser, 
+        NEXTCLOUD_PASSWORD: nextcloudPassword 
+    } = process.env;
+
+    if (!nextcloudUrl || !nextcloudUser || !nextcloudPassword) {
+        return { 
+            success: false, 
+            error: { 
+                formErrors: ["Nextcloud credentials are not configured in environment variables. Please configure them in the settings page."], 
+                fieldErrors: {} 
+            }
+        };
+    }
 
     try {
         const client: WebDAVClient = createClient(nextcloudUrl, {
@@ -51,7 +60,7 @@ export async function addProject(formData: FormData) {
         }
 
         const fileName = `${Date.now()}-${videoFile.name}`;
-        const filePath = `${projectsDir}/${fileName}`;
+        const filePath = `${projectsdir}/${fileName}`;
         
         const fileBuffer = Buffer.from(await videoFile.arrayBuffer());
 
@@ -62,16 +71,12 @@ export async function addProject(formData: FormData) {
         }
         
         const fileUrl = `${nextcloudUrl}/files/${nextcloudUser}${filePath}`;
-
-        const clientInfo = allClients.find(c => c.id === projectData.clientId);
+        const clientInfo = allClients.find(c => c.id === result.data.clientId);
 
         const newProject = {
             id: `proj-${Date.now()}`,
-            title: projectData.title,
-            description: projectData.description,
-            clientId: projectData.clientId,
-            amount: projectData.amount,
-            expiryDate: projectData.expiryDate.toISOString(),
+            ...result.data,
+            expiryDate: result.data.expiryDate.toISOString(),
             clientName: clientInfo?.name || 'Unknown Client',
             paymentStatus: 'pending' as const,
             orderId: `ORD-${Date.now()}`,
@@ -79,11 +84,11 @@ export async function addProject(formData: FormData) {
             previewVideoUrl: fileUrl,
             finalVideoUrl: fileUrl
         };
-        projects.unshift(newProject); // Add to the beginning of the array
+        projects.unshift(newProject);
 
-        revalidatePath('/admin/projects'); // Refresh the projects page
-        revalidatePath('/admin/dashboard'); // Refresh the dashboard
-        revalidatePath('/client/dashboard'); // Refresh the client dashboard
+        revalidatePath('/admin/projects');
+        revalidatePath('/admin/dashboard');
+        revalidatePath('/client/dashboard');
 
         return { success: true };
 

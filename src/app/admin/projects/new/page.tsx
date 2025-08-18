@@ -2,11 +2,11 @@
 "use client";
 
 import Link from "next/link";
-import { useForm, type SubmitHandler } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
-import { CalendarIcon, ArrowLeft, Upload, Server } from "lucide-react";
+import { CalendarIcon, ArrowLeft, Upload } from "lucide-react";
 import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
@@ -46,7 +46,8 @@ import { useToast } from "@/hooks/use-toast";
 import { addProject } from "./actions";
 import { clients } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Terminal } from "lucide-react";
 
 const projectSchema = z.object({
   title: z.string().min(1, "Project title is required."),
@@ -57,9 +58,6 @@ const projectSchema = z.object({
     required_error: "An expiry date is required.",
   }),
   videoFile: z.any().refine(file => file?.length > 0, 'File is required.'),
-  nextcloudUrl: z.string().url({ message: "Nextcloud URL is required." }),
-  nextcloudUser: z.string().min(1, { message: "Nextcloud username is required." }),
-  nextcloudPassword: z.string().min(1, { message: "Nextcloud password is required." }),
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
@@ -74,9 +72,6 @@ export default function NewProjectPage() {
       description: "",
       clientId: "",
       amount: 0,
-      nextcloudUrl: "",
-      nextcloudUser: "",
-      nextcloudPassword: "",
     },
   });
 
@@ -89,7 +84,7 @@ export default function NewProjectPage() {
         formData.append(key, value.toISOString());
       }
       else {
-        formData.append(key, value);
+        formData.append(key, String(value));
       }
     });
 
@@ -124,7 +119,7 @@ export default function NewProjectPage() {
             <p className="text-muted-foreground">Fill in the details below to create a new project.</p>
         </div>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <Card>
                 <CardHeader>
                     <CardTitle>Project Details</CardTitle>
@@ -269,57 +264,16 @@ export default function NewProjectPage() {
                 </CardContent>
             </Card>
 
-            <Card className="mt-6">
-                <CardHeader>
-                    <CardTitle>Nextcloud Storage</CardTitle>
-                    <CardDescription>
-                        Enter credentials for the Nextcloud instance where the video will be stored.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    <FormField
-                        control={form.control}
-                        name="nextcloudUrl"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Nextcloud URL</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="https://cloud.example.com" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FormField
-                            control={form.control}
-                            name="nextcloudUser"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Username</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="admin" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="nextcloudPassword"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>App Password</FormLabel>
-                                    <FormControl>
-                                        <Input type="password" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    </div>
-                </CardContent>
-                <CardFooter className="border-t px-6 py-4">
+            <Alert>
+              <Terminal className="h-4 w-4" />
+              <AlertTitle>Nextcloud Credentials</AlertTitle>
+              <AlertDescription>
+                Project video files will be uploaded to the Nextcloud instance configured in the <Link href="/admin/settings" className="font-bold underline">Settings</Link> page.
+              </AlertDescription>
+            </Alert>
+            
+            <Card>
+                <CardFooter>
                     <Button type="submit" disabled={form.formState.isSubmitting}>
                         {form.formState.isSubmitting ? "Creating..." : "Create Project & Upload"}
                     </Button>
