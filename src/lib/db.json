@@ -15,14 +15,6 @@
       "role": "admin",
       "initials": "AU",
       "password": "password123"
-    },
-    {
-      "id": "user-3",
-      "name": "Charlie Brown",
-      "email": "charlie@example.com",
-      "role": "client",
-      "initials": "CB",
-      "password": "password123"
     }
   ],
   "clients": [
@@ -33,15 +25,16 @@
       "company": "",
       "projectIds": [],
       "createdAt": "2025-08-18T20:17:03.377Z"
-    },
-    {
-      "id": "user-3",
-      "name": "Charlie Brown",
-      "email": "charlie@example.com",
-      "projectIds": [],
-      "createdAt": "2025-08-18T20:15:16.839Z",
-      "company": ""
     }
   ],
-  "projects": []
+  "projects": [],
+  "settings": {
+    "nextcloudUrl": "https://mydrive.motionmint.top/remote.php/dav/files/islamifty",
+    "nextcloudUser": "islamifty",
+    "nextcloudPassword": "WJNSK-7pG5s-WXNie-3w6DZ-Qx2QG",
+    "bkashAppKey": "",
+    "bkashAppSecret": "",
+    "bkashUsername": "",
+    "bkashPassword": ""
+  }
 }
