@@ -80,20 +80,3 @@ export const projects: Project[] = [
     amount: 3000,
   },
 ];
-
-export const allUsers: User[] = [
-  {
-    id: "user-1",
-    name: "Admin User",
-    email: "admin@motionminthub.com",
-    role: "admin",
-    initials: "AU",
-  },
-  {
-    id: 'firebase-user-mdiftekharulislamifty@gmail.com',
-    name: 'mdiftekharulislamifty@gmail.com',
-    email: 'mdiftekharulislamifty@gmail.com',
-    role: 'admin',
-    initials: 'MD'
-  }
-];

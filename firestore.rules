@@ -2,11 +2,21 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // A user can read/write their own document
-    // An admin can read/write any user's document
+  
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
     match /users/{userId} {
-      allow read, update: if request.auth != null && (request.auth.uid == userId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
-      allow create: if request.auth != null;
+      // Allow new users to create their own profile document
+      allow create: if isOwner(userId);
+      
+      // Allow users to read/update their own data, and admins to read all user data
+      allow read, update: if isOwner(userId) || isAdmin();
     }
   }
 }
