@@ -3,7 +3,7 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { clients, users } from '@/lib/data';
+import { readDb, writeDb } from '@/lib/db';
 import type { Client, User } from '@/types';
 
 const clientSchema = z.object({
@@ -22,15 +22,16 @@ export async function addClient(data: unknown) {
 
     try {
         const { name, email, password, company } = result.data;
+        const db = readDb();
 
         // Check if user already exists
-        if (users.some(u => u.email === email)) {
+        if (db.users.some(u => u.email === email)) {
             return { success: false, error: { formErrors: ["This email address is already in use."], fieldErrors: {} }};
         }
 
         const newUserId = `user-${Date.now()}`;
 
-        // 1. Create user in the local user list
+        // 1. Create user
         const newUser: User = {
             id: newUserId,
             name: name,
@@ -39,9 +40,9 @@ export async function addClient(data: unknown) {
             initials: (name || email).substring(0, 2).toUpperCase(),
             password: password, // In a real app, hash this password
         };
-        users.unshift(newUser);
+        db.users.unshift(newUser);
         
-        // 2. Add to the local clients list
+        // 2. Add to clients list
         const newClient: Client = {
             id: newUserId,
             name: name,
@@ -50,8 +51,10 @@ export async function addClient(data: unknown) {
             projectIds: [],
             createdAt: new Date().toISOString(),
         };
+        db.clients.unshift(newClient);
 
-        clients.unshift(newClient);
+        // Write the updated data back to the file
+        writeDb(db);
 
         revalidatePath('/admin/clients');
         revalidatePath('/admin/users');

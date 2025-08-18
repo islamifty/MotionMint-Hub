@@ -37,15 +37,18 @@ import { clients as initialClients } from "@/lib/data";
 import { deleteClients as deleteClientsAction } from "./actions";
 import type { Client } from "@/types";
 
+// NOTE: The page now uses client-side state management for immediate UI feedback,
+// while the server actions handle the persistent file-based storage.
+
 export default function ClientsPage() {
-  const [clients, setClients] = useState<Client[]>(initialClients);
+  const [clients, setClients] = useState<Client[]>([]);
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
   const { toast } = useToast();
-
+  
+  // Load initial data into state
   useEffect(() => {
     setClients(initialClients);
   }, []);
-
 
   const handleSelectionChange = (id: string, checked: boolean) => {
     setSelectedClients((prev) =>
@@ -65,7 +68,6 @@ export default function ClientsPage() {
     const result = await deleteClientsAction(selectedClients);
     if (result.success) {
       // Optimistically update the UI by filtering out the deleted clients from the local state.
-      // This is the key fix.
       setClients((prev) => prev.filter(c => !selectedClients.includes(c.id)));
       setSelectedClients([]);
       toast({

@@ -1,13 +1,15 @@
 
 'use server';
 
-import { users, clients } from "@/lib/data";
+import { readDb, writeDb } from "@/lib/db";
 import type { User, Client } from '@/types';
 import { revalidatePath } from "next/cache";
 
 export async function addNewUser(userData: { name: string, email: string, password: string }) {
+    
+    const db = readDb();
 
-    if (users.some(u => u.email === userData.email)) {
+    if (db.users.some(u => u.email === userData.email)) {
         return { success: false, error: "An account with this email already exists." };
     }
 
@@ -32,8 +34,10 @@ export async function addNewUser(userData: { name: string, email: string, passwo
     };
 
     try {
-        users.unshift(newUser);
-        clients.unshift(newClient);
+        db.users.unshift(newUser);
+        db.clients.unshift(newClient);
+        
+        writeDb(db);
         
         revalidatePath('/admin/users');
         revalidatePath('/admin/clients');
