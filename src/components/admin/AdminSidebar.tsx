@@ -6,6 +6,7 @@ import {
   Users,
   LineChart,
   Settings,
+  User,
 } from "lucide-react";
 
 import {
@@ -20,6 +21,7 @@ const navItems = [
     { href: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { href: "/admin/projects", icon: FolderKanban, label: "Projects" },
     { href: "/admin/clients", icon: Users, label: "Clients" },
+    { href: "/admin/users", icon: User, label: "Users" },
     { href: "/admin/reports", icon: LineChart, label: "Reports" },
 ];
 

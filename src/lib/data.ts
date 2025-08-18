@@ -1,21 +1,35 @@
 import type { Client, Project, User } from "@/types";
 
-export const users: { [key: string]: User } = {
-  "user-1": {
+export const allUsers: User[] = [
+  {
     id: "user-1",
     name: "Admin User",
     email: "admin@motionminthub.com",
     role: "admin",
     initials: "AU",
   },
-  "user-2": {
+  {
     id: "user-2",
     name: "Client User",
     email: "client@example.com",
     role: "client",
     initials: "CU",
   },
-};
+  {
+    id: "user-3",
+    name: "Jane Doe",
+    email: "jane@example.com",
+    role: "user",
+    initials: "JD",
+  },
+  {
+    id: "user-4",
+    name: "John Smith",
+    email: "john@example.com",
+    role: "user",
+    initials: "JS",
+  }
+];
 
 export const clients: Client[] = [
   {

@@ -69,6 +69,12 @@ export default function AdminLayout({
                 >
                   Clients
                 </Link>
+                 <Link
+                  href="/admin/users"
+                  className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                >
+                  Users
+                </Link>
                 <Link
                   href="/admin/reports"
                   className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
