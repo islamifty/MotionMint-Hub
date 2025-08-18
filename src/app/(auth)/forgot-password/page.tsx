@@ -42,7 +42,7 @@ export default function ForgotPasswordPage() {
       setIsSent(true);
       toast({
         title: "Check Your Email",
-        description: `A password reset link has been sent to ${email}.`,
+        description: `A password reset link has been sent to ${email}. Please check your spam folder if you don't see it.`,
       });
     } catch (error: any) {
       toast({
@@ -72,7 +72,7 @@ export default function ForgotPasswordPage() {
             <div className="flex flex-col items-center text-center p-4 bg-green-50 dark:bg-green-900/10 rounded-md">
                 <Mail className="h-12 w-12 text-primary mb-2" />
                 <p className="font-semibold text-primary">Reset Link Sent!</p>
-                <p className="text-sm text-muted-foreground">Please check your inbox and follow the instructions to reset your password.</p>
+                <p className="text-sm text-muted-foreground">Please check your inbox (and spam folder) and follow the instructions to reset your password.</p>
             </div>
           ) : (
             <div className="space-y-2">
