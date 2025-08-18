@@ -1,14 +1,17 @@
 
-import Link from "next/link"
-import { PlusCircle } from "lucide-react"
-import { Button } from "@/components/ui/button"
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { PlusCircle, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -16,10 +19,62 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { clients } from "@/lib/data"
+} from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/hooks/use-toast";
+import { clients as initialClients } from "@/lib/data";
+import { deleteClients } from "./actions";
+import type { Client } from "@/types";
+
 
 export default function ClientsPage() {
+  const [clients, setClients] = useState<Client[]>(initialClients);
+  const [selectedClients, setSelectedClients] = useState<string[]>([]);
+  const { toast } = useToast();
+
+  const handleSelectionChange = (id: string, checked: boolean) => {
+    setSelectedClients((prev) =>
+      checked ? [...prev, id] : prev.filter((cId) => cId !== id)
+    );
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedClients(clients.map((c) => c.id));
+    } else {
+      setSelectedClients([]);
+    }
+  };
+  
+  const handleDelete = async () => {
+    const result = await deleteClients(selectedClients);
+    if (result.success) {
+      setClients((prev) => prev.filter(c => !selectedClients.includes(c.id)));
+      setSelectedClients([]);
+      toast({
+        title: "Clients Deleted",
+        description: `${selectedClients.length} client(s) have been successfully deleted.`,
+      });
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: result.error || "Failed to delete clients. Please try again.",
+      });
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -30,20 +85,53 @@ export default function ClientsPage() {
               Manage your clients and view their project history.
             </CardDescription>
           </div>
-          <Button size="sm" className="h-8 gap-1" asChild>
-            <Link href="/admin/clients/new">
-              <PlusCircle className="h-3.5 w-3.5" />
-              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                Add Client
-              </span>
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+             {selectedClients.length > 0 && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="sm" variant="destructive" className="h-8 gap-1">
+                    <Trash2 className="h-3.5 w-3.5" />
+                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                      Delete ({selectedClients.length})
+                    </span>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete the selected {selectedClients.length} client account(s), including their authentication record and all associated data.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+            <Button size="sm" className="h-8 gap-1" asChild>
+              <Link href="/admin/clients/new">
+                <PlusCircle className="h-3.5 w-3.5" />
+                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                  Add Client
+                </span>
+              </Link>
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[40px]">
+                <Checkbox
+                  checked={clients.length > 0 && selectedClients.length === clients.length}
+                  onCheckedChange={(checked) => handleSelectAll(!!checked)}
+                  aria-label="Select all"
+                />
+              </TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Projects</TableHead>
@@ -52,7 +140,14 @@ export default function ClientsPage() {
           </TableHeader>
           <TableBody>
             {clients.map((client) => (
-              <TableRow key={client.id}>
+              <TableRow key={client.id} data-state={selectedClients.includes(client.id) && "selected"}>
+                <TableCell>
+                   <Checkbox
+                    checked={selectedClients.includes(client.id)}
+                    onCheckedChange={(checked) => handleSelectionChange(client.id, !!checked)}
+                    aria-label={`Select client ${client.name}`}
+                  />
+                </TableCell>
                 <TableCell className="font-medium">
                   <Link href={`/admin/clients/${client.id}`} className="hover:underline">
                     {client.name}
@@ -67,5 +162,5 @@ export default function ClientsPage() {
         </Table>
       </CardContent>
     </Card>
-  )
+  );
 }
