@@ -1,7 +1,29 @@
 import type { Client, Project, User } from "@/types";
 
-// This file now only contains mock data for clients and projects.
-// The user data is now managed in Firestore.
+// Mock user data to represent "old" users that might exist.
+export const mockUsers: User[] = [
+    {
+      id: "user-1",
+      name: "Alice Johnson",
+      email: "alice@example.com",
+      role: "user",
+      initials: "AJ",
+    },
+    {
+      id: "user-2",
+      name: "Bob Williams",
+      email: "bob@example.com",
+      role: "user",
+      initials: "BW",
+    },
+    {
+      id: "user-3",
+      name: "Charlie Brown",
+      email: "charlie@example.com",
+      role: "client",
+      initials: "CB",
+    }
+];
 
 export const clients: Client[] = [
   {
@@ -20,6 +42,14 @@ export const clients: Client[] = [
     projectIds: ["proj-2"],
     createdAt: "2023-11-15T14:30:00Z",
   },
+  {
+    id: "user-3",
+    name: "Charlie Brown",
+    email: "charlie@example.com",
+    company: "",
+    projectIds: [],
+    createdAt: "2023-12-01T11:00:00Z"
+  }
 ];
 
 export const projects: Project[] = [
