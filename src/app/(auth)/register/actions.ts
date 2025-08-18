@@ -11,6 +11,10 @@ export async function addNewUser(userData: {id: string, name: string, email: str
         role: "user",
         initials: (userData.name || userData.email).substring(0,2).toUpperCase(),
     };
-    allUsers.unshift(newUser);
-    revalidatePath('/admin/users');
+    
+    // Check if user already exists
+    if (!allUsers.find(u => u.email === newUser.email)) {
+      allUsers.unshift(newUser);
+      revalidatePath('/admin/users');
+    }
 }

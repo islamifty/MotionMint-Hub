@@ -1,4 +1,3 @@
-
 import type { Client, Project, User } from "@/types";
 
 export const allUsers: User[] = [
@@ -29,6 +28,13 @@ export const allUsers: User[] = [
     email: "john@example.com",
     role: "user",
     initials: "JS",
+  },
+  {
+    id: 'firebase-user-mdiftekharulislamifty@gmail.com',
+    name: 'mdiftekharulislamifty@gmail.com',
+    email: 'mdiftekharulislamifty@gmail.com',
+    role: 'admin',
+    initials: 'MD'
   }
 ];
 
