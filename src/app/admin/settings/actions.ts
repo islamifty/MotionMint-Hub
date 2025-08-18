@@ -52,12 +52,12 @@ async function updateEnvFile(settings: Record<string, string>) {
 
         await fs.writeFile(envFilePath, newEnvContent.trim());
         
-        // Update current process's env vars
+        // Update current process's env vars to avoid needing a restart
         for (const [key, value] of Object.entries(settings)) {
             process.env[key] = value;
         }
 
-        return { success: true, message: "Settings saved successfully. Please restart the development server for changes to take full effect." };
+        return { success: true, message: "Settings saved successfully. Changes are applied immediately." };
     } catch (error) {
         console.error('Failed to save settings to .env file:', error);
         return { success: false, message: 'Failed to save settings to .env file.' };
