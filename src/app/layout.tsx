@@ -3,6 +3,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { BrandingProvider } from "@/context/BrandingContext";
 import { AuthProvider } from "@/context/AuthContext";
+import { NextNProgress } from "@/components/shared/NextNProgress";
 
 export const metadata: Metadata = {
   title: "MotionMint Hub",
@@ -31,6 +32,7 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <AuthProvider>
           <BrandingProvider>
+            <NextNProgress />
             {children}
             <Toaster />
           </BrandingProvider>
