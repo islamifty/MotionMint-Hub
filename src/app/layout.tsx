@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { BrandingProvider } from "@/context/BrandingContext";
+import { AuthProvider } from "@/context/AuthContext";
 
 export const metadata: Metadata = {
   title: "MotionMint Hub",
@@ -28,10 +29,12 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <BrandingProvider>
+        <AuthProvider>
+          <BrandingProvider>
             {children}
             <Toaster />
-        </BrandingProvider>
+          </BrandingProvider>
+        </AuthProvider>
       </body>
     </html>
   );

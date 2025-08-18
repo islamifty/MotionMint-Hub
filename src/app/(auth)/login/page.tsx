@@ -1,13 +1,17 @@
+
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -19,16 +23,36 @@ import { useToast } from "@/hooks/use-toast";
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const [email, setEmail] = useState("admin@motionflow.com");
+  const [password, setPassword] = useState("password123");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = (role: "admin" | "client") => {
-    toast({
-      title: "Login Successful",
-      description: `Redirecting to the ${role} dashboard.`,
-    });
-    if (role === "admin") {
-      router.push("/admin/dashboard");
-    } else {
-      router.push("/client/dashboard");
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      toast({
+        title: "Login Successful",
+        description: "Redirecting to your dashboard.",
+      });
+
+      // Simple role-based redirection
+      if (user.email === "admin@motionflow.com") {
+        router.push("/admin/dashboard");
+      } else {
+        router.push("/client/dashboard");
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Login Failed",
+        description: error.message,
+      });
+      setIsLoading(false);
     }
   };
 
@@ -39,32 +63,40 @@ export default function LoginPage() {
         <CardTitle className="pt-4 font-headline">Welcome Back</CardTitle>
         <CardDescription>Enter your credentials to access your account</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" placeholder="m@example.com" required defaultValue="admin@motionflow.com" />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
-          <Input id="password" type="password" required defaultValue="password123" />
-        </div>
-      </CardContent>
-      <CardFooter className="flex flex-col gap-4">
-        <div className="grid grid-cols-2 gap-4 w-full">
-            <Button onClick={() => handleLogin("admin")} className="w-full">
-            Login as Admin
-            </Button>
-            <Button onClick={() => handleLogin("client")} className="w-full" variant="secondary">
-            Login as Client
-            </Button>
-        </div>
-        <div className="text-center text-sm">
-          Don&apos;t have an account?{" "}
-          <Link href="/register" className="underline">
-            Sign up
-          </Link>
-        </div>
-      </CardFooter>
+      <form onSubmit={handleLogin}>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="m@example.com"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? "Logging in..." : "Login"}
+          </Button>
+        </CardContent>
+      </form>
+      <div className="p-6 pt-0 text-center text-sm">
+        Don&apos;t have an account?{" "}
+        <Link href="/register" className="underline">
+          Sign up
+        </Link>
+      </div>
     </Card>
   );
 }

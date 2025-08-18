@@ -1,3 +1,6 @@
+
+"use client";
+
 import Link from "next/link";
 import {
   PanelLeft,
@@ -19,7 +22,6 @@ import {
 } from "@/components/ui/sheet";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { UserNav } from "@/components/shared/UserNav";
-import { users } from "@/lib/data";
 import { Logo } from "@/components/shared/Logo";
 
 
@@ -28,7 +30,6 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-    const adminUser = users["user-1"];
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
       <AdminSidebar />
@@ -100,7 +101,7 @@ export default function AdminLayout({
               className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[336px]"
             />
           </div>
-          <UserNav user={adminUser}/>
+          <UserNav />
         </header>
         <main className="flex-1 p-4 sm:px-6 sm:py-0">{children}</main>
       </div>
