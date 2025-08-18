@@ -4,8 +4,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/lib/firebase";
 import { addNewUser } from "./actions";
 
 import { Button } from "@/components/ui/button";
@@ -33,14 +31,15 @@ export default function RegisterPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      
-      // Add the new user to our mock database
-      await addNewUser({
-        id: userCredential.user.uid,
+      const result = await addNewUser({
         name: fullName,
         email: email,
+        password: password,
       });
+
+      if (!result.success) {
+        throw new Error(result.error || "Registration failed.");
+      }
 
       toast({
         title: "Account Created",

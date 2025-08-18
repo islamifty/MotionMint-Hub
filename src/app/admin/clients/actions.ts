@@ -2,30 +2,28 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { getFirebaseAdmin } from '@/lib/firebase-admin';
-import { clients } from '@/lib/data';
+import { clients, users } from '@/lib/data';
 
 export async function deleteClients(clientIds: string[]) {
     try {
-        const { auth, db } = getFirebaseAdmin();
-
-        // Batch delete from Firebase Auth and Firestore
-        const deleteAuthPromises = clientIds.map(id => auth.deleteUser(id).catch(err => console.error(`Failed to delete auth user ${id}:`, err)));
-        const deleteFirestorePromises = clientIds.map(id => db.collection('users').doc(id).delete().catch(err => console.error(`Failed to delete firestore user ${id}:`, err)));
-        
-        await Promise.all([
-            ...deleteAuthPromises,
-            ...deleteFirestorePromises
-        ]);
-        
         // This simulates the data mutation for the demo's in-memory array
-        const initialCount = clients.length;
+        const initialClientsCount = clients.length;
+        const initialUsersCount = users.length;
+        
         const newClients = clients.filter(c => !clientIds.includes(c.id));
+        const newUsers = users.filter(u => !clientIds.includes(u.id));
+
         clients.length = 0;
         Array.prototype.push.apply(clients, newClients);
+
+        users.length = 0;
+        Array.prototype.push.apply(users, newUsers);
         
-        if (clients.length !== initialCount - clientIds.length) {
+        if (clients.length !== initialClientsCount - clientIds.length) {
             console.warn("In-memory client list did not update as expected.");
+        }
+        if (users.length !== initialUsersCount - clientIds.length) {
+            console.warn("In-memory user list did not update as expected.");
         }
 
         revalidatePath('/admin/clients');

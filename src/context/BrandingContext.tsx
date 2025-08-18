@@ -87,11 +87,13 @@ export const BrandingProvider = ({ children }: { children: ReactNode }) => {
 
   const setBranding = (newBranding: Branding) => {
     try {
-      localStorage.setItem('branding', JSON.stringify(newBranding));
+        const currentBranding = JSON.parse(localStorage.getItem('branding') || '{}');
+        const updatedBranding = { ...currentBranding, ...newBranding };
+        localStorage.setItem('branding', JSON.stringify(updatedBranding));
+        setBrandingState(updatedBranding);
     } catch (error) {
-      console.error("Failed to save branding to localStorage", error);
+        console.error("Failed to save branding to localStorage", error);
     }
-    setBrandingState(newBranding);
   };
 
   useEffect(() => {

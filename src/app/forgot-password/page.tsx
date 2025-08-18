@@ -3,8 +3,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { sendPasswordResetEmail } from "firebase/auth";
-import { auth } from "@/lib/firebase";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -37,22 +35,16 @@ export default function ForgotPasswordPage() {
       return;
     }
     setIsLoading(true);
-    try {
-      await sendPasswordResetEmail(auth, email);
-      setIsSent(true);
-      toast({
-        title: "Check Your Email",
-        description: `A password reset link has been sent to ${email}. Please check your spam folder if you don't see it.`,
-      });
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message,
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    // This is a placeholder for a real password reset flow
+    // In a real app you'd send an email with a unique token
+    setTimeout(() => {
+        setIsSent(true);
+        toast({
+            title: "Check Your Email",
+            description: `If an account with ${email} exists, a password reset link has been sent.`,
+        });
+        setIsLoading(false);
+    }, 1000);
   };
 
   return (

@@ -38,9 +38,6 @@ import {
 } from "@/components/ui/form";
 import { useBranding } from "@/context/BrandingContext";
 import { Upload } from "lucide-react";
-import { storage } from "@/lib/firebase";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-
 
 const nextcloudSchema = z.object({
   nextcloudUrl: z.string().url({ message: "Please enter a valid URL." }),
@@ -71,6 +68,15 @@ type NextcloudFormValues = z.infer<typeof nextcloudSchema>;
 type BKashFormValues = z.infer<typeof bKashSchema>;
 type PipraPayFormValues = z.infer<typeof pipraPaySchema>;
 type BrandingFormValues = z.infer<typeof brandingSchema>;
+
+function fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = error => reject(error);
+    });
+}
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -173,9 +179,7 @@ export default function SettingsPage() {
         const logoFile = data.logo?.[0];
 
         if (logoFile) {
-            const storageRef = ref(storage, `branding/logo-${Date.now()}`);
-            const uploadResult = await uploadBytes(storageRef, logoFile);
-            logoUrl = await getDownloadURL(uploadResult.ref);
+            logoUrl = await fileToBase64(logoFile);
         }
 
         setBranding({
@@ -193,7 +197,7 @@ export default function SettingsPage() {
         toast({
             variant: "destructive",
             title: "Error",
-            description: "Failed to save branding settings. Please check your Firebase Storage rules.",
+            description: "Failed to save branding settings.",
         });
     }
   };

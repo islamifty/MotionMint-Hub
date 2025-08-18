@@ -4,8 +4,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { login } from './actions';
 
 import { Button } from "@/components/ui/button";
 import {
@@ -32,23 +31,11 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
+      const result = await login({ email, password });
 
-      const idToken = await user.getIdToken();
-
-      // Set session cookie via API route
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create session.');
+      if (!result.success) {
+        throw new Error(result.error || 'Login failed.');
       }
-
-      const { isAdmin } = await response.json();
 
       toast({
         title: "Login Successful",
@@ -56,7 +43,7 @@ export default function LoginPage() {
       });
 
       // Role-based redirection decided by the server
-      if (isAdmin) {
+      if (result.isAdmin) {
         router.push("/admin/dashboard");
       } else {
         router.push("/client/dashboard");

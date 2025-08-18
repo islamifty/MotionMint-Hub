@@ -16,13 +16,18 @@ import {
 } from "@/components/ui/table"
 import { getUsers } from "./actions";
 import { UserRow } from "./UserRow";
-import { getAuthenticatedUser } from "@/lib/firebase-admin";
+import { getSession } from "@/lib/session";
+import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
 export default async function UsersPage() {
-  const user = await getAuthenticatedUser();
-  const allUsers = await getUsers(user?.email);
+  const session = await getSession();
+  if (!session?.user) {
+    redirect('/login');
+  }
+
+  const allUsers = await getUsers(session.user.email);
   
   return (
     <Card>

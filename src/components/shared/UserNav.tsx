@@ -2,8 +2,6 @@
 "use client";
 
 import { useRouter } from 'next/navigation';
-import { signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
 import { useAuth } from '@/context/AuthContext';
 
 import {
@@ -31,8 +29,6 @@ export function UserNav() {
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
-      // Clear session cookie via API route
       await fetch('/api/logout', { method: 'POST' });
       
       toast({
@@ -40,6 +36,8 @@ export function UserNav() {
         description: "You have been successfully logged out.",
       });
       router.push('/login');
+      // Refresh the page to ensure user state is cleared
+      router.refresh();
     } catch (error) {
       toast({
         variant: "destructive",
@@ -54,7 +52,11 @@ export function UserNav() {
   }
   
   if (!currentUser) {
-    return null;
+    return (
+      <Button variant="outline" onClick={() => router.push('/login')}>
+        Sign In
+      </Button>
+    );
   }
 
   return (

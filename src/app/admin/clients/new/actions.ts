@@ -3,9 +3,8 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { clients } from '@/lib/data';
-import type { Client } from '@/types';
-import { getFirebaseAdmin } from '@/lib/firebase-admin';
+import { clients, users } from '@/lib/data';
+import type { Client, User } from '@/types';
 
 const clientSchema = z.object({
   name: z.string().min(1, "Client name is required."),
@@ -22,27 +21,29 @@ export async function addClient(data: unknown) {
     }
 
     try {
-        const { auth, db } = getFirebaseAdmin();
         const { name, email, password, company } = result.data;
 
-        // 1. Create user in Firebase Authentication
-        const userRecord = await auth.createUser({
-            email: email,
-            password: password,
-            displayName: name,
-        });
+        // Check if user already exists
+        if (users.some(u => u.email === email)) {
+            return { success: false, error: { formErrors: ["This email address is already in use."], fieldErrors: {} }};
+        }
 
-        // 2. Create user profile in Firestore using the user's UID as the document ID
-        await db.collection("users").doc(userRecord.uid).set({
+        const newUserId = `user-${Date.now()}`;
+
+        // 1. Create user in the local user list
+        const newUser: User = {
+            id: newUserId,
             name: name,
             email: email,
             role: 'client',
             initials: (name || email).substring(0, 2).toUpperCase(),
-        });
+            password: password, // In a real app, hash this password
+        };
+        users.unshift(newUser);
         
-        // 3. Add to the local clients list (for demo purposes)
+        // 2. Add to the local clients list
         const newClient: Client = {
-            id: userRecord.uid,
+            id: newUserId,
             name: name,
             email: email,
             company: company,
@@ -60,9 +61,6 @@ export async function addClient(data: unknown) {
     } catch (error: any) {
         console.error("Client creation failed:", error);
         let errorMessage = "An unexpected error occurred.";
-        if (error.code === 'auth/email-already-exists') {
-            errorMessage = "This email address is already in use by another account.";
-        }
         return { success: false, error: { formErrors: [errorMessage], fieldErrors: {} }};
     }
 }
