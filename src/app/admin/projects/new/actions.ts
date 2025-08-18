@@ -70,7 +70,7 @@ export async function addProject(formData: FormData) {
             throw new Error("Failed to upload file to Nextcloud.");
         }
         
-        const fileUrl = `${nextcloudUrl}/files/${nextcloudUser}${filePath}`;
+        const fileUrl = `${nextcloudUrl}/remote.php/dav/files/${nextcloudUser}${filePath}`;
         
         const db = readDb();
         const clientInfo = db.clients.find(c => c.id === result.data.clientId);
