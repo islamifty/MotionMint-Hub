@@ -4,6 +4,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { File, PlusCircle, Trash2 } from "lucide-react";
+import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -85,7 +86,7 @@ const ProjectTable = ({
           <TableCell>
             <Badge variant="outline">{project.paymentStatus}</Badge>
           </TableCell>
-          <TableCell>{new Date(project.expiryDate).toLocaleDateString()}</TableCell>
+          <TableCell>{format(new Date(project.expiryDate), 'PPP')}</TableCell>
           <TableCell className="text-right">${project.amount.toLocaleString()}</TableCell>
         </TableRow>
       ))}
@@ -129,7 +130,7 @@ export default function ProjectsPage() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to delete projects. Please try again.",
+        description: result.error || "Failed to delete projects. Please try again.",
       });
     }
   };
@@ -170,7 +171,7 @@ export default function ProjectsPage() {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete the selected {selectedProjects.length} project(s).
+                    This action cannot be undone. This will permanently delete the selected {selectedProjects.length} project(s) and their associated files from Nextcloud.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
