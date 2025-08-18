@@ -2,7 +2,7 @@
 'use server';
 
 import { revalidatePath } from "next/cache";
-import { db } from '@/lib/firebase-admin';
+import { getFirebaseAdmin } from '@/lib/firebase-admin';
 import type { User, Client } from '@/types';
 import { clients } from "@/lib/data";
 
@@ -14,6 +14,7 @@ export async function getUsers(currentUserEmail?: string | null): Promise<User[]
     }
     
     try {
+        const { db } = getFirebaseAdmin();
         const usersCollection = db.collection("users");
         const userSnapshot = await usersCollection.get();
         const userList = userSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
@@ -31,6 +32,7 @@ export async function makeUserClient(user: User) {
             return { success: false, message: "User not found." };
         }
         
+        const { db } = getFirebaseAdmin();
         const userRef = db.collection("users").doc(user.id);
         const userSnap = await userRef.get();
 

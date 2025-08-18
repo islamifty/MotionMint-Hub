@@ -1,7 +1,7 @@
 
 'use server';
 
-import { db } from '@/lib/firebase-admin';
+import { getFirebaseAdmin } from '@/lib/firebase-admin';
 import type { User } from '@/types';
 import { revalidatePath } from "next/cache";
 
@@ -14,6 +14,7 @@ export async function addNewUser(userData: {id: string, name: string, email: str
     };
     
     try {
+        const { db } = getFirebaseAdmin();
         await db.collection("users").doc(userData.id).set(newUser);
         
         revalidatePath('/admin/users');

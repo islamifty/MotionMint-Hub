@@ -1,6 +1,6 @@
 
 import { cookies } from "next/headers";
-import { auth } from "@/lib/firebase-admin";
+import { getFirebaseAdmin } from "@/lib/firebase-admin";
 
 // This function runs on the server and safely gets the authenticated user
 // from the session cookie.
@@ -12,6 +12,7 @@ export async function getAuthenticatedUser() {
   }
 
   try {
+    const { auth } = getFirebaseAdmin();
     const decodedClaims = await auth.verifySessionCookie(session, true);
     return decodedClaims;
   } catch (error) {
