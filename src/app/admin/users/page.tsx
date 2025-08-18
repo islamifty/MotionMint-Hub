@@ -1,7 +1,4 @@
 
-"use client";
-
-import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -17,68 +14,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { clients } from "@/lib/data";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { getUsers, makeUserClient } from "./actions";
+import { getUsers } from "./actions";
 import type { User } from "@/types";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useAuth } from "@/context/AuthContext";
+import { UserRow } from "./UserRow";
+import { auth } from "@/lib/firebase-admin";
+import { getAuthenticatedUser } from "@/lib/get-authenticated-user";
 
-export default function UsersPage() {
-  const { toast } = useToast();
-  const { currentUser } = useAuth();
-  const [loadingUserId, setLoadingUserId] = useState<string | null>(null);
-  const [allUsers, setAllUsers] = useState<User[]>([]);
-  const [isLoadingUsers, setIsLoadingUsers] = useState(true);
+export const dynamic = 'force-dynamic';
 
-  useEffect(() => {
-    async function fetchUsers() {
-      if (!currentUser) {
-        setIsLoadingUsers(false);
-        return;
-      }
-      try {
-        // Fetch users using the secure server action
-        const userList = await getUsers(currentUser.email);
-        setAllUsers(userList);
-      } catch (error) {
-        console.error("Error fetching users: ", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Could not fetch users. Please try again.",
-        });
-      } finally {
-        setIsLoadingUsers(false);
-      }
-    }
-
-    fetchUsers();
-  }, [toast, currentUser]);
-
-  const clientEmails = new Set(clients.map(c => c.email));
-
-  const handleMakeClient = async (user: User) => {
-    setLoadingUserId(user.id);
-    const result = await makeUserClient(user);
-    if (result.success) {
-      toast({
-        title: "Success",
-        description: result.message,
-      });
-      // Optimistically update the UI to reflect the new role
-      setAllUsers(prevUsers => prevUsers.map(u => u.id === user.id ? {...u, role: 'client'} : u));
-    } else {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: result.message,
-      });
-    }
-    setLoadingUserId(null);
-  };
-
+export default async function UsersPage() {
+  const user = await getAuthenticatedUser();
+  const allUsers = await getUsers(user?.email);
+  
   return (
     <Card>
       <CardHeader>
@@ -102,38 +49,16 @@ export default function UsersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoadingUsers ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <TableRow key={i}>
-                  <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-12" /></TableCell>
-                  <TableCell><Skeleton className="h-8 w-24" /></TableCell>
-                </TableRow>
-              ))
-            ) : (
-              allUsers.map((user) => {
-                const isClient = clientEmails.has(user.email) || user.role === 'client';
-                const isLoading = loadingUserId === user.id;
-
-                return (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.name}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell className="capitalize">{user.role}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleMakeClient(user)}
-                        disabled={isClient || isLoading || user.role === 'admin'}
-                      >
-                        {isLoading ? "Processing..." : (isClient ? "Already a Client" : "Make Client")}
-                      </Button>
+            {allUsers.length === 0 ? (
+                 <TableRow>
+                    <TableCell colSpan={4} className="h-24 text-center">
+                        No registered users found.
                     </TableCell>
-                  </TableRow>
-                );
-              })
+                </TableRow>
+            ) : (
+              allUsers.map((user) => (
+                <UserRow key={user.id} user={user} />
+              ))
             )}
           </TableBody>
         </Table>

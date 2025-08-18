@@ -37,6 +37,16 @@ export default function LoginPage() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
+      const idToken = await user.getIdToken();
+
+      // Set session cookie via API route
+      await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
+      });
+
+
       toast({
         title: "Login Successful",
         description: "Redirecting to your dashboard.",

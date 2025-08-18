@@ -1,26 +1,21 @@
 
 'use server';
 
-import { collection, getDocs, doc, updateDoc, getDoc } from "firebase/firestore";
-import { db } from '@/lib/firebase';
-import type { User, Client } from '@/types';
 import { revalidatePath } from "next/cache";
+import { db } from '@/lib/firebase-admin';
+import type { User, Client } from '@/types';
 import { clients } from "@/lib/data";
 
 const adminEmails = ["admin@motionflow.com", "mdiftekharulislamifty@gmail.com"];
 
 export async function getUsers(currentUserEmail?: string | null): Promise<User[]> {
     if (!currentUserEmail || !adminEmails.includes(currentUserEmail)) {
-        // This is a security check. If the user is not an admin, return an empty array.
-        // The client-side rules already prevent direct access, but this adds a layer of defense.
         return [];
     }
     
-    // Because this code runs on the server, it has trusted access to Firestore
-    // and bypasses client-side security rules.
     try {
-        const usersCollection = collection(db, "users");
-        const userSnapshot = await getDocs(usersCollection);
+        const usersCollection = db.collection("users");
+        const userSnapshot = await usersCollection.get();
         const userList = userSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
         return userList;
     } catch (error) {
@@ -36,23 +31,22 @@ export async function makeUserClient(user: User) {
             return { success: false, message: "User not found." };
         }
         
-        const userRef = doc(db, "users", user.id);
-        const userSnap = await getDoc(userRef);
+        const userRef = db.collection("users").doc(user.id);
+        const userSnap = await userRef.get();
 
-        if (!userSnap.exists()) {
+        if (!userSnap.exists) {
             return { success: false, message: "User profile does not exist in the database." };
         }
 
         const userData = userSnap.data();
 
-        if (userData.role === 'client' || userData.role === 'admin') {
+        if (userData?.role === 'client' || userData?.role === 'admin') {
             return { success: false, message: "This user is already a client or an admin." };
         }
 
         const existingClient = clients.find(c => c.email === user.email);
         if (existingClient) {
-            // If they are already in the mock client list, just update their role in Firestore
-             await updateDoc(userRef, {
+             await userRef.update({
                 role: 'client'
             });
             revalidatePath('/admin/users');
@@ -60,7 +54,7 @@ export async function makeUserClient(user: User) {
         }
         
         const newClient: Client = {
-            id: user.id, // Use the user's auth UID as the client ID for consistency
+            id: user.id,
             name: user.name,
             email: user.email,
             projectIds: [],
@@ -69,8 +63,7 @@ export async function makeUserClient(user: User) {
 
         clients.unshift(newClient);
 
-        // Update the user's role in Firestore
-        await updateDoc(userRef, {
+        await userRef.update({
             role: 'client'
         });
 
