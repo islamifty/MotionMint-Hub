@@ -1,3 +1,4 @@
+
 import * as admin from 'firebase-admin';
 import type { Auth } from 'firebase-admin/auth';
 import type { Firestore } from 'firebase-admin/firestore';
@@ -15,27 +16,36 @@ function initializeFirebaseAdmin(): FirebaseAdmin {
     return firebaseAdmin;
   }
 
+  if (admin.apps.length > 0) {
+    const defaultApp = admin.app();
+    firebaseAdmin = {
+        auth: defaultApp.auth(),
+        db: defaultApp.firestore(),
+    };
+    return firebaseAdmin;
+  }
+
   let serviceAccount: admin.ServiceAccount | undefined;
 
   if (process.env.FIREBASE_SERVICE_ACCOUNT) {
     try {
-      // The environment variable is a string, so it needs to be parsed as JSON.
       serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
     } catch (e) {
       console.error('Failed to parse FIREBASE_SERVICE_ACCOUNT. Make sure it is a valid JSON string.', e);
-      throw new Error('Firebase service account is not a valid JSON object.');
+      // Fall through to the error below
     }
   }
 
-  if (!admin.apps.length) {
-    if (!serviceAccount) {
-        console.warn("Firebase Admin SDK not initialized. FIREBASE_SERVICE_ACCOUNT environment variable is not set or is invalid.");
-        throw new Error("Firebase Admin SDK credentials are not set.");
-    }
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-    });
+  if (!serviceAccount) {
+    console.warn("Firebase Admin SDK credentials are not set or are invalid. Server-side Firebase features will not be available.");
+    // Return a dummy object or throw, depending on desired behavior for a missing config.
+    // For this app, we'll throw to make it clear that configuration is required.
+    throw new Error("Firebase Admin SDK credentials are not set in the environment variables.");
   }
+
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+  });
   
   const auth = admin.auth();
   const db = admin.firestore();
@@ -45,7 +55,6 @@ function initializeFirebaseAdmin(): FirebaseAdmin {
 }
 
 export function getFirebaseAdmin(): FirebaseAdmin {
-  // This function ensures that we always get an initialized instance.
   if (!firebaseAdmin) {
     return initializeFirebaseAdmin();
   }
