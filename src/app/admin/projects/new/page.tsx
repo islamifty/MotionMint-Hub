@@ -8,6 +8,7 @@ import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { CalendarIcon, ArrowLeft, Upload } from "lucide-react";
 import { format } from "date-fns";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -44,10 +45,11 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
 import { addProject } from "./actions";
-import { clients } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal } from "lucide-react";
+import type { Client } from "@/types";
+import { getClients } from "../../clients/actions";
 
 const projectSchema = z.object({
   title: z.string().min(1, "Project title is required."),
@@ -65,6 +67,16 @@ type ProjectFormValues = z.infer<typeof projectSchema>;
 export default function NewProjectPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const [clients, setClients] = useState<Client[]>([]);
+
+  useEffect(() => {
+    async function loadClients() {
+      const serverClients = await getClients();
+      setClients(serverClients);
+    }
+    loadClients();
+  }, []);
+
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectSchema),
     defaultValues: {

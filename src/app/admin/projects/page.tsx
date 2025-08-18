@@ -38,9 +38,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { projects as initialProjects } from "@/lib/data";
 import type { Project } from "@/types";
-import { deleteProjects } from "./actions";
+import { deleteProjects, getProjects } from "./actions";
 import { useToast } from "@/hooks/use-toast";
 
 const ProjectDate = ({ dateString }: { dateString: string }) => {
@@ -111,9 +110,17 @@ const ProjectTable = ({
 );
 
 export default function ProjectsPage() {
-  const [projects, setProjects] = useState<Project[]>(initialProjects);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
   const { toast } = useToast();
+  
+  useEffect(() => {
+    async function loadProjects() {
+      const serverProjects = await getProjects();
+      setProjects(serverProjects);
+    }
+    loadProjects();
+  }, []);
   
   const [activeTab, setActiveTab] = useState("all");
 
@@ -135,7 +142,6 @@ export default function ProjectsPage() {
   const handleDelete = async () => {
     const result = await deleteProjects(selectedProjects);
     if (result.success) {
-      // Optimistically update the UI
       setProjects((prev) => prev.filter(p => !selectedProjects.includes(p.id)));
       setSelectedProjects([]);
       toast({

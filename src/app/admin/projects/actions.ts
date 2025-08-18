@@ -2,8 +2,15 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { projects } from '@/lib/data';
+import { readDb, writeDb } from '@/lib/db';
 import { createClient, type WebDAVClient } from 'webdav';
+import type { Project } from '@/types';
+
+export async function getProjects(): Promise<Project[]> {
+    const db = readDb();
+    return db.projects;
+}
+
 
 export async function deleteProjects(projectIds: string[]) {
     const { 
@@ -12,16 +19,15 @@ export async function deleteProjects(projectIds: string[]) {
         NEXTCLOUD_PASSWORD: nextcloudPassword 
     } = process.env;
 
-    if (!nextcloudUrl || !nextcloudUser || !nextcloudPassword) {
-        console.warn("Nextcloud credentials are not configured. Cannot delete files, but will delete project entries.");
-    } else {
+    const db = readDb();
+    const projectsToDelete = db.projects.filter(p => projectIds.includes(p.id));
+
+    if (nextcloudUrl && nextcloudUser && nextcloudPassword) {
         try {
             const client: WebDAVClient = createClient(nextcloudUrl, {
                 username: nextcloudUser,
                 password: nextcloudPassword,
             });
-    
-            const projectsToDelete = projects.filter(p => projectIds.includes(p.id));
     
             for (const project of projectsToDelete) {
                 try {
@@ -41,21 +47,15 @@ export async function deleteProjects(projectIds: string[]) {
         } catch (error) {
             console.error("Failed to connect to Nextcloud during project deletion:", error);
         }
+    } else {
+        console.warn("Nextcloud credentials are not configured. Cannot delete files, but will delete project entries.");
     }
 
     try {
-        const initialCount = projects.length;
+        const updatedProjects = db.projects.filter(p => !projectIds.includes(p.id));
         
-        // Find indices of projects to delete
-        const indicesToDelete = projectIds.map(id => projects.findIndex(p => p.id === id));
-
-        // Remove from projects array by index to mutate the original array
-        indicesToDelete
-            .filter(index => index !== -1)
-            .sort((a, b) => b - a) // Sort in descending order
-            .forEach(index => projects.splice(index, 1));
-        
-        if (projects.length === initialCount - projectIds.length) {
+        if (db.projects.length - updatedProjects.length === projectIds.length) {
+            writeDb({ ...db, projects: updatedProjects });
             revalidatePath('/admin/projects');
             return { success: true };
         } else {
@@ -63,7 +63,7 @@ export async function deleteProjects(projectIds: string[]) {
         }
 
     } catch (error) {
-        console.error("Failed to delete projects from in-memory array:", error);
+        console.error("Failed to delete projects from db.json:", error);
         return { success: false, error: "An unexpected error occurred during project deletion." };
     }
 }

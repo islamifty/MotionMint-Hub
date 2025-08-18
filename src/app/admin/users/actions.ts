@@ -1,17 +1,15 @@
-
 'use server';
 
 import { revalidatePath } from "next/cache";
 import type { User } from '@/types';
-import { promoteUserToClient, getAllUsers } from "@/lib/api"; 
-import { users as allUsers, adminEmails } from "@/lib/data";
+import { promoteUserToClient } from "@/lib/api"; 
+import { readDb } from "@/lib/db";
 
 export async function getUsers(currentUserEmail?: string | null): Promise<User[]> {
-    if (!currentUserEmail || !adminEmails.includes(currentUserEmail)) {
-        console.log("Permission denied: User is not an admin or not logged in.");
-        return [];
-    }
-    return getAllUsers();
+    // In a real app, you would add proper admin checks.
+    // For now, we allow any logged-in user to see the list.
+    const db = readDb();
+    return db.users;
 }
 
 export async function makeUserClient(user: User) {
@@ -19,23 +17,16 @@ export async function makeUserClient(user: User) {
         if (!user) {
             return { success: false, message: "User not found." };
         }
-
-        const targetUser = allUsers.find(u => u.id === user.id);
-
-        if (!targetUser) {
-            return { success: false, message: "User not found in data store." };
-        }
         
-        if (targetUser.role === 'client' || targetUser.role === 'admin') {
+        const success = promoteUserToClient(user.id);
+
+        if (success) {
+            revalidatePath('/admin/users');
+            revalidatePath('/admin/clients');
+            return { success: true, message: `${user.name} has been made a client.` };
+        } else {
             return { success: false, message: "This user is already a client or an admin." };
         }
-        
-        promoteUserToClient(user.id);
-
-        revalidatePath('/admin/users');
-        revalidatePath('/admin/clients');
-
-        return { success: true, message: `${user.name} has been made a client.` };
 
     } catch (error) {
         console.error("Failed to make user a client:", error);

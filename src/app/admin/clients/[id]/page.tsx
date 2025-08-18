@@ -16,17 +16,20 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { clients, projects } from "@/lib/data";
+import { readDb } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
 export default function ClientDetailPage({ params }: { params: { id: string } }) {
-  const client = clients.find((c) => c.id === params.id);
+  const db = readDb();
+  const client = db.clients.find((c) => c.id === params.id);
+  
   if (!client) {
     notFound();
   }
-  const clientProjects = projects.filter((p) => p.clientId === client.id);
+  
+  const clientProjects = db.projects.filter((p) => p.clientId === client.id);
 
   return (
     <div className="space-y-6">

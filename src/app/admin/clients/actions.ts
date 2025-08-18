@@ -1,8 +1,13 @@
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
 import { readDb, writeDb } from '@/lib/db';
+import type { Client } from '@/types';
+
+export async function getClients(): Promise<Client[]> {
+    const db = readDb();
+    return db.clients;
+}
 
 export async function deleteClients(clientIds: string[]) {
     try {

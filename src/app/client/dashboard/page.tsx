@@ -1,6 +1,6 @@
 
 import { ProjectCard } from "@/components/client/ProjectCard";
-import { projects } from "@/lib/data";
+import { readDb } from "@/lib/db";
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import {
@@ -16,8 +16,9 @@ export default async function ClientDashboard() {
   if (!session?.user) {
     redirect('/login');
   }
-
-  const clientProjects = projects.filter(p => p.clientId === session.user.id);
+  
+  const db = readDb();
+  const clientProjects = db.projects.filter(p => p.clientId === session.user.id);
 
   return (
     <div className="container py-8">

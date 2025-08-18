@@ -1,6 +1,7 @@
+
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { projects } from "@/lib/data";
+import { readDb } from "@/lib/db";
 import {
   Card,
   CardContent,
@@ -15,7 +16,8 @@ import { Download, CreditCard, Clock, AlertTriangle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 export default function ProjectDetailPage({ params }: { params: { id: string } }) {
-  const project = projects.find((p) => p.id === params.id);
+  const db = readDb();
+  const project = db.projects.find((p) => p.id === params.id);
 
   if (!project) {
     notFound();
@@ -78,6 +80,7 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
                              ) : (
                                 <div className="w-full space-y-2">
                                     <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">Pay with PipraPay</Button>
+
                                     <Button className="w-full bg-pink-500 hover:bg-pink-600 text-white">Pay with bKash</Button>
                                 </div>
                              )}

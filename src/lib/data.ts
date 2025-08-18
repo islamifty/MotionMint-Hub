@@ -1,13 +1,17 @@
+
+// This file is now primarily for providing initial data if db.json doesn't exist.
+// All dynamic data operations should go through lib/db.ts functions.
+
 import type { Client, Project, User } from "@/types";
-import { readDb, writeDb } from './db';
+import { readDb } from './db';
 
 export const adminEmails = ["admin@motionflow.com"];
 
-// Read initial data from the DB
+// The readDb function will either read from db.json or create it with initial data.
 const db = readDb();
 
-// Use the data from db.json as the source of truth.
-// The arrays below are now proxies to the data in the db object.
+// We export these so that other server components can still import them,
+// but client components should fetch data via server actions.
 export const users: User[] = db.users;
 export const clients: Client[] = db.clients;
 export const projects: Project[] = db.projects;
