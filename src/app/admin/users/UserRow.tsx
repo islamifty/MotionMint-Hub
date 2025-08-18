@@ -8,8 +8,6 @@ import { useToast } from "@/hooks/use-toast";
 import { makeUserClient } from "./actions";
 import type { User } from "@/types";
 
-const adminEmails = ["admin@motionflow.com", "mdiftekharulislamifty@gmail.com"];
-
 export function UserRow({ user: initialUser }: { user: User }) {
   const { toast } = useToast();
   const [user, setUser] = useState(initialUser);
@@ -40,7 +38,7 @@ export function UserRow({ user: initialUser }: { user: User }) {
 
   return (
     <TableRow>
-      <TableCell className="font-medium">{user.name}</TableCell>
+      <TableCell className="font-medium">{user.name || user.email}</TableCell>
       <TableCell>{user.email}</TableCell>
       <TableCell className="capitalize">{user.role}</TableCell>
       <TableCell>
