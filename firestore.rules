@@ -1,10 +1,20 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // By default, deny all reads and writes.
-    // Server-side code using the Admin SDK will bypass these rules.
+    // Rules for the 'users' collection
+    match /users/{userId} {
+      // Allow a user to read their own document.
+      // This is necessary for the application to fetch user-specific data like name and role upon login.
+      allow read: if request.auth != null && request.auth.uid == userId;
+
+      // Deny all other client-side operations on user documents.
+      // Server-side operations using the Admin SDK are not affected by these rules.
+      allow create, update, delete, list: if false;
+    }
+    
+    // Explicitly deny access to all other collections by default from the client.
+    // This is a security best practice.
     match /{document=**} {
       allow read, write: if false;
     }
