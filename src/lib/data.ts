@@ -1,44 +1,7 @@
 import type { Client, Project, User } from "@/types";
 
-let users: User[] = [
-  {
-    id: "user-1",
-    name: "Admin User",
-    email: "admin@motionminthub.com",
-    role: "admin",
-    initials: "AU",
-  },
-  {
-    id: "user-2",
-    name: "Client User",
-    email: "client@example.com",
-    role: "client",
-    initials: "CU",
-  },
-  {
-    id: "user-3",
-    name: "Jane Doe",
-    email: "jane@example.com",
-    role: "user",
-    initials: "JD",
-  },
-  {
-    id: "user-4",
-    name: "John Smith",
-    email: "john@example.com",
-    role: "user",
-    initials: "JS",
-  },
-  {
-    id: 'firebase-user-mdiftekharulislamifty@gmail.com',
-    name: 'mdiftekharulislamifty@gmail.com',
-    email: 'mdiftekharulislamifty@gmail.com',
-    role: 'admin',
-    initials: 'MD'
-  }
-];
-
-export const allUsers = users;
+// This file now only contains mock data for clients and projects.
+// The user data is now managed in Firestore.
 
 export const clients: Client[] = [
   {
@@ -116,4 +79,21 @@ export const projects: Project[] = [
     createdAt: "2022-12-01T09:00:00Z",
     amount: 3000,
   },
+];
+
+export const allUsers: User[] = [
+  {
+    id: "user-1",
+    name: "Admin User",
+    email: "admin@motionminthub.com",
+    role: "admin",
+    initials: "AU",
+  },
+  {
+    id: 'firebase-user-mdiftekharulislamifty@gmail.com',
+    name: 'mdiftekharulislamifty@gmail.com',
+    email: 'mdiftekharulislamifty@gmail.com',
+    role: 'admin',
+    initials: 'MD'
+  }
 ];
