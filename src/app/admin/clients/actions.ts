@@ -13,6 +13,7 @@ export async function deleteClients(clientIds: string[]) {
         const newClients = clients.filter(c => !clientIds.includes(c.id));
         const newUsers = users.filter(u => !clientIds.includes(u.id));
 
+        // This is a way to mutate the in-memory array for the demo
         clients.length = 0;
         Array.prototype.push.apply(clients, newClients);
 
