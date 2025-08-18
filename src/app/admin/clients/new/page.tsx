@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -32,6 +31,7 @@ import { addClient } from "./actions";
 const clientSchema = z.object({
   name: z.string().min(1, "Client name is required."),
   email: z.string().email("Please enter a valid email address."),
+  password: z.string().min(6, "Password must be at least 6 characters."),
   company: z.string().optional(),
 });
 
@@ -45,6 +45,7 @@ export default function NewClientPage() {
     defaultValues: {
       name: "",
       email: "",
+      password: "",
       company: "",
     },
   });
@@ -78,13 +79,16 @@ export default function NewClientPage() {
           </Link>
         </Button>
         <h1 className="text-2xl font-headline font-bold tracking-tight">Add New Client</h1>
-        <p className="text-muted-foreground">Fill in the details below to create a new client.</p>
+        <p className="text-muted-foreground">Fill in the details below to create a new client account.</p>
       </div>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Client Details</CardTitle>
+              <CardTitle>Client Account Details</CardTitle>
+              <CardDescription>
+                This will create a new user account for the client with the specified password.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <FormField
@@ -109,6 +113,22 @@ export default function NewClientPage() {
                     <FormControl>
                       <Input type="email" placeholder="e.g., client@example.com" {...field} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="••••••••" {...field} />
+                    </FormControl>
+                     <FormDescription>
+                        Set an initial password for the client. They can change it later.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
