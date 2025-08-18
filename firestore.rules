@@ -1,22 +1,12 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Helper functions
-    function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
-    }
-
-    match /users/{userId} {
-      // CREATE: Any authenticated user can create their own user document.
-      allow create: if request.auth != null && request.resource.id == request.auth.uid;
-
-      // READ, UPDATE: Only the document owner can read or update their own data.
-      allow read, update: if isOwner(userId);
-      
-      // DELETE: No one can delete a user document through the client SDK for safety.
-      allow delete: if false;
+    // By default, deny all reads and writes.
+    // Server-side access with the Admin SDK is not affected by these rules.
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
