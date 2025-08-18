@@ -32,17 +32,18 @@ export async function addProject(formData: FormData) {
         return { success: false, error: { formErrors: ["A video file is required."], fieldErrors: {} }};
     }
 
+    const db = readDb();
     const { 
-        NEXTCLOUD_URL: nextcloudUrl, 
-        NEXTCLOUD_USER: nextcloudUser, 
-        NEXTCLOUD_PASSWORD: nextcloudPassword 
-    } = process.env;
+        nextcloudUrl, 
+        nextcloudUser, 
+        nextcloudPassword 
+    } = db.settings;
 
     if (!nextcloudUrl || !nextcloudUser || !nextcloudPassword) {
         return { 
             success: false, 
             error: { 
-                formErrors: ["Nextcloud credentials are not configured in environment variables. Please configure them in the settings page."], 
+                formErrors: ["Nextcloud credentials are not configured. Please configure them in the settings page."], 
                 fieldErrors: {} 
             }
         };
@@ -72,7 +73,6 @@ export async function addProject(formData: FormData) {
         
         const fileUrl = `${nextcloudUrl}/remote.php/dav/files/${nextcloudUser}${filePath}`;
         
-        const db = readDb();
         const clientInfo = db.clients.find(c => c.id === result.data.clientId);
 
         const newProject: Project = {
@@ -97,8 +97,6 @@ export async function addProject(formData: FormData) {
 
     } catch (error) {
         console.error("Project creation failed:", error);
-        // Return a plain, serializable error object.
-        // Do not pass the original `error` object, as it may contain non-serializable properties.
         return { success: false, error: { formErrors: ["Failed to upload video. Please check Nextcloud credentials and configuration."], fieldErrors: {} }};
     }
 }

@@ -1,12 +1,8 @@
-
 'use server';
 
 import { z } from 'zod';
 import { createClient, type WebDAVClient } from 'webdav';
-import fs from 'fs/promises';
-import path from 'path';
-import 'dotenv/config';
-
+import { readDb, writeDb } from '@/lib/db';
 
 const nextcloudSchema = z.object({
     nextcloudUrl: z.string().url(),
@@ -27,59 +23,9 @@ const pipraPaySchema = z.object({
 });
 
 export async function getSettings() {
-    // This function can be called from the client to get non-sensitive data
-    // For this app, we are okay showing the stored values on the settings page itself.
-    return {
-        nextcloudUrl: process.env.NEXTCLOUD_URL || '',
-        nextcloudUser: process.env.NEXTCLOUD_USER || '',
-        // We don't return password/secret for security, but for this admin UI we will
-        nextcloudPassword: process.env.NEXTCLOUD_PASSWORD || '',
-        bkashAppKey: process.env.BKASH_APP_KEY || '',
-        bkashAppSecret: process.env.BKASH_APP_SECRET || '',
-        bkashUsername: process.env.BKASH_USERNAME || '',
-        bkashPassword: process.env.BKASH_PASSWORD || '',
-    };
+    const db = readDb();
+    return db.settings || {};
 }
-
-
-async function updateEnvFile(settings: Record<string, string>) {
-    const envFilePath = path.join(process.cwd(), '.env');
-    try {
-        let envFileContent = '';
-        try {
-            envFileContent = await fs.readFile(envFilePath, 'utf-8');
-        } catch (error: any) {
-            if (error.code !== 'ENOENT') {
-                throw error;
-            }
-        }
-
-        let newEnvContent = envFileContent;
-
-        for (const [key, value] of Object.entries(settings)) {
-            const regex = new RegExp(`^${key}=.*$`, 'm');
-            const settingLine = `${key}="${value}"`;
-            if (regex.test(newEnvContent)) {
-                newEnvContent = newEnvContent.replace(regex, settingLine);
-            } else {
-                newEnvContent += `\n${settingLine}`;
-            }
-        }
-
-        await fs.writeFile(envFilePath, newEnvContent.trim());
-        
-        // Update current process's env vars to avoid needing a restart
-        for (const [key, value] of Object.entries(settings)) {
-            process.env[key] = value;
-        }
-
-        return { success: true, message: "Settings saved successfully. Changes are applied immediately." };
-    } catch (error) {
-        console.error('Failed to save settings to .env file:', error);
-        return { success: false, message: 'Failed to save settings to .env file.' };
-    }
-}
-
 
 export async function verifyNextcloudConnection(data: unknown) {
     const result = nextcloudSchema.safeParse(data);
@@ -106,17 +52,10 @@ export async function verifyBKashConnection(data: unknown) {
     if (!result.success) {
         return { success: false, message: 'Invalid credentials provided.' };
     }
-
-    // This is a mock verification. In a real app, you would make an API call
-    // to a bKash endpoint (e.g., to get an auth token) to verify credentials.
     console.log('Verifying bKash credentials (mock):', result.data);
-    
-    // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 1000));
-
     return { success: true, message: 'bKash connection successful! (This is a mock response)' };
 }
-
 
 export async function saveNextcloudSettings(data: unknown) {
     const result = nextcloudSchema.safeParse(data);
@@ -124,12 +63,18 @@ export async function saveNextcloudSettings(data: unknown) {
         return { success: false, error: result.error.flatten() };
     }
     
-    const { nextcloudUrl, username, appPassword } = result.data;
-    return await updateEnvFile({
-        NEXTCLOUD_URL: nextcloudUrl,
-        NEXTCLOUD_USER: username,
-        NEXTCLOUD_PASSWORD: appPassword,
-    });
+    try {
+        const { nextcloudUrl, username, appPassword } = result.data;
+        const db = readDb();
+        db.settings.nextcloudUrl = nextcloudUrl;
+        db.settings.nextcloudUser = username;
+        db.settings.nextcloudPassword = appPassword;
+        writeDb(db);
+        return { success: true, message: "Nextcloud settings saved successfully." };
+    } catch (error) {
+        console.error("Failed to save Nextcloud settings:", error);
+        return { success: false, message: "Failed to save settings." };
+    }
 }
 
 export async function saveBKashSettings(data: unknown) {
@@ -138,13 +83,19 @@ export async function saveBKashSettings(data: unknown) {
         return { success: false, error: result.error.flatten() };
     }
 
-    const { appKey, appSecret, username, password } = result.data;
-    return await updateEnvFile({
-        BKASH_APP_KEY: appKey,
-        BKASH_APP_SECRET: appSecret,
-        BKASH_USERNAME: username,
-        BKASH_PASSWORD: password,
-    });
+    try {
+        const { appKey, appSecret, username, password } = result.data;
+        const db = readDb();
+        db.settings.bkashAppKey = appKey;
+        db.settings.bkashAppSecret = appSecret;
+        db.settings.bkashUsername = username;
+        db.settings.bkashPassword = password;
+        writeDb(db);
+        return { success: true, message: "bKash settings saved successfully." };
+    } catch (error) {
+        console.error("Failed to save bKash settings:", error);
+        return { success: false, message: "Failed to save settings." };
+    }
 }
 
 export async function savePipraPaySettings(data: unknown) {

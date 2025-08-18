@@ -8,6 +8,7 @@ export type User = {
   role: "admin" | "client" | "user";
   avatarUrl?: string;
   initials: string;
+  password?: string;
 };
 
 export type Project = {
@@ -40,4 +41,14 @@ export type StatCard = {
   icon: LucideIcon;
   change?: string;
   changeType?: "increase" | "decrease";
+};
+
+export type AppSettings = {
+    nextcloudUrl?: string;
+    nextcloudUser?: string;
+    nextcloudPassword?: string;
+    bkashAppKey?: string;
+    bkashAppSecret?: string;
+    bkashUsername?: string;
+    bkashPassword?: string;
 };

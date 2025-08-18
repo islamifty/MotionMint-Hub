@@ -2,7 +2,7 @@
 // In a real-world application, you would use a proper database like PostgreSQL, MySQL, or a NoSQL database.
 import fs from 'fs';
 import path from 'path';
-import type { Client, Project, User } from "@/types";
+import type { Client, Project, User, AppSettings } from "@/types";
 
 const dbPath = path.join(process.cwd(), 'src', 'lib', 'db.json');
 
@@ -11,6 +11,7 @@ interface DbData {
     users: User[];
     clients: Client[];
     projects: Project[];
+    settings: AppSettings;
 }
 
 // This is the initial data that will be written to db.json if it doesn't exist.
@@ -124,7 +125,16 @@ const initialData: DbData = {
             createdAt: "2022-12-01T09:00:00Z",
             amount: 3000,
         },
-    ]
+    ],
+    settings: {
+        nextcloudUrl: "",
+        nextcloudUser: "",
+        nextcloudPassword: "",
+        bkashAppKey: "",
+        bkashAppSecret: "",
+        bkashUsername: "",
+        bkashPassword: "",
+    }
 };
 
 // Function to read the database file
@@ -136,7 +146,12 @@ export function readDb(): DbData {
             return initialData;
         }
         const data = fs.readFileSync(dbPath, 'utf8');
-        return JSON.parse(data);
+        const jsonData = JSON.parse(data);
+        // Ensure settings object exists
+        if (!jsonData.settings) {
+            jsonData.settings = initialData.settings;
+        }
+        return jsonData;
     } catch (error) {
         console.error("Error reading from db.json, returning initial data:", error);
         return initialData;

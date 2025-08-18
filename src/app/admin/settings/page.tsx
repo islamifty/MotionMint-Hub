@@ -40,8 +40,6 @@ import {
 } from "@/components/ui/form";
 import { useBranding } from "@/context/BrandingContext";
 import { Upload } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal } from "lucide-react";
 
 const nextcloudSchema = z.object({
   nextcloudUrl: z.string().url({ message: "Please enter a valid URL." }),
@@ -116,17 +114,19 @@ export default function SettingsPage() {
   useEffect(() => {
     async function loadSettings() {
         const settings = await getSettings();
-        nextcloudForm.reset({
-            nextcloudUrl: settings.nextcloudUrl,
-            username: settings.nextcloudUser,
-            appPassword: settings.nextcloudPassword
-        });
-        bKashForm.reset({
-            appKey: settings.bkashAppKey,
-            appSecret: settings.bkashAppSecret,
-            username: settings.bkashUsername,
-            password: settings.bkashPassword
-        });
+        if (settings) {
+            nextcloudForm.reset({
+                nextcloudUrl: settings.nextcloudUrl || '',
+                username: settings.nextcloudUser || '',
+                appPassword: settings.nextcloudPassword || ''
+            });
+            bKashForm.reset({
+                appKey: settings.bkashAppKey || '',
+                appSecret: settings.bkashAppSecret || '',
+                username: settings.bkashUsername || '',
+                password: settings.bkashPassword || ''
+            });
+        }
     }
     loadSettings();
   }, [nextcloudForm, bKashForm]);
@@ -145,13 +145,13 @@ export default function SettingsPage() {
     if (result.success) {
       toast({
         title: "Settings Saved",
-        description: result.message || "Nextcloud settings have been successfully updated.",
+        description: result.message,
       });
     } else {
       toast({
         variant: "destructive",
         title: "Error",
-        description: result.message || "Failed to save Nextcloud settings.",
+        description: result.message,
       });
     }
   };
@@ -220,13 +220,13 @@ export default function SettingsPage() {
       if (result.success) {
         toast({
           title: "Settings Saved",
-          description: "bKash settings have been successfully updated.",
+          description: result.message,
         });
       } else {
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Failed to save bKash settings. Please try again.",
+          description: result.message,
         });
       }
     };
@@ -359,13 +359,6 @@ export default function SettingsPage() {
               </form>
             </Form>
           </Card>
-           <Alert className="mt-4">
-              <Terminal className="h-4 w-4" />
-              <AlertTitle>Important Note</AlertTitle>
-              <AlertDescription>
-                Your settings are saved in the project's .env file. Changes are applied immediately without needing a server restart.
-              </AlertDescription>
-            </Alert>
         </TabsContent>
 
         <TabsContent value="bkash">
