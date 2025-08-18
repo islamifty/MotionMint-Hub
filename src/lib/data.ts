@@ -1,5 +1,42 @@
 import type { Client, Project, User } from "@/types";
 
+export const adminEmails = ["admin@motionflow.com"];
+
+export const users: User[] = [
+  {
+    id: "admin-1",
+    name: "Admin User",
+    email: "admin@motionflow.com",
+    role: "admin",
+    initials: "AU",
+    password: "password123", // In a real app, this would be hashed
+  },
+  {
+    id: "client-1",
+    name: "Innovate Inc.",
+    email: "contact@innovate.com",
+    role: "client",
+    initials: "II",
+    password: "password123",
+  },
+  {
+    id: "client-2",
+    name: "Solutions Co.",
+    email: "hello@solutions.co",
+    role: "client",
+    initials: "SC",
+    password: "password123",
+  },
+  {
+    id: "user-3",
+    name: "Charlie Brown",
+    email: "charlie@example.com",
+    role: "user",
+    initials: "CB",
+    password: "password123",
+  },
+];
+
 export const clients: Client[] = [
   {
     id: "client-1",
