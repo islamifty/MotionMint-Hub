@@ -4,7 +4,7 @@
 import { revalidatePath } from "next/cache";
 import { getFirebaseAdmin } from '@/lib/firebase-admin';
 import type { User, Client } from '@/types';
-import { clients, mockUsers } from "@/lib/data";
+import { clients } from "@/lib/data";
 
 const adminEmails = ["admin@motionflow.com", "mdiftekharulislamifty@gmail.com"];
 
@@ -17,23 +17,22 @@ export async function getUsers(currentUserEmail?: string | null): Promise<User[]
         const { db } = getFirebaseAdmin();
         const usersCollection = db.collection("users");
         const userSnapshot = await usersCollection.get();
-        const firestoreUsers = userSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-
-        // Combine mock users with Firestore users, giving precedence to Firestore data
-        const combinedUsers = [...firestoreUsers];
-        const firestoreUserEmails = new Set(firestoreUsers.map(u => u.email));
-
-        for (const mockUser of mockUsers) {
-            if (!firestoreUserEmails.has(mockUser.email)) {
-                combinedUsers.push(mockUser);
-            }
-        }
+        const firestoreUsers = userSnapshot.docs.map(doc => {
+            const data = doc.data();
+            return { 
+                id: doc.id,
+                name: data.name || '',
+                email: data.email || '',
+                role: data.role || 'user',
+                initials: data.initials || ''
+            } as User;
+        });
         
-        return combinedUsers;
+        return firestoreUsers;
     } catch (error) {
         console.error("Error fetching users from server action: ", error);
-        // If Firestore fails, return mock users to prevent a crash.
-        return mockUsers;
+        // If Firestore fails, return an empty array to prevent a crash.
+        return [];
     }
 }
 
@@ -49,21 +48,14 @@ export async function makeUserClient(user: User) {
         const userSnap = await userRef.get();
 
         if (!userSnap.exists) {
-            // This case handles promoting a mock user who isn't in Firestore yet.
-            const newUserFromMock: Omit<User, 'id'> = {
-                name: user.name,
-                email: user.email,
-                role: 'client', // Promote directly
-                initials: (user.name || user.email).substring(0, 2).toUpperCase(),
-            };
-            await userRef.set(newUserFromMock);
-        } else {
-            const userData = userSnap.data();
-            if (userData?.role === 'client' || userData?.role === 'admin') {
-                return { success: false, message: "This user is already a client or an admin." };
-            }
-            await userRef.update({ role: 'client' });
+            return { success: false, message: "User does not exist in the database." };
+        } 
+        
+        const userData = userSnap.data();
+        if (userData?.role === 'client' || userData?.role === 'admin') {
+            return { success: false, message: "This user is already a client or an admin." };
         }
+        await userRef.update({ role: 'client' });
 
 
         const existingClient = clients.find(c => c.email === user.email);

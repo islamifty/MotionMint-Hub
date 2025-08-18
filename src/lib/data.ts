@@ -1,30 +1,5 @@
 import type { Client, Project, User } from "@/types";
 
-// Mock user data to represent "old" users that might exist.
-export const mockUsers: User[] = [
-    {
-      id: "user-1",
-      name: "Alice Johnson",
-      email: "alice@example.com",
-      role: "user",
-      initials: "AJ",
-    },
-    {
-      id: "user-2",
-      name: "Bob Williams",
-      email: "bob@example.com",
-      role: "user",
-      initials: "BW",
-    },
-    {
-      id: "user-3",
-      name: "Charlie Brown",
-      email: "charlie@example.com",
-      role: "client",
-      initials: "CB",
-    }
-];
-
 export const clients: Client[] = [
   {
     id: "client-1",
