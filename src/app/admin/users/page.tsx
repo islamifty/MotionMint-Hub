@@ -16,9 +16,28 @@ import {
 } from "@/components/ui/table"
 import { getUsers } from "./actions";
 import { UserRow } from "./UserRow";
-import { getAuthenticatedUser } from "@/lib/get-authenticated-user";
+import { cookies } from "next/headers";
+import { getFirebaseAdmin } from "@/lib/firebase-admin";
 
 export const dynamic = 'force-dynamic';
+
+async function getAuthenticatedUser() {
+  const session = cookies().get("session")?.value || "";
+
+  if (!session) {
+    return null;
+  }
+
+  try {
+    const { auth } = getFirebaseAdmin();
+    const decodedClaims = await auth.verifySessionCookie(session, true);
+    return decodedClaims;
+  } catch (error) {
+    console.error("Error verifying session cookie:", error);
+    return null;
+  }
+}
+
 
 export default async function UsersPage() {
   const user = await getAuthenticatedUser();
