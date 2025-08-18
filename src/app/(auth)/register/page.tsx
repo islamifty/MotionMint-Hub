@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { addNewUser } from "@/lib/data";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -32,7 +33,15 @@ export default function RegisterPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Add the new user to our mock database
+      await addNewUser({
+        id: userCredential.user.uid,
+        name: fullName,
+        email: email,
+      });
+
       toast({
         title: "Account Created",
         description: "You have been successfully registered. Redirecting to login...",
