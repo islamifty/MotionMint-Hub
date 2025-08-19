@@ -8,14 +8,15 @@ const apiCallbackRoutes = ['/api/bkash/callback', '/api/piprapay/callback'];
 
 export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
-  const cookie = cookies().get('session')?.value;
-  const session = await decrypt(cookie);
-  const currentUser = session?.user;
-
-  // Allow API callbacks to pass through without checks
+  
+  // Allow public API callback routes to pass through without any checks
   if (apiCallbackRoutes.some(route => path.startsWith(route))) {
     return NextResponse.next();
   }
+
+  const cookie = cookies().get('session')?.value;
+  const session = await decrypt(cookie);
+  const currentUser = session?.user;
 
   const isProtectedRoute = protectedRoutes.some((prefix) => path.startsWith(prefix));
 
@@ -27,7 +28,7 @@ export default async function middleware(req: NextRequest) {
   if (currentUser) {
     const isAdmin = currentUser.role === 'admin';
 
-    // If user is logged in, prevent access to login/register pages
+    // If user is logged in, prevent access to login/register pages by redirecting them to their dashboard
     if (publicRoutes.includes(path)) {
        return NextResponse.redirect(new URL(isAdmin ? '/admin/dashboard' : '/client/dashboard', req.nextUrl));
     }
@@ -50,10 +51,10 @@ export default async function middleware(req: NextRequest) {
 export const config = {
   /*
    * Match all request paths except for the ones starting with:
-   * - api (API routes)
    * - _next/static (static files)
    * - _next/image (image optimization files)
    * - favicon.ico (favicon file)
+   * This ensures the middleware runs on all pages and API routes (except callbacks defined above).
    */
-   matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+   matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 };
