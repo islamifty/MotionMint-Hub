@@ -46,7 +46,15 @@ export async function createPayment(paymentRequest: any) {
             'Authorization': id_token,
             'X-App-Key': bkashAppKey || '',
         },
-        body: JSON.stringify(paymentRequest),
+        body: JSON.stringify({
+            mode: paymentRequest.mode,
+            payerReference: paymentRequest.payerReference,
+            callbackURL: paymentRequest.callbackURL,
+            amount: paymentRequest.amount,
+            currency: paymentRequest.currency,
+            intent: paymentRequest.intent,
+            merchantInvoiceNumber: paymentRequest.merchantInvoiceNumber,
+        }),
     });
 
     const data = await response.json();
