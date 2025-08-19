@@ -34,12 +34,16 @@ export async function createPipraPayPayment(project: Project, customerInfo: { na
             body: JSON.stringify(body)
         });
         
-        const data = await response.json();
-        
-        if (data.success) {
-            return { success: true, payment_url: data.payment_url };
-        } else {
-            return { success: false, error: data.message || 'Failed to create PipraPay payment.' };
+        try {
+            const data = await response.json();
+            if (data.success) {
+                return { success: true, payment_url: data.payment_url };
+            } else {
+                return { success: false, error: data.message || 'Failed to create PipraPay payment.' };
+            }
+        } catch (jsonError) {
+            console.error('PipraPay JSON parse error:', jsonError);
+            return { success: false, error: 'Failed to parse response from PipraPay API. It might be down or returning an invalid format.' };
         }
 
     } catch (error: any) {
@@ -72,12 +76,16 @@ export async function verifyPipraPayPayment(invoiceId: string) {
             body: JSON.stringify(body)
         });
 
-        const data = await response.json();
-        
-        if (data.success) {
-            return { success: true, status: data.status };
-        } else {
-            return { success: false, error: data.message || 'Payment verification failed.' };
+        try {
+            const data = await response.json();
+            if (data.success) {
+                return { success: true, status: data.status };
+            } else {
+                return { success: false, error: data.message || 'Payment verification failed.' };
+            }
+        } catch (jsonError) {
+             console.error('PipraPay verification JSON parse error:', jsonError);
+            return { success: false, error: 'Failed to parse verification response from PipraPay API.' };
         }
     } catch (error: any) {
         console.error('PipraPay verification error:', error);
