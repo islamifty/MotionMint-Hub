@@ -4,6 +4,7 @@ import { getSession } from '@/lib/session';
 import { readDb } from '@/lib/db';
 
 // This function handles video proxy requests to hide the actual Nextcloud URL from the client.
+// It works for both direct file paths and HLS playlist files (.m3u8) and segments (.ts).
 export async function GET(request: NextRequest) {
   // 1. Authenticate the user
   const session = await getSession();
@@ -16,14 +17,14 @@ export async function GET(request: NextRequest) {
   const videoUrl = searchParams.get('url');
 
   if (!videoUrl) {
-    return new NextResponse('Missing video URL', { status: 400 });
+    return new NextResponse('Missing video/file URL', { status: 400 });
   }
 
   let targetUrl: URL;
   try {
     targetUrl = new URL(decodeURIComponent(videoUrl));
   } catch (error) {
-    return new NextResponse('Invalid video URL', { status: 400 });
+    return new NextResponse('Invalid URL', { status: 400 });
   }
 
   // 3. Prepare the request to Nextcloud
@@ -32,8 +33,6 @@ export async function GET(request: NextRequest) {
 
   const headers = new Headers();
   
-  // Add authentication only if it's a direct file path and credentials exist.
-  // Public share links (/s/...) do not require authentication.
   const isShareLink = targetUrl.pathname.includes('/s/') || targetUrl.pathname.includes('/index.php/s/');
   
   if (!isShareLink && nextcloudUser && nextcloudPassword) {
@@ -42,42 +41,45 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // If it's a share link, ensure it points to the download endpoint for direct file access
     if (isShareLink && !targetUrl.pathname.endsWith('/download')) {
       targetUrl.pathname += '/download';
     }
 
-    // 4. Fetch the video from Nextcloud from the server-side
-    const videoResponse = await fetch(targetUrl.toString(), {
+    // 4. Fetch the video/file from Nextcloud from the server-side
+    const resourceResponse = await fetch(targetUrl.toString(), {
       method: 'GET',
       headers: headers,
-      redirect: 'follow', // Important for Nextcloud redirects
+      redirect: 'follow',
     });
 
-    if (!videoResponse.ok) {
-      console.error(`Nextcloud request failed with status: ${videoResponse.status} ${videoResponse.statusText}`);
-      return new NextResponse(`Failed to fetch video from source: ${videoResponse.statusText}`, { status: videoResponse.status });
+    if (!resourceResponse.ok) {
+      console.error(`Nextcloud request failed with status: ${resourceResponse.status} ${resourceResponse.statusText}`);
+      return new NextResponse(`Failed to fetch resource from source: ${resourceResponse.statusText}`, { status: resourceResponse.status });
     }
     
-    // 5. Stream the video back to the client
-    const readableStream = videoResponse.body;
+    // 5. Stream the content back to the client
+    const readableStream = resourceResponse.body;
     
     if (!readableStream) {
-        return new NextResponse('Video stream not available', { status: 500 });
+        return new NextResponse('Resource stream not available', { status: 500 });
     }
 
     // Create a new response, streaming the body from the Nextcloud response
+    const responseHeaders = new Headers();
+    responseHeaders.set('Content-Type', resourceResponse.headers.get('Content-Type') || 'application/octet-stream');
+    const contentLength = resourceResponse.headers.get('Content-Length');
+    if (contentLength) {
+        responseHeaders.set('Content-Length', contentLength);
+    }
+    responseHeaders.set('Accept-Ranges', 'bytes');
+
     return new NextResponse(readableStream, {
       status: 200,
-      headers: {
-        'Content-Type': videoResponse.headers.get('Content-Type') || 'video/mp4',
-        'Content-Length': videoResponse.headers.get('Content-Length') || '',
-        'Accept-Ranges': 'bytes',
-      },
+      headers: responseHeaders,
     });
 
   } catch (error) {
-    console.error('Error proxying video:', error);
+    console.error('Error proxying resource:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
 }

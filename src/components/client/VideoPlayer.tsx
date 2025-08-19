@@ -1,42 +1,66 @@
 
 "use client";
 
-import { useMemo } from 'react';
-
-// This function creates a secure proxy URL for the video source.
-// It takes the original Nextcloud URL and encodes it to be passed to our server-side proxy.
-function getProxyUrl(originalSrc: string): string {
-    if (!originalSrc) return "";
-    try {
-        // We encode the entire URL to ensure all special characters are handled correctly.
-        const encodedUrl = encodeURIComponent(originalSrc);
-        return `/api/video/proxy?url=${encodedUrl}`;
-    } catch (e) {
-        console.error("Failed to create proxy URL from:", originalSrc, e);
-        return "";
-    }
-}
-
+import React, { useEffect, useRef } from 'react';
+import Hls from 'hls.js';
 
 interface VideoPlayerProps {
     src: string;
 }
 
 export function VideoPlayer({ src }: VideoPlayerProps) {
-    // useMemo ensures the proxy URL is calculated only when the src prop changes.
-    const proxySrc = useMemo(() => getProxyUrl(src), [src]);
+    const videoRef = useRef<HTMLVideoElement>(null);
 
-    if (!proxySrc) {
-        return <div className="w-full h-full bg-black flex items-center justify-center text-white">Invalid Video URL</div>;
+    useEffect(() => {
+        const video = videoRef.current;
+        if (!video) return;
+
+        // Ensure src is a valid URL before proceeding
+        if (!src || typeof src !== 'string') {
+            console.error("Invalid src provided to VideoPlayer:", src);
+            return;
+        }
+
+        let hls: Hls | null = null;
+
+        if (src.endsWith('.m3u8')) {
+            if (Hls.isSupported()) {
+                hls = new Hls();
+                hls.loadSource(src);
+                hls.attachMedia(video);
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                // For Safari and other browsers that support HLS natively
+                video.src = src;
+            }
+        } else {
+            // Fallback for non-HLS videos if needed, though the goal is to use HLS
+            video.src = src;
+        }
+
+        return () => {
+            if (hls) {
+                hls.destroy();
+            }
+        };
+    }, [src]);
+
+    if (!src) {
+        return (
+            <div className="w-full h-full bg-black flex items-center justify-center text-white">
+                <div className="text-center">
+                    <p className="font-semibold">Processing Video</p>
+                    <p className="text-sm text-muted-foreground">The video is being prepared for secure streaming. Please check back shortly.</p>
+                </div>
+            </div>
+        );
     }
 
     return (
         <video
-            key={proxySrc} // Use key to force re-render if src changes, ensuring the player reloads with the new source.
-            src={proxySrc}
+            ref={videoRef}
             controls
-            controlsList="nodownload" // Disables the download button in the browser's default video controls.
-            onContextMenu={(e) => e.preventDefault()} // Prevents right-clicking on the video to access "Save video as...".
+            controlsList="nodownload" // Disables the download button
+            onContextMenu={(e) => e.preventDefault()} // Prevents right-clicking
             className="w-full h-full object-contain"
             preload="auto"
         />

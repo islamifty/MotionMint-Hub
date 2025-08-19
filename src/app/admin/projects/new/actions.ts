@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { createClient, type WebDAVClient, type FileStat } from 'webdav';
 import { readDb, writeDb } from '@/lib/db';
 import type { Project } from '@/types';
+import { processVideo } from '@/ai/flows/process-video-flow';
 
 const projectSchema = z.object({
   title: z.string().min(1, "Project title is required."),
@@ -34,9 +35,10 @@ export async function addProject(data: unknown) {
     
     try {
         const clientInfo = db.clients.find(c => c.id === result.data.clientId);
+        const projectId = `proj-${Date.now()}`;
 
         const newProject: Project = {
-            id: `proj-${Date.now()}`,
+            id: projectId,
             title: result.data.title,
             description: result.data.description,
             clientId: result.data.clientId,
@@ -46,11 +48,15 @@ export async function addProject(data: unknown) {
             paymentStatus: 'pending' as const,
             orderId: `ORD-${Date.now()}`,
             createdAt: new Date().toISOString(),
-            previewVideoUrl: result.data.videoUrl, // Use the provided URL
-            finalVideoUrl: result.data.videoUrl // Use the same URL for final for now
+            previewVideoUrl: '', // This will be populated by the AI flow
+            finalVideoUrl: result.data.videoUrl, // Keep the original for final download
+            processingStatus: 'processing'
         };
         db.projects.unshift(newProject);
         writeDb(db);
+
+        // Do not await this, let it run in the background
+        processVideo({ projectId, sourceUrl: result.data.videoUrl });
 
         revalidatePath('/admin/projects');
         revalidatePath('/admin/dashboard');
