@@ -1,32 +1,15 @@
 {
   "users": [
     {
-      "id": "user-1755548223377",
-      "name": "Islam Ifty",
+      "id": "admin-main",
+      "name": "Iftekharul Islam",
       "email": "mdiftekharulislamifty@gmail.com",
-      "role": "client",
-      "initials": "IS",
-      "password": "01@*#Mdifty"
-    },
-    {
-      "id": "admin-1",
-      "name": "Admin User",
-      "email": "admin@motionflow.com",
       "role": "admin",
-      "initials": "AU",
-      "password": "password123"
+      "initials": "II",
+      "password": "01@*#Mdifty"
     }
   ],
-  "clients": [
-    {
-      "id": "user-1755548223377",
-      "name": "Islam Ifty",
-      "email": "mdiftekharulislamifty@gmail.com",
-      "company": "",
-      "projectIds": [],
-      "createdAt": "2025-08-18T20:17:03.377Z"
-    }
-  ],
+  "clients": [],
   "projects": [
     {
       "id": "proj-1755593453211",
@@ -47,10 +30,6 @@
     "nextcloudUrl": "https://mydrive.motionmint.top/remote.php/dav/files/islamifty",
     "nextcloudUser": "islamifty",
     "nextcloudPassword": "WJNSK-7pG5s-WXNie-3w6DZ-Qx2QG",
-    "bkashAppKey": "aDgqtKHfBF2wLYYXYRGfwaTQtc",
-    "bkashAppSecret": "gFd5EivEGDmENxUOK9Ne7o64WWskRc6HtP8i94Fb3YsVxnbOYwFJ",
-    "bkashUsername": "01580720711",
-    "bkashPassword": "w2mj!V$]p^G",
     "piprapayApiKey": "123504360668a3583081ed41601947378127387162768a3583081ed8648939280",
     "piprapayBaseUrl": "https://pay.motionmint.top/api"
   }
