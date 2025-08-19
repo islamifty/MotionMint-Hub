@@ -180,7 +180,11 @@ export default function SettingsPage() {
   };
 
   const onGeneralSubmit: SubmitHandler<GeneralFormValues> = async (data) => {
+    let brandingUpdated = false;
+    let settingsUpdated = false;
+    
     try {
+        // --- Branding Logic ---
         let logoUrl = branding.logo;
         const logoFile = data.logo?.[0];
 
@@ -188,25 +192,43 @@ export default function SettingsPage() {
             logoUrl = await fileToBase64(logoFile);
         }
 
-        setBranding({
+        const newBranding = {
             logo: logoUrl,
             primaryColor: data.primaryColor,
             backgroundColor: data.backgroundColor,
             accentColor: data.accentColor,
-        });
-        
-        const generalSettingsResult = await saveGeneralSettings({ whatsappLink: data.whatsappLink });
-        if (!generalSettingsResult.success) throw new Error("Failed to save general settings.");
+        };
 
-        toast({
-            title: "Settings Saved",
-            description: "Your general and branding settings have been updated.",
-        });
-    } catch (error) {
+        // Only update if branding actually changed
+        if (JSON.stringify(newBranding) !== JSON.stringify(branding)) {
+            setBranding(newBranding);
+            brandingUpdated = true;
+        }
+
+        // --- General Settings Logic ---
+        const generalSettingsResult = await saveGeneralSettings({ whatsappLink: data.whatsappLink });
+        if (generalSettingsResult.success) {
+            settingsUpdated = true;
+        } else {
+             throw new Error(generalSettingsResult.message || "Failed to save general settings.");
+        }
+
+        if (brandingUpdated || settingsUpdated) {
+             toast({
+                title: "Settings Saved",
+                description: "Your general and branding settings have been updated.",
+            });
+        } else {
+             toast({
+                title: "No Changes",
+                description: "No new settings were saved as no changes were detected.",
+            });
+        }
+    } catch (error: any) {
         toast({
             variant: "destructive",
             title: "Error",
-            description: "Failed to save settings.",
+            description: error.message || "Failed to save settings.",
         });
     }
   };

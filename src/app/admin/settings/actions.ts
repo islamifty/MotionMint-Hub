@@ -21,11 +21,7 @@ const pipraPaySchema = z.object({
     pipraPayEnabled: z.boolean(),
 });
 
-const generalSchema = z.object({
-    logo: z.any().optional(),
-    primaryColor: z.string(),
-    backgroundColor: z.string(),
-    accentColor: z.string(),
+const generalSettingsSchema = z.object({
     whatsappLink: z.string().url("Please enter a valid WhatsApp link.").or(z.literal('')),
 });
 
@@ -144,7 +140,7 @@ export async function savePipraPaySettings(data: unknown) {
 }
 
 export async function saveGeneralSettings(data: unknown) {
-    const result = generalSchema.safeParse(data);
+    const result = generalSettingsSchema.safeParse(data);
     if (!result.success) {
         return { success: false, error: result.error.flatten() };
     }
