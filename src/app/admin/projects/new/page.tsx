@@ -6,9 +6,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
-import { CalendarIcon, ArrowLeft, Upload } from "lucide-react";
+import { CalendarIcon, ArrowLeft, Folder, FileVideo, LinkIcon, X, ServerCrash } from "lucide-react";
 import { format } from "date-fns";
 import { useEffect, useState } from "react";
+import type { FileStat } from "webdav";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -42,14 +43,23 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
-import { addProject } from "./actions";
+import { addProject, getDirectoryContents } from "./actions";
 import { cn } from "@/lib/utils";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal } from "lucide-react";
 import type { Client } from "@/types";
 import { getClients } from "../../clients/actions";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+
 
 const projectSchema = z.object({
   title: z.string().min(1, "Project title is required."),
@@ -59,7 +69,7 @@ const projectSchema = z.object({
   expiryDate: z.date({
     required_error: "An expiry date is required.",
   }),
-  videoFile: z.any().refine(file => file?.length > 0, 'File is required.'),
+  videoUrl: z.string().url({ message: "Please select a file or provide a valid video URL." }),
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
@@ -68,6 +78,22 @@ export default function NewProjectPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [clients, setClients] = useState<Client[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [nextcloudFiles, setNextcloudFiles] = useState<FileStat[]>([]);
+  const [currentPath, setCurrentPath] = useState("/");
+  const [isLoadingFiles, setIsLoadingFiles] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
+
+  const form = useForm<ProjectFormValues>({
+    resolver: zodResolver(projectSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      clientId: "",
+      amount: 0,
+      videoUrl: ""
+    },
+  });
 
   useEffect(() => {
     async function loadClients() {
@@ -77,35 +103,51 @@ export default function NewProjectPage() {
     loadClients();
   }, []);
 
-  const form = useForm<ProjectFormValues>({
-    resolver: zodResolver(projectSchema),
-    defaultValues: {
-      title: "",
-      description: "",
-      clientId: "",
-      amount: 0,
-    },
-  });
+  const fetchFiles = async (path: string) => {
+    setIsLoadingFiles(true);
+    setFileError(null);
+    try {
+      const files = await getDirectoryContents(path);
+      setNextcloudFiles(files);
+      setCurrentPath(path);
+    } catch (error: any) {
+      setFileError(error.message);
+    } finally {
+      setIsLoadingFiles(false);
+    }
+  };
+
+  const handleOpenModal = () => {
+    fetchFiles('/');
+    setIsModalOpen(true);
+  };
+  
+  const handleDirectoryClick = (path: string) => {
+    fetchFiles(path);
+  };
+
+  const handleFileSelect = (file: FileStat) => {
+     // This constructs a public-friendly URL. Adjust if your Nextcloud setup differs.
+     const url = new URL(file.filename);
+     const publicUrl = `${url.origin}/remote.php/dav/files${url.pathname}`;
+     form.setValue("videoUrl", publicUrl, { shouldValidate: true });
+     setIsModalOpen(false);
+  }
+
+  const handleParentDirectory = () => {
+    if (currentPath === '/') return;
+    const parent = currentPath.split('/').slice(0, -1).join('/') || '/';
+    fetchFiles(parent);
+  };
+
 
   const onSubmit = async (data: ProjectFormValues) => {
-    const formData = new FormData();
-    Object.entries(data).forEach(([key, value]) => {
-      if (key === 'videoFile') {
-        formData.append(key, value[0]);
-      } else if (value instanceof Date) {
-        formData.append(key, value.toISOString());
-      }
-      else {
-        formData.append(key, String(value));
-      }
-    });
-
-    const result = await addProject(formData);
+    const result = await addProject(data);
     
     if (result.success) {
       toast({
         title: "Project Added",
-        description: "The new project has been successfully created and the video uploaded.",
+        description: "The new project has been successfully created.",
       });
       router.push("/admin/projects");
     } else {
@@ -166,33 +208,33 @@ export default function NewProjectPage() {
                         </FormItem>
                     )}
                     />
+                    
                     <FormField
-                    control={form.control}
-                    name="videoFile"
-                    render={({ field: { onChange, value, ...rest } }) => (
+                      control={form.control}
+                      name="videoUrl"
+                      render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Project Video</FormLabel>
-                        <FormControl>
-                            <div className="relative">
-                                <Input
-                                    type="file"
-                                    accept="video/*"
-                                    className="pl-12"
-                                    onChange={(e) => {
-                                        onChange(e.target.files);
-                                    }}
-                                    {...rest}
-                                />
-                                <Upload className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                            </div>
-                        </FormControl>
-                        <FormDescription>
-                            Upload the video file for this project.
-                        </FormDescription>
-                        <FormMessage />
+                          <FormLabel>Project Video</FormLabel>
+                          <div className="flex gap-2">
+                            <FormControl>
+                                <div className="relative w-full">
+                                    <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input placeholder="https://cloud.example.com/s/..." className="pl-10" {...field} />
+                                </div>
+                            </FormControl>
+                            <Button type="button" variant="outline" onClick={handleOpenModal}>
+                              <Folder className="h-4 w-4 mr-2" />
+                              Browse Nextcloud
+                            </Button>
+                          </div>
+                           <FormDescription>
+                            Select a video from your Nextcloud storage or paste a direct shareable link.
+                          </FormDescription>
+                          <FormMessage />
                         </FormItem>
-                    )}
+                      )}
                     />
+
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <FormField
                         control={form.control}
@@ -275,24 +317,70 @@ export default function NewProjectPage() {
                     </div>
                 </CardContent>
             </Card>
-
-            <Alert>
-              <Terminal className="h-4 w-4" />
-              <AlertTitle>Nextcloud Credentials</AlertTitle>
-              <AlertDescription>
-                Project video files will be uploaded to the Nextcloud instance configured in the <Link href="/admin/settings" className="font-bold underline">Settings</Link> page.
-              </AlertDescription>
-            </Alert>
             
             <Card>
                 <CardFooter>
                     <Button type="submit" disabled={form.formState.isSubmitting}>
-                        {form.formState.isSubmitting ? "Creating..." : "Create Project & Upload"}
+                        {form.formState.isSubmitting ? "Creating..." : "Create Project"}
                     </Button>
                 </CardFooter>
             </Card>
         </form>
       </Form>
+
+       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Browse Nextcloud Files</DialogTitle>
+            <DialogDescription>
+              Select a video file from your Nextcloud storage. Current path: {currentPath}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            {fileError ? (
+                <Alert variant="destructive">
+                    <ServerCrash className="h-4 w-4" />
+                    <AlertTitle>Connection Error</AlertTitle>
+                    <AlertDescription>{fileError}</AlertDescription>
+                </Alert>
+            ) : isLoadingFiles ? (
+              <div className="flex justify-center items-center h-48">
+                <p>Loading files...</p>
+              </div>
+            ) : (
+              <ScrollArea className="h-72 w-full rounded-md border">
+                <div className="p-4">
+                   {currentPath !== '/' && (
+                    <button onClick={handleParentDirectory} className="flex items-center p-2 rounded-md hover:bg-accent w-full text-left">
+                      .. (Parent Directory)
+                    </button>
+                  )}
+                  {nextcloudFiles.map((file) => (
+                    <div key={file.filename}>
+                      {file.type === 'directory' ? (
+                        <button onClick={() => handleDirectoryClick(file.filename)} className="flex items-center p-2 rounded-md hover:bg-accent w-full text-left">
+                          <Folder className="h-4 w-4 mr-2" />
+                          {file.basename}
+                        </button>
+                      ) : (
+                        <button onClick={() => handleFileSelect(file)} className="flex items-center p-2 rounded-md hover:bg-accent w-full text-left">
+                          <FileVideo className="h-4 w-4 mr-2" />
+                          {file.basename}
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsModalOpen(false)}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
