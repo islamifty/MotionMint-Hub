@@ -49,7 +49,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
       </CardHeader>
       <CardContent className="flex-grow">
         <CardTitle className="font-headline text-lg">{project.title}</CardTitle>
-        <div className="mt-2 flex gap-2 items-center">
+        <div className="mt-2 flex gap-2 items-center flex-wrap">
             <Badge variant={project.paymentStatus === 'paid' ? 'default' : 'secondary'}>
                 {project.paymentStatus}
             </Badge>
