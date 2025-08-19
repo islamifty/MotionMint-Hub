@@ -27,12 +27,16 @@ export async function decrypt(input: string): Promise<any> {
 }
 
 export async function createSession(user: Omit<User, 'id'> & { id: string }) {
-  // Create the session
-  const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // Expires in 1 day
+  const oneDayInSeconds = 24 * 60 * 60;
+  const expires = new Date(Date.now() + oneDayInSeconds * 1000);
   const session = await encrypt({ user, expires });
 
-  // Save the session in a cookie
-  cookies().set('session', session, { expires, httpOnly: true });
+  // Save the session in a cookie, including maxAge for better compatibility
+  cookies().set('session', session, { 
+    expires, 
+    httpOnly: true,
+    maxAge: oneDayInSeconds, // Explicitly set max age in seconds
+  });
 }
 
 export async function getSession(): Promise<{ user: User } | null> {
