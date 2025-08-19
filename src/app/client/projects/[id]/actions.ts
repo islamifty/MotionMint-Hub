@@ -29,12 +29,12 @@ export async function initiateBkashPayment(projectId: string) {
 
         const paymentData = {
             mode: '0011',
-            payerReference: ' ', 
-            callbackURL: `${process.env.NEXT_PUBLIC_APP_URL}/api/bkash/callback`,
+            payerReference: 'payment_for_project',
+            callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/bkash/callback`,
             amount: project.amount.toString(),
             currency: 'BDT',
             intent: 'sale',
-            merchantInvoiceNumber: project.orderId,
+            merchant_invoice_number: project.orderId,
         };
 
         const result = await createPayment(paymentData);
