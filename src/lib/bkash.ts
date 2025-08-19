@@ -20,7 +20,10 @@ async function getBkashToken(): Promise<string> {
             'username': bkashUsername,
             'password': bkashPassword,
         },
-        body: JSON.stringify({ app_key: bkashAppKey, app_secret: bkashAppSecret }),
+        body: JSON.stringify({
+             app_key: bkashAppKey, 
+             app_secret: bkashAppSecret 
+        }),
     });
 
     const data = await response.json();
