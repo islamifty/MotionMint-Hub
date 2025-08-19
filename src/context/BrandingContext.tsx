@@ -37,8 +37,12 @@ const parseHsl = (hslStr: string): [number, number, number] | null => {
         return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)];
     }
 
-    const match = hslStr.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
-    if (!match) return null;
+    const match = hslStr.match(/(\d+)\s*(\d+)%\s*(\d+)%/);
+    if (!match) {
+         const legacyMatch = hslStr.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
+         if (!legacyMatch) return null;
+         return [parseInt(legacyMatch[1]), parseInt(legacyMatch[2]), parseInt(legacyMatch[3])];
+    };
     return [parseInt(match[1]), parseInt(match[2]), parseInt(match[3])];
 };
 
@@ -74,6 +78,7 @@ export const BrandingProvider = ({ children }: { children: ReactNode }) => {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
+    // This effect runs only on the client
     try {
       const savedBranding = localStorage.getItem('branding');
       if (savedBranding) {
@@ -97,7 +102,7 @@ export const BrandingProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-      if(isLoaded) {
+      if(isLoaded) { // Only apply styles on the client after loading from localStorage
         const root = document.documentElement;
         
         const primaryHsl = parseHsl(branding.primaryColor);
