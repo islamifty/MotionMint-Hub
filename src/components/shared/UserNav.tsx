@@ -37,9 +37,8 @@ export function UserNav() {
         title: "Logged Out",
         description: "You have been successfully logged out.",
       });
-      router.push('/login');
-      // Refresh the page to ensure user state is cleared
-      router.refresh();
+      // Use window.location.href for a full page reload to ensure session is cleared
+      window.location.href = '/login';
     } catch (error) {
       toast({
         variant: "destructive",

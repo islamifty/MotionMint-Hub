@@ -3,7 +3,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { login } from './actions';
 
 import { Button } from "@/components/ui/button";
@@ -20,7 +19,6 @@ import { Logo } from "@/components/shared/Logo";
 import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
-  const router = useRouter();
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -42,15 +40,11 @@ export default function LoginPage() {
         description: "Redirecting to your dashboard.",
       });
 
-      // This forces a refresh of the router's cache, ensuring the new
-      // session cookie is picked up for subsequent navigation.
-      router.refresh();
-
-      // Role-based redirection decided by the server
+      // Use window.location.href for a full page reload to ensure session is picked up
       if (result.isAdmin) {
-        router.push("/admin/dashboard");
+        window.location.href = "/admin/dashboard";
       } else {
-        router.push("/client/dashboard");
+        window.location.href = "/client/dashboard";
       }
     } catch (error: any) {
       toast({
