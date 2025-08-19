@@ -22,8 +22,9 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
 export default function ClientDetailPage({ params }: { params: { id: string } }) {
+  const { id } = params;
   const db = readDb();
-  const client = db.clients.find((c) => c.id === params.id);
+  const client = db.clients.find((c) => c.id === id);
   
   if (!client) {
     notFound();

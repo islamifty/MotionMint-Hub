@@ -25,17 +25,18 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
   const [loading, setLoading] = useState(true);
   const [isPaying, setIsPaying] = useState(false);
   const { toast } = useToast();
+  const { id } = params;
   
   useEffect(() => {
     async function fetchProject() {
-        const foundProject = await getProjectDetails(params.id);
+        const foundProject = await getProjectDetails(id);
         if (foundProject) {
             setProject(foundProject);
         }
         setLoading(false);
     }
     fetchProject();
-  }, [params.id]);
+  }, [id]);
 
 
   if (loading) {
