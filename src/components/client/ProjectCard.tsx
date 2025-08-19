@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import {
   Card,
   CardContent,
@@ -11,7 +10,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Project } from "@/types";
-import { cn } from "@/lib/utils";
 
 interface ProjectCardProps {
   project: Project;
@@ -24,12 +22,10 @@ export function ProjectCard({ project }: ProjectCardProps) {
     <Card className="flex flex-col">
       <CardHeader>
         <div className="relative aspect-video w-full overflow-hidden rounded-md">
-            <Image
+            <video
                 src={project.previewVideoUrl}
-                alt={project.title}
-                fill
-                className="object-cover"
-                data-ai-hint="video production"
+                controls
+                className="w-full h-full object-cover"
             />
         </div>
       </CardHeader>

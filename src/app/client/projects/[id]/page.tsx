@@ -1,5 +1,4 @@
 
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { readDb } from "@/lib/db";
 import {
@@ -30,22 +29,18 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
     <div className="container py-8">
         <div className="max-w-4xl mx-auto">
             <div className="relative mb-6 aspect-video w-full overflow-hidden rounded-lg border shadow-lg">
-                <Image
+                <video
                     src={project.previewVideoUrl}
-                    alt={`Preview for ${project.title}`}
-                    fill
-                    className="object-cover"
-                    data-ai-hint="video preview"
+                    controls
+                    className="w-full h-full object-cover"
                 />
-                 <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                    <h1 className="text-4xl font-extrabold font-headline tracking-tight text-white drop-shadow-md text-center px-4">
-                        {project.title}
-                    </h1>
-                 </div>
             </div>
 
             <div className="grid md:grid-cols-3 gap-6">
                 <div className="md:col-span-2 space-y-4">
+                     <h1 className="text-3xl font-extrabold font-headline tracking-tight text-primary">
+                        {project.title}
+                    </h1>
                     <h2 className="text-2xl font-bold font-headline">Project Description</h2>
                     <p className="text-muted-foreground">{project.description}</p>
                 </div>
