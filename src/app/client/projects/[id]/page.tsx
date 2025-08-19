@@ -1,7 +1,7 @@
 
 "use client";
 
-import { notFound } from "next/navigation";
+import { notFound, useParams } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -20,14 +20,17 @@ import { useEffect, useState } from "react";
 import { getProjectDetails, initiateBkashPayment } from "./actions";
 import { useToast } from "@/hooks/use-toast";
 
-export default function ProjectDetailPage({ params }: { params: { id: string } }) {
+export default function ProjectDetailPage() {
+  const params = useParams();
+  const id = params.id as string;
+
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [isPaying, setIsPaying] = useState(false);
   const { toast } = useToast();
-  const { id } = params;
   
   useEffect(() => {
+    if (!id) return;
     async function fetchProject() {
         const foundProject = await getProjectDetails(id);
         if (foundProject) {
