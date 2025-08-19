@@ -9,6 +9,10 @@ export type User = {
   avatarUrl?: string;
   initials: string;
   password?: string;
+  notificationSettings?: {
+    newProject: boolean;
+    paymentSuccess: boolean;
+  };
 };
 
 export type Project = {

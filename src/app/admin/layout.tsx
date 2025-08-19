@@ -6,12 +6,15 @@ import {
   PanelLeft,
   Search
 } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
+  BreadcrumbSeparator,
+  BreadcrumbPage,
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +35,9 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+  const pathSegments = pathname.split('/').filter(Boolean);
+
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
       <AdminSidebar />
@@ -91,12 +97,30 @@ export default function AdminLayout({
             </SheetContent>
           </Sheet>
           <Breadcrumb className="hidden md:flex">
-            <BreadcrumbList>
+             <BreadcrumbList>
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
-                  <Link href="/admin/dashboard">Dashboard</Link>
+                  <Link href="/admin/dashboard">Admin</Link>
                 </BreadcrumbLink>
               </BreadcrumbItem>
+              {pathSegments.slice(1).map((segment, index) => {
+                const href = `/${pathSegments.slice(0, index + 2).join('/')}`;
+                const isLast = index === pathSegments.length - 2;
+                return (
+                  <React.Fragment key={href}>
+                    <BreadcrumbSeparator />
+                    <BreadcrumbItem>
+                      {isLast ? (
+                        <BreadcrumbPage className="capitalize">{segment}</BreadcrumbPage>
+                      ) : (
+                        <BreadcrumbLink asChild>
+                           <Link href={href} className="capitalize">{segment}</Link>
+                        </BreadcrumbLink>
+                      )}
+                    </BreadcrumbItem>
+                  </React.Fragment>
+                )
+              })}
             </BreadcrumbList>
           </Breadcrumb>
           <div className="relative ml-auto flex-1 md:grow-0">
