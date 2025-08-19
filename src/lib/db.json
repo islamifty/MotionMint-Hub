@@ -1,6 +1,14 @@
 {
   "users": [
     {
+      "id": "user-1755630322300",
+      "name": "test",
+      "email": "test@test.com",
+      "role": "client",
+      "initials": "TE",
+      "password": "12345678"
+    },
+    {
       "id": "user-1755623097607",
       "name": "Ifty",
       "email": "edit@motionmint.top",
@@ -18,6 +26,14 @@
     }
   ],
   "clients": [
+    {
+      "id": "user-1755630322300",
+      "name": "test",
+      "email": "test@test.com",
+      "company": "",
+      "projectIds": [],
+      "createdAt": "2025-08-19T19:05:22.300Z"
+    },
     {
       "id": "user-1755623097607",
       "name": "Ifty",
