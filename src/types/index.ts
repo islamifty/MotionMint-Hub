@@ -53,6 +53,9 @@ export type AppSettings = {
     nextcloudPassword?: string;
     piprapayApiKey?: string;
     piprapayBaseUrl?: string;
+    pipraPayEnabled?: boolean;
+    bKashEnabled?: boolean;
+    whatsappLink?: string;
 };
 
 // Define the structure of our database

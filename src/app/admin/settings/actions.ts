@@ -11,9 +11,22 @@ const nextcloudSchema = z.object({
     appPassword: z.string().min(1),
 });
 
+const bKashSchema = z.object({
+    bKashEnabled: z.boolean(),
+});
+
 const pipraPaySchema = z.object({
     apiKey: z.string().min(1),
     piprapayBaseUrl: z.string().url({ message: "Please enter a valid Base URL." }),
+    pipraPayEnabled: z.boolean(),
+});
+
+const generalSchema = z.object({
+    logo: z.any().optional(),
+    primaryColor: z.string(),
+    backgroundColor: z.string(),
+    accentColor: z.string(),
+    whatsappLink: z.string().url("Please enter a valid WhatsApp link.").or(z.literal('')),
 });
 
 export async function getSettings() {
@@ -92,6 +105,24 @@ export async function saveNextcloudSettings(data: unknown) {
     }
 }
 
+export async function saveBKashSettings(data: unknown) {
+    const result = bKashSchema.safeParse(data);
+    if (!result.success) {
+        return { success: false, error: result.error.flatten() };
+    }
+    
+    try {
+        const { bKashEnabled } = result.data;
+        const db = readDb();
+        db.settings.bKashEnabled = bKashEnabled;
+        writeDb(db);
+        return { success: true, message: "bKash settings saved successfully." };
+    } catch (error) {
+        console.error("Failed to save bKash settings:", error);
+        return { success: false, message: "Failed to save settings." };
+    }
+}
+
 export async function savePipraPaySettings(data: unknown) {
     const result = pipraPaySchema.safeParse(data);
     if (!result.success) {
@@ -99,14 +130,33 @@ export async function savePipraPaySettings(data: unknown) {
     }
     
     try {
-        const { apiKey, piprapayBaseUrl } = result.data;
+        const { apiKey, piprapayBaseUrl, pipraPayEnabled } = result.data;
         const db = readDb();
         db.settings.piprapayApiKey = apiKey;
         db.settings.piprapayBaseUrl = piprapayBaseUrl;
+        db.settings.pipraPayEnabled = pipraPayEnabled;
         writeDb(db);
         return { success: true, message: "PipraPay settings saved successfully." };
     } catch (error) {
         console.error("Failed to save PipraPay settings:", error);
+        return { success: false, message: "Failed to save settings." };
+    }
+}
+
+export async function saveGeneralSettings(data: unknown) {
+    const result = generalSchema.safeParse(data);
+    if (!result.success) {
+        return { success: false, error: result.error.flatten() };
+    }
+    
+    try {
+        const { whatsappLink } = result.data;
+        const db = readDb();
+        db.settings.whatsappLink = whatsappLink;
+        writeDb(db);
+        return { success: true, message: "General settings saved successfully." };
+    } catch (error) {
+        console.error("Failed to save General settings:", error);
         return { success: false, message: "Failed to save settings." };
     }
 }

@@ -12,10 +12,10 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, AlertTriangle, Loader2 } from "lucide-react";
+import { Download, AlertTriangle, Loader2, MessageSquare } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { VideoPlayer } from "@/components/client/VideoPlayer";
-import type { Project, User } from "@/types";
+import type { Project, User, AppSettings } from "@/types";
 import { useEffect, useState } from "react";
 import { getProjectDetails, initiateBkashPayment, initiatePipraPayPayment } from "./actions";
 import { useToast } from "@/hooks/use-toast";
@@ -26,6 +26,7 @@ export default function ProjectDetailPage() {
 
   const [project, setProject] = useState<Project | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [settings, setSettings] = useState<AppSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [isPaying, setIsPaying] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'bkash' | 'piprapay' | null>(null);
@@ -34,10 +35,11 @@ export default function ProjectDetailPage() {
   useEffect(() => {
     if (!id) return;
     async function fetchProject() {
-        const { project: foundProject, user: foundUser } = await getProjectDetails(id);
-        if (foundProject && foundUser) {
+        const { project: foundProject, user: foundUser, settings: foundSettings } = await getProjectDetails(id);
+        if (foundProject && foundUser && foundSettings) {
             setProject(foundProject);
             setUser(foundUser);
+            setSettings(foundSettings);
         }
         setLoading(false);
     }
@@ -152,19 +154,34 @@ export default function ProjectDetailPage() {
                                         </Button>
                                      ) : (
                                         <>
-                                            <Button 
-                                                className="w-full bg-blue-600 hover:bg-blue-700 text-white" 
-                                                onClick={() => handlePayment('piprapay')}
-                                                disabled={isPaying}
-                                            >
-                                                {isPaying && paymentMethod === 'piprapay' ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Connecting...</> : 'Pay with PipraPay'}
-                                            </Button>
-                                            <Button 
-                                                className="w-full bg-pink-500 hover:bg-pink-600 text-white" 
-                                                onClick={() => handlePayment('bkash')}
-                                                disabled={isPaying}
-                                            >
-                                                {isPaying && paymentMethod === 'bkash' ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Connecting...</> : 'Pay with bKash'}
+                                            {settings?.pipraPayEnabled && (
+                                                <Button 
+                                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white" 
+                                                    onClick={() => handlePayment('piprapay')}
+                                                    disabled={isPaying}
+                                                >
+                                                    {isPaying && paymentMethod === 'piprapay' ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Connecting...</> : 'Pay with PipraPay'}
+                                                </Button>
+                                            )}
+                                             {settings?.bKashEnabled && (
+                                                <Button 
+                                                    className="w-full bg-pink-500 hover:bg-pink-600 text-white" 
+                                                    onClick={() => handlePayment('bkash')}
+                                                    disabled={isPaying}
+                                                >
+                                                    {isPaying && paymentMethod === 'bkash' ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Connecting...</> : 'Pay with bKash'}
+                                                </Button>
+                                             )}
+                                        </>
+                                     )}
+                                     {settings?.whatsappLink && (
+                                         <>
+                                            <Separator className="my-4" />
+                                            <Button variant="outline" className="w-full" asChild>
+                                                <a href={settings.whatsappLink} target="_blank" rel="noopener noreferrer">
+                                                    <MessageSquare className="mr-2 h-4 w-4" />
+                                                    Contact via WhatsApp
+                                                </a>
                                             </Button>
                                         </>
                                      )}

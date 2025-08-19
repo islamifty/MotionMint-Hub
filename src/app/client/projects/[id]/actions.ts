@@ -4,19 +4,20 @@
 import { createPayment as createBkashPayment } from '@/lib/bkash';
 import { createPipraPayPayment } from '@/lib/piprapay';
 import { readDb } from '@/lib/db';
-import type { Project, User } from '@/types';
+import type { Project, User, AppSettings } from '@/types';
 import { getSession } from '@/lib/session';
 
-export async function getProjectDetails(projectId: string): Promise<{ project: Project | null, user: User | null }> {
+export async function getProjectDetails(projectId: string): Promise<{ project: Project | null, user: User | null, settings: AppSettings | null }> {
     const session = await getSession();
     if (!session?.user) {
-        return { project: null, user: null };
+        return { project: null, user: null, settings: null };
     }
 
     const db = readDb();
     const project = db.projects.find((p) => p.id === projectId && p.clientId === session.user.id);
+    const settings = db.settings;
     
-    return { project: project || null, user: session.user };
+    return { project: project || null, user: session.user, settings: settings || null };
 }
 
 export async function initiateBkashPayment(projectId: string) {
@@ -33,11 +34,11 @@ export async function initiateBkashPayment(projectId: string) {
         const paymentData = {
             mode: '0011',
             payerReference: 'payment_for_project',
-            callbackURL: callbackUrl,
+            callback_url: callbackUrl,
             amount: project.amount.toString(),
             currency: 'BDT',
             intent: 'sale',
-            merchantInvoiceNumber: project.orderId,
+            merchant_invoice_number: project.orderId,
         };
 
         const result = await createBkashPayment(paymentData);
