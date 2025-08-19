@@ -1,7 +1,6 @@
 'use server';
 import { createSession } from '@/lib/session';
 import { readDb } from '@/lib/db';
-import { adminEmails } from '@/lib/data';
 
 export async function login(credentials: {email: string, password: string}) {
     const { email, password } = credentials;
@@ -20,7 +19,8 @@ export async function login(credentials: {email: string, password: string}) {
     
     await createSession(user);
 
-    const isAdmin = adminEmails.includes(user.email);
+    // Determine if the user is an admin based on their role property
+    const isAdmin = user.role === 'admin';
     
     return { success: true, isAdmin };
 }
