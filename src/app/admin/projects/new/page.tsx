@@ -105,7 +105,7 @@ export default function NewProjectPage() {
       ]);
       setClients(serverClients);
       if (settings?.nextcloudUrl) {
-        // We only need the origin for constructing the full URL
+        // The URL from settings is the WebDAV endpoint, we need the origin for shareable links
         const url = new URL(settings.nextcloudUrl);
         setNextcloudBaseUrl(url.origin);
       }
@@ -151,7 +151,8 @@ export default function NewProjectPage() {
          return;
      }
      
-     // Construct the full WebDAV URL which can be used for streaming if logged in.
+     // This creates a WebDAV URL, which is good for admin preview but not for clients.
+     // The recommended workflow is to paste a public share link for clients.
      const fullUrl = `${nextcloudBaseUrl}${file.filename}`;
      form.setValue("videoUrl", fullUrl, { shouldValidate: true });
      setIsModalOpen(false);
@@ -247,16 +248,16 @@ export default function NewProjectPage() {
                             <FormControl>
                                 <div className="relative w-full">
                                     <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                    <Input placeholder="https://cloud.example.com/s/..." className="pl-10" {...field} />
+                                    <Input placeholder="Paste a public shareable link here for clients" className="pl-10" {...field} />
                                 </div>
                             </FormControl>
                             <Button type="button" variant="outline" onClick={handleOpenModal}>
                               <Folder className="h-4 w-4 mr-2" />
-                              Browse Nextcloud
+                              Browse (For Admin)
                             </Button>
                           </div>
                            <FormDescription>
-                            Select a video from your Nextcloud storage or paste a direct shareable link.
+                            For the best client experience, create a public share link in Nextcloud and paste it above. The browse feature uses a WebDAV link that may not be playable for clients.
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
