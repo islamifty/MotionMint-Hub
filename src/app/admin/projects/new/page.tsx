@@ -105,7 +105,7 @@ export default function NewProjectPage() {
       ]);
       setClients(serverClients);
       if (settings?.nextcloudUrl) {
-        // Extract the base part of the URL for constructing public links
+        // We only need the origin for constructing the full URL
         const url = new URL(settings.nextcloudUrl);
         setNextcloudBaseUrl(url.origin);
       }
@@ -151,22 +151,9 @@ export default function NewProjectPage() {
          return;
      }
      
-     // The file.filename is a WebDAV path like /remote.php/dav/files/user/path/to/file.mp4
-     // We need to transform it into a likely public shareable link structure.
-     // This assumes a standard Nextcloud public link structure and that a share link exists.
-     const davPrefix = "/remote.php/dav/files/";
-     if (file.filename.startsWith(davPrefix)) {
-        // This part is an assumption, as we can't create share links via WebDAV.
-        // We assume the admin has shared the folder/file and we construct a plausible public URL.
-        // A more robust solution would involve the Nextcloud Share API.
-        const filePath = file.filename.substring(file.filename.indexOf('/', davPrefix.length)); // Gets /path/to/file.mp4
-        const publicUrl = `${nextcloudBaseUrl}/s${filePath}`;
-        form.setValue("videoUrl", publicUrl, { shouldValidate: true });
-     } else {
-        const publicUrl = `${nextcloudBaseUrl}${file.filename}`;
-        form.setValue("videoUrl", publicUrl, { shouldValidate: true });
-     }
-
+     // Construct the full WebDAV URL which can be used for streaming if logged in.
+     const fullUrl = `${nextcloudBaseUrl}${file.filename}`;
+     form.setValue("videoUrl", fullUrl, { shouldValidate: true });
      setIsModalOpen(false);
   }
 
