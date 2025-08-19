@@ -43,6 +43,8 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
                 <video
                     src={videoUrl}
                     controls
+                    controlsList="nodownload"
+                    onContextMenu={(e) => e.preventDefault()}
                     className="w-full h-full object-contain"
                     preload="auto"
                 />

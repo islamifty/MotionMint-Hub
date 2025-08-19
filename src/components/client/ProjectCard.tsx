@@ -34,6 +34,8 @@ export function ProjectCard({ project }: ProjectCardProps) {
             <video
                 src={videoUrl}
                 controls
+                controlsList="nodownload"
+                onContextMenu={(e) => e.preventDefault()}
                 className="w-full h-full object-cover bg-black"
                 preload="metadata"
             />
