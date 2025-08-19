@@ -212,11 +212,26 @@ export default function SettingsPage() {
   };
 
   const handleTestNextcloudConnection = async () => {
-    // ... (rest of the function is unchanged)
+    setIsTestingNextcloud(true);
+    const data = nextcloudForm.getValues();
+    const result = await verifyNextcloudConnection(data);
+    toast({
+      title: result.success ? "Success" : "Connection Failed",
+      description: result.message,
+      variant: result.success ? "default" : "destructive",
+    });
+    setIsTestingNextcloud(false);
   };
 
   const handleTestBKashConnection = async () => {
-    // ... (rest of the function is unchanged)
+    setIsTestingBKash(true);
+    const result = await verifyBKashConnection();
+    toast({
+        title: result.success ? "Success" : "Connection Failed",
+        description: result.message,
+        variant: result.success ? "default" : "destructive",
+    });
+    setIsTestingBKash(false);
   };
 
   return (
@@ -238,7 +253,87 @@ export default function SettingsPage() {
         </TabsList>
 
         <TabsContent value="nextcloud">
-          {/* Nextcloud Form remains the same */}
+          <Card>
+            <Form {...nextcloudForm}>
+              <form onSubmit={nextcloudForm.handleSubmit(onNextcloudSubmit)}>
+                <CardHeader>
+                  <CardTitle>Nextcloud Integration</CardTitle>
+                  <CardDescription>
+                    Enter your Nextcloud WebDAV URL and credentials to store and
+                    manage project files.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <FormField
+                    control={nextcloudForm.control}
+                    name="nextcloudUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>WebDAV URL</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="https://your-nextcloud.com/remote.php/dav/files/username"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={nextcloudForm.control}
+                    name="username"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Username</FormLabel>
+                        <FormControl>
+                          <Input placeholder="nextcloud_user" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={nextcloudForm.control}
+                    name="appPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>App Password</FormLabel>
+                        <FormControl>
+                          <Input type="password" {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          It&apos;s recommended to create a dedicated app password in
+                          your Nextcloud security settings.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+                <CardFooter className="flex-col items-start gap-4">
+                  <div className="flex gap-2">
+                    <Button
+                      type="submit"
+                      disabled={nextcloudForm.formState.isSubmitting}
+                    >
+                      {nextcloudForm.formState.isSubmitting
+                        ? "Saving..."
+                        : "Save Nextcloud Settings"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleTestNextcloudConnection}
+                      disabled={isTestingNextcloud}
+                    >
+                      {isTestingNextcloud ? "Testing..." : "Test Connection"}
+                    </Button>
+                  </div>
+                </CardFooter>
+              </form>
+            </Form>
+          </Card>
         </TabsContent>
 
         <TabsContent value="bkash">
