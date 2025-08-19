@@ -10,8 +10,14 @@ const paymentCallbackRoutes = ['/api/bkash/callback', '/api/piprapay/callback'];
 export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
 
-  // Allow specific public API routes (like payment callbacks) to pass through without checks
-  if (paymentCallbackRoutes.some(route => path.startsWith(route))) {
+  // Allow specific public API routes (like payment callbacks) to pass through without checks.
+  // This logic is now part of the main function to handle all API routes correctly.
+  if (path.startsWith('/api')) {
+    if (paymentCallbackRoutes.some(route => path.startsWith(route))) {
+      return NextResponse.next();
+    }
+    // Let other api routes pass through as well, they are handled by their own logic
+    // or are implicitly public. Crucially, /api/user needs to be accessible.
     return NextResponse.next();
   }
 
@@ -51,7 +57,7 @@ export default async function middleware(req: NextRequest) {
         return NextResponse.redirect(new URL('/client/dashboard', req.nextUrl));
     }
 
-    // Prevent admins from accessing client-specific routes if needed
+    // Prevent admins from accessing client-specific routes
     if (path.startsWith('/client') && dbUser.role === 'admin') {
         return NextResponse.redirect(new URL('/admin/dashboard', req.nextUrl));
     }
@@ -63,5 +69,5 @@ export default async function middleware(req: NextRequest) {
 
 // This config matches all request paths except for files in _next/static, _next/image, and favicon.ico.
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 };
