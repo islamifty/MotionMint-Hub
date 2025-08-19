@@ -7,6 +7,7 @@ import {
   LineChart,
   Settings,
   User,
+  Files,
 } from "lucide-react";
 
 import {
@@ -22,6 +23,7 @@ const navItems = [
     { href: "/admin/projects", icon: FolderKanban, label: "Projects" },
     { href: "/admin/clients", icon: Users, label: "Clients" },
     { href: "/admin/users", icon: User, label: "Users" },
+    { href: "/admin/files", icon: Files, label: "File Manager"},
     { href: "/admin/reports", icon: LineChart, label: "Reports" },
 ];
 

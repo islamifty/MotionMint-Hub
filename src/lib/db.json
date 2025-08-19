@@ -49,10 +49,10 @@
       "title": "Test",
       "description": "Test",
       "clientId": "user-1755623097607",
-      "amount": 0,
+      "amount": 200,
       "expiryDate": "2025-08-30T18:00:00.000Z",
       "clientName": "Ifty",
-      "paymentStatus": "paid",
+      "paymentStatus": "pending",
       "orderId": "ORD-1755624925434",
       "createdAt": "2025-08-19T17:35:25.434Z",
       "previewVideoUrl": "https://mydrive.motionmint.top/index.php/s/H4dExyR255fgk9o",
@@ -66,6 +66,7 @@
     "piprapayApiKey": "123504360668a3583081ed41601947378127387162768a3583081ed8648939280",
     "piprapayBaseUrl": "https://pay.motionmint.top/api",
     "bKashEnabled": true,
-    "pipraPayEnabled": true
+    "pipraPayEnabled": true,
+    "whatsappLink": "https://wa.link/ge8fgx"
   }
 }

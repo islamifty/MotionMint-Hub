@@ -1,5 +1,8 @@
 
 import type { LucideIcon } from "lucide-react";
+import type { FileStat as WebDAVFile } from "webdav";
+
+export { WebDAVFile };
 
 export type User = {
   id: string;
