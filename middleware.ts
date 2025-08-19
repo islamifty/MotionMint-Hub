@@ -3,10 +3,16 @@ import { decrypt } from '@/lib/session';
 import { cookies } from 'next/headers';
 
 const protectedRoutes = ['/admin', '/client'];
-const publicRoutes = ['/login', '/register', '/forgot-password'];
+const publicRoutes = ['/login', '/register', '/forgot-password', '/api/bkash/callback'];
 
 export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
+  
+  // Allow public routes, including the bKash callback, to pass through
+  if (publicRoutes.some(route => path.startsWith(route))) {
+    return NextResponse.next();
+  }
+
   const isProtectedRoute = protectedRoutes.some((prefix) => path.startsWith(prefix));
 
   if (!isProtectedRoute) {
@@ -24,5 +30,5 @@ export default async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|.*\\.png$).*)'],
+  matcher: ['/((?!_next/static|_next/image|.*\\.png$).*)'],
 };
