@@ -18,14 +18,24 @@ interface ProjectCardProps {
 export function ProjectCard({ project }: ProjectCardProps) {
   const isExpired = new Date(project.expiryDate) < new Date();
 
+  const getDirectVideoLink = (url: string) => {
+    if (url.includes('/s/') && !url.endsWith('/download')) {
+      return `${url}/download`;
+    }
+    return url;
+  };
+
+  const videoUrl = getDirectVideoLink(project.previewVideoUrl);
+
   return (
     <Card className="flex flex-col">
       <CardHeader>
         <div className="relative aspect-video w-full overflow-hidden rounded-md">
             <video
-                src={project.previewVideoUrl}
+                src={videoUrl}
                 controls
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover bg-black"
+                preload="metadata"
             />
         </div>
       </CardHeader>

@@ -25,14 +25,26 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
   const isExpired = new Date(project.expiryDate) < new Date();
   const isPaid = project.paymentStatus === 'paid';
 
+  const getDirectVideoLink = (url: string) => {
+    if (url.includes('/s/') && !url.endsWith('/download')) {
+      return `${url}/download`;
+    }
+    return url;
+  };
+
+  const videoUrl = getDirectVideoLink(project.previewVideoUrl);
+  const finalVideoUrl = getDirectVideoLink(project.finalVideoUrl || project.previewVideoUrl);
+
+
   return (
     <div className="container py-8">
         <div className="max-w-4xl mx-auto">
             <div className="relative mb-6 aspect-video w-full overflow-hidden rounded-lg border shadow-lg bg-black">
                 <video
-                    src={project.previewVideoUrl}
+                    src={videoUrl}
                     controls
                     className="w-full h-full object-contain"
+                    preload="auto"
                 />
             </div>
 
@@ -69,7 +81,7 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
                         <CardFooter className="pt-6">
                              {isPaid ? (
                                 <Button className="w-full" asChild>
-                                    <a href={project.finalVideoUrl || project.previewVideoUrl} target="_blank" rel="noopener noreferrer" download>
+                                    <a href={finalVideoUrl} target="_blank" rel="noopener noreferrer" download>
                                         <Download className="mr-2 h-4 w-4" />
                                         Download Final Video
                                     </a>
