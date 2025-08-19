@@ -15,17 +15,6 @@ import { Download, AlertTriangle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { VideoPlayer } from "@/components/client/VideoPlayer";
 
-function getProxyUrl(originalSrc: string): string {
-    if (!originalSrc) return "";
-    try {
-        const encodedUrl = encodeURIComponent(originalSrc);
-        return `/api/video/proxy?url=${encodedUrl}`;
-    } catch (e) {
-        console.error("Failed to create proxy URL from:", originalSrc, e);
-        return "";
-    }
-}
-
 export default function ProjectDetailPage({ params }: { params: { id: string } }) {
   const db = readDb();
   const project = db.projects.find((p) => p.id === params.id);
@@ -43,8 +32,7 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
     }
     return url;
   };
-
-  const videoUrl = getProxyUrl(project.previewVideoUrl);
+  
   const finalVideoUrl = getDirectVideoLink(project.finalVideoUrl || '');
 
 
@@ -52,7 +40,7 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
     <div className="container py-8">
         <div className="max-w-4xl mx-auto">
             <div className="relative mb-6 aspect-video w-full overflow-hidden rounded-lg border shadow-lg bg-black">
-                <VideoPlayer src={videoUrl} />
+                <VideoPlayer videoUrl={project.previewVideoUrl} />
             </div>
 
             <div className="grid md:grid-cols-3 gap-6">

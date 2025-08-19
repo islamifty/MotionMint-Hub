@@ -21,26 +21,12 @@ interface ProjectCardProps {
 
 export function ProjectCard({ project }: ProjectCardProps) {
   const isExpired = new Date(project.expiryDate) < new Date();
-  
-  const getProxyUrl = (originalSrc: string): string => {
-    if (!originalSrc) return "";
-    try {
-        const encodedUrl = encodeURIComponent(originalSrc);
-        return `/api/video/proxy?url=${encodedUrl}`;
-    } catch (e) {
-        console.error("Failed to create proxy URL from:", originalSrc, e);
-        return "";
-    }
-  }
-
-  const videoUrl = getProxyUrl(project.previewVideoUrl);
-
 
   return (
     <Card className="flex flex-col">
       <CardHeader>
         <div className="relative aspect-video w-full overflow-hidden rounded-md bg-black">
-            <VideoPlayer src={videoUrl} />
+            <VideoPlayer videoUrl={project.previewVideoUrl} />
         </div>
       </CardHeader>
       <CardContent className="flex-grow">
