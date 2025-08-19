@@ -2,17 +2,9 @@
 // In a real-world application, you would use a proper database like PostgreSQL, MySQL, or a NoSQL database.
 import fs from 'fs';
 import path from 'path';
-import type { Client, Project, User, AppSettings } from "@/types";
+import type { Client, Project, User, AppSettings, DbData } from "@/types";
 
 const dbPath = path.join(process.cwd(), 'src', 'lib', 'db.json');
-
-// Define the structure of our database
-interface DbData {
-    users: User[];
-    clients: Client[];
-    projects: Project[];
-    settings: AppSettings;
-}
 
 // This is the initial data that will be written to db.json if it doesn't exist.
 const initialData: DbData = {
@@ -32,10 +24,6 @@ const initialData: DbData = {
         nextcloudUrl: "",
         nextcloudUser: "",
         nextcloudPassword: "",
-        bkashAppKey: "",
-        bkashAppSecret: "",
-        bkashUsername: "",
-        bkashPassword: "",
     }
 };
 
@@ -47,16 +35,27 @@ export function readDb(): DbData {
             fs.writeFileSync(dbPath, JSON.stringify(initialData, null, 2), 'utf8');
             return initialData;
         }
-        const data = fs.readFileSync(dbPath, 'utf8');
-        const jsonData = JSON.parse(data);
+        const fileContents = fs.readFileSync(dbPath, 'utf8');
+        // If file is empty, initialize it
+        if (!fileContents) {
+            fs.writeFileSync(dbPath, JSON.stringify(initialData, null, 2), 'utf8');
+            return initialData;
+        }
+        const jsonData = JSON.parse(fileContents);
         // Ensure settings object exists
         if (!jsonData.settings) {
             jsonData.settings = initialData.settings;
         }
         return jsonData;
     } catch (error) {
-        console.error("Error reading from db.json, returning initial data:", error);
-        return initialData;
+        console.error("Critical error reading or parsing db.json:", error);
+        // Return a safe, empty structure to prevent crashes
+        return {
+            users: [],
+            clients: [],
+            projects: [],
+            settings: {},
+        };
     }
 }
 
