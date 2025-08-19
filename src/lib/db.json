@@ -1,6 +1,14 @@
 {
   "users": [
     {
+      "id": "user-1755623097607",
+      "name": "Ifty",
+      "email": "edit@motionmint.top",
+      "role": "client",
+      "initials": "IF",
+      "password": "12345678"
+    },
+    {
       "id": "admin-main",
       "name": "Iftekharul Islam",
       "email": "mdiftekharulislamifty@gmail.com",
@@ -9,7 +17,16 @@
       "password": "01@*#Mdifty"
     }
   ],
-  "clients": [],
+  "clients": [
+    {
+      "id": "user-1755623097607",
+      "name": "Ifty",
+      "email": "edit@motionmint.top",
+      "company": "",
+      "projectIds": [],
+      "createdAt": "2025-08-19T17:04:57.607Z"
+    }
+  ],
   "projects": [
     {
       "id": "proj-1755593453211",

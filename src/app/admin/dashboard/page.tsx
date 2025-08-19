@@ -20,16 +20,49 @@ import { StatCard } from "@/components/shared/StatCard";
 import { readDb } from "@/lib/db";
 import type { StatCard as StatCardType } from "@/types";
 
-const statCards: StatCardType[] = [
-    { title: "Total Revenue", value: "11,200 BDT", icon: DollarSign, change: "+15.2%", changeType: "increase" },
-    { title: "Active Projects", value: "3", icon: FolderKanban, change: "+2 from last month", changeType: "increase" },
-    { title: "Total Clients", value: "2", icon: Users, change: "All active", changeType: "increase" },
-    { title: "Pending Payments", value: "8,700 BDT", icon: CreditCard, change: "2 projects", changeType: "decrease" },
-];
-
 export default function DashboardPage() {
   const db = readDb();
   const recentProjects = db.projects.slice(0, 5);
+
+  // Calculate dynamic stats
+  const totalRevenue = db.projects
+    .filter(p => p.paymentStatus === 'paid')
+    .reduce((sum, p) => sum + p.amount, 0);
+
+  const activeProjects = db.projects.filter(p => new Date(p.expiryDate) >= new Date()).length;
+
+  const totalClients = db.clients.length;
+
+  const pendingPayments = db.projects
+    .filter(p => p.paymentStatus === 'pending' && new Date(p.expiryDate) >= new Date())
+    .reduce((sum, p) => sum + p.amount, 0);
+
+  const pendingProjectsCount = db.projects.filter(p => p.paymentStatus === 'pending' && new Date(p.expiryDate) >= new Date()).length;
+
+  const statCards: StatCardType[] = [
+      { 
+        title: "Total Revenue", 
+        value: `${totalRevenue.toLocaleString()} BDT`, 
+        icon: DollarSign, 
+      },
+      { 
+        title: "Active Projects", 
+        value: activeProjects.toString(), 
+        icon: FolderKanban,
+      },
+      { 
+        title: "Total Clients", 
+        value: totalClients.toString(), 
+        icon: Users,
+      },
+      { 
+        title: "Pending Payments", 
+        value: `${pendingPayments.toLocaleString()} BDT`, 
+        icon: CreditCard,
+        change: `${pendingProjectsCount} projects`,
+        changeType: pendingProjectsCount > 0 ? "decrease" : "increase"
+      },
+  ];
 
   return (
     <div className="space-y-6">
