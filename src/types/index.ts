@@ -50,3 +50,11 @@ export type AppSettings = {
     piprapayApiKey?: string;
     piprapayBaseUrl?: string;
 };
+
+// Define the structure of our database
+export interface DbData {
+    users: User[];
+    clients: Client[];
+    projects: Project[];
+    settings: AppSettings;
+}

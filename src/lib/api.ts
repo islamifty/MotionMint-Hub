@@ -1,18 +1,18 @@
 import { readDb, writeDb } from './db';
-import type { User, Client } from '@/types';
+import type { User, Client, DbData } from '@/types';
 
 // This file will serve as a simple API for our file-based database.
 
-export function promoteUserToClient(userId: string): boolean {
-    const db = readDb();
-    const user = db.users.find(u => u.id === userId);
+export function promoteUserToClient(userId: string, db?: DbData): boolean {
+    const database = db || readDb();
+    const user = database.users.find(u => u.id === userId);
 
-    if (user && user.role === 'user') {
+    if (user && user.role !== 'client') {
         // 1. Update the user's role
         user.role = 'client';
 
         // 2. Check if they already exist in the clients list
-        const clientExists = db.clients.some(c => c.id === userId);
+        const clientExists = database.clients.some(c => c.id === userId);
         
         // 3. If not, add them to the clients list
         if (!clientExists) {
@@ -24,13 +24,16 @@ export function promoteUserToClient(userId: string): boolean {
                 createdAt: new Date().toISOString(),
                 company: '', 
             };
-            db.clients.unshift(newClient);
+            database.clients.unshift(newClient);
         }
-
-        writeDb(db);
+        
+        if (!db) { // Only write if we're not being called from another function that will write
+             writeDb(database);
+        }
+       
         return true;
     } 
     
-    // User not found or cannot be promoted
+    // User not found or already a client
     return false;
 }

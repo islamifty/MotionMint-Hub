@@ -36,7 +36,7 @@ export default async function UsersPage() {
           <div>
             <CardTitle>Registered Users</CardTitle>
             <CardDescription>
-              List of all users who have signed up. You can promote a user to a client.
+              Manage all registered users, change their roles, or delete their accounts.
             </CardDescription>
           </div>
         </div>
@@ -48,7 +48,7 @@ export default async function UsersPage() {
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -60,7 +60,7 @@ export default async function UsersPage() {
                 </TableRow>
             ) : (
               allUsers.map((user) => (
-                <UserRow key={user.id} user={user} />
+                <UserRow key={user.id} user={user} currentUserId={session.user.id} />
               ))
             )}
           </TableBody>
