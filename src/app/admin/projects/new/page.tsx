@@ -292,7 +292,7 @@ export default function NewProjectPage() {
                         name="amount"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Amount ($)</FormLabel>
+                            <FormLabel>Amount (BDT)</FormLabel>
                             <FormControl>
                                 <Input type="number" placeholder="2500" {...field} />
                             </FormControl>

@@ -1,3 +1,4 @@
+
 import { DollarSign, FolderKanban, Users, CreditCard } from "lucide-react";
 import {
   Card,
@@ -20,10 +21,10 @@ import { projects } from "@/lib/data";
 import type { StatCard as StatCardType } from "@/types";
 
 const statCards: StatCardType[] = [
-    { title: "Total Revenue", value: "$11,200", icon: DollarSign, change: "+15.2%", changeType: "increase" },
+    { title: "Total Revenue", value: "11,200 BDT", icon: DollarSign, change: "+15.2%", changeType: "increase" },
     { title: "Active Projects", value: "3", icon: FolderKanban, change: "+2 from last month", changeType: "increase" },
     { title: "Total Clients", value: "2", icon: Users, change: "All active", changeType: "increase" },
-    { title: "Pending Payments", value: "$8,700", icon: CreditCard, change: "2 projects", changeType: "decrease" },
+    { title: "Pending Payments", value: "8,700 BDT", icon: CreditCard, change: "2 projects", changeType: "decrease" },
 ];
 
 export default function DashboardPage() {
@@ -63,7 +64,7 @@ export default function DashboardPage() {
                   <TableCell>
                     <Badge variant={project.paymentStatus === 'paid' ? 'default' : 'secondary'}>{project.paymentStatus}</Badge>
                   </TableCell>
-                  <TableCell className="text-right">${project.amount.toLocaleString()}</TableCell>
+                  <TableCell className="text-right">{project.amount.toLocaleString()} BDT</TableCell>
                 </TableRow>
               ))}
             </TableBody>

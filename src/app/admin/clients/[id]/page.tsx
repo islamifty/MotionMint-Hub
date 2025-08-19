@@ -69,7 +69,7 @@ export default function ClientDetailPage({ params }: { params: { id: string } })
                     <Badge variant="outline">{project.paymentStatus}</Badge>
                   </TableCell>
                   <TableCell>{new Date(project.createdAt).toLocaleDateString()}</TableCell>
-                  <TableCell className="text-right">${project.amount.toLocaleString()}</TableCell>
+                  <TableCell className="text-right">{project.amount.toLocaleString()} BDT</TableCell>
                 </TableRow>
               ))}
             </TableBody>

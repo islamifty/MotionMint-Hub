@@ -102,7 +102,7 @@ const ProjectTable = ({
           <TableCell>
             <ProjectDate dateString={project.expiryDate} />
           </TableCell>
-          <TableCell className="text-right">${project.amount.toLocaleString()}</TableCell>
+          <TableCell className="text-right">{project.amount.toLocaleString()} BDT</TableCell>
         </TableRow>
       ))}
     </TableBody>
