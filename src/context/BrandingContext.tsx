@@ -87,6 +87,7 @@ export const BrandingProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error("Failed to parse branding from localStorage", error);
     }
+    // Signal that we have loaded from localStorage and are on the client
     setIsLoaded(true);
   }, []);
 
@@ -102,7 +103,8 @@ export const BrandingProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-      if(isLoaded) { // Only apply styles on the client after loading from localStorage
+      // Only apply styles on the client after loading from localStorage to prevent hydration mismatch
+      if(isLoaded) { 
         const root = document.documentElement;
         
         const primaryHsl = parseHsl(branding.primaryColor);

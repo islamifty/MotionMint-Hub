@@ -1,3 +1,4 @@
+
 'use server';
 import { createSession } from '@/lib/session';
 import { readDb } from '@/lib/db';
@@ -19,7 +20,7 @@ export async function login(credentials: {email: string, password: string}) {
     
     await createSession(user);
 
-    // Determine if the user is an admin based on their role property
+    // Determine role from the user object property
     const isAdmin = user.role === 'admin';
     
     return { success: true, isAdmin };

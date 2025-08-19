@@ -34,7 +34,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   
   const fetchUser = useCallback(async () => {
-    setLoading(true);
+    // No need to setLoading(true) here as it's handled initially
     const user = await getCurrentUser();
     setCurrentUser(user);
     setLoading(false);

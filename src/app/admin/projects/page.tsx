@@ -43,17 +43,14 @@ import { deleteProjects, getProjects } from "./actions";
 import { useToast } from "@/hooks/use-toast";
 
 const ProjectDate = ({ dateString }: { dateString: string }) => {
-  const [isClient, setIsClient] = useState(false);
+  const [formattedDate, setFormattedDate] = useState<string | null>(null);
 
   useEffect(() => {
-    setIsClient(true);
-  }, []);
+    // This ensures the date is formatted only on the client, avoiding hydration mismatch.
+    setFormattedDate(format(new Date(dateString), "PP"));
+  }, [dateString]);
 
-  return (
-    <>
-      {isClient ? format(new Date(dateString), "PP") : null}
-    </>
-  );
+  return <>{formattedDate}</>;
 };
 
 const ProjectTable = ({ 

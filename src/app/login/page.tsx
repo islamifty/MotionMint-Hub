@@ -33,7 +33,7 @@ export default function LoginPage() {
     try {
       const result = await login({ email, password });
 
-      if (!result.success) {
+      if (result.success === false) {
         throw new Error(result.error || 'Login failed.');
       }
 
@@ -41,6 +41,10 @@ export default function LoginPage() {
         title: "Login Successful",
         description: "Redirecting to your dashboard.",
       });
+
+      // This forces a refresh of the router's cache, ensuring the new
+      // session cookie is picked up for subsequent navigation.
+      router.refresh();
 
       // Role-based redirection decided by the server
       if (result.isAdmin) {
