@@ -27,10 +27,14 @@ export async function initiateBkashPayment(projectId: string) {
             throw new Error('Project not found');
         }
 
+        const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/bkash/callback`;
+        console.log(`Using callback URL: ${callbackUrl}`);
+
+
         const paymentData = {
             mode: '0011',
             payerReference: 'payment_for_project',
-            callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/bkash/callback`,
+            callback_url: callbackUrl,
             amount: project.amount.toString(),
             currency: 'BDT',
             intent: 'sale',
