@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { File, PlusCircle, Trash2 } from "lucide-react";
+import { File, PlusCircle, Trash2, Edit } from "lucide-react";
 import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
@@ -82,6 +82,7 @@ const ProjectTable = ({
         <TableHead>Status</TableHead>
         <TableHead>Expiry Date</TableHead>
         <TableHead className="text-right">Amount</TableHead>
+        <TableHead className="w-[80px] text-right">Actions</TableHead>
       </TableRow>
     </TableHeader>
     <TableBody>
@@ -103,6 +104,14 @@ const ProjectTable = ({
             <ProjectDate dateString={project.expiryDate} />
           </TableCell>
           <TableCell className="text-right">{project.amount.toLocaleString()} BDT</TableCell>
+          <TableCell className="text-right">
+             <Button asChild size="icon" variant="ghost" className="h-8 w-8">
+                <Link href={`/admin/projects/edit/${project.id}`}>
+                  <Edit className="h-4 w-4" />
+                  <span className="sr-only">Edit</span>
+                </Link>
+              </Button>
+          </TableCell>
         </TableRow>
       ))}
     </TableBody>

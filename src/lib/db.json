@@ -27,22 +27,7 @@
       "createdAt": "2025-08-19T17:04:57.607Z"
     }
   ],
-  "projects": [
-    {
-      "id": "proj-1755593453211",
-      "title": "Test",
-      "description": "Test",
-      "clientId": "user-1755548223377",
-      "amount": 55,
-      "expiryDate": "2025-08-28T18:00:00.000Z",
-      "clientName": "Islam Ifty",
-      "paymentStatus": "pending",
-      "orderId": "ORD-1755593453211",
-      "createdAt": "2025-08-19T08:50:53.211Z",
-      "previewVideoUrl": "https://mydrive.motionmint.top/index.php/s/H4dExyR255fgk9o",
-      "finalVideoUrl": "https://mydrive.motionmint.top/index.php/s/H4dExyR255fgk9o"
-    }
-  ],
+  "projects": [],
   "settings": {
     "nextcloudUrl": "https://mydrive.motionmint.top/remote.php/dav/files/islamifty",
     "nextcloudUser": "islamifty",
