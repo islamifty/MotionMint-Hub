@@ -4,10 +4,12 @@
 function getProxyPath(directUrl: string): string {
     try {
         const url = new URL(directUrl);
-        // We want the path starting from /remote.php/... or /s/...
-        // The API route will handle reconstructing the full path.
-        // The [...path] in the route captures everything after /api/video/
-        return `/api/video${url.pathname}${url.search}`;
+        // We want the path part of the URL, but without the leading slash.
+        // e.g., for "https://example.com/remote.php/dav/files/video.mp4",
+        // pathname is "/remote.php/dav/files/video.mp4"
+        // We slice(1) to get "remote.php/dav/files/video.mp4"
+        const pathWithoutHost = url.pathname.slice(1) + url.search;
+        return `/api/video/${pathWithoutHost}`;
     } catch (e) {
         console.error("Invalid URL for proxy path:", directUrl);
         return ""; // Return empty string if URL is invalid

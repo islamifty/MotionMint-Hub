@@ -25,14 +25,16 @@ export async function GET(
   }
 
   // 3. Construct the actual Nextcloud file URL from the request path
+  // The client will send the path starting from 'remote.php' or 's'
   const filePath = params.path.join('/');
   
-  // The nextcloudUrl from settings is the base DAV path, remove it to get the server root
+  // Get the base URL (e.g., https://mydrive.motionmint.top)
   const urlObject = new URL(nextcloudUrl);
   const nextcloudBaseUrl = `${urlObject.protocol}//${urlObject.host}`;
 
-  // This is the direct file URL, not a share link
-  const fileUrl = `${nextcloudBaseUrl}${filePath}`;
+  // The final URL is the base URL plus the path sent by the client.
+  // Example filePath: 'remote.php/dav/files/user/video.mp4' or 'index.php/s/sharelink/download'
+  const fileUrl = `${nextcloudBaseUrl}/${filePath}`;
 
   // 4. Fetch the video from Nextcloud using credentials
   try {
