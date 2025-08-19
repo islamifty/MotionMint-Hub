@@ -27,13 +27,15 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
   const isPaid = project.paymentStatus === 'paid';
 
   const getDirectVideoLink = (url: string) => {
+    // This logic is important for the download link, 
+    // the player will use the proxy.
     if (url.includes('/s/') && !url.endsWith('/download')) {
       return `${url}/download`;
     }
     return url;
   };
 
-  const videoUrl = getDirectVideoLink(project.previewVideoUrl);
+  const videoUrl = project.previewVideoUrl; // Pass the original URL to the player
   const finalVideoUrl = getDirectVideoLink(project.finalVideoUrl || project.previewVideoUrl);
 
 

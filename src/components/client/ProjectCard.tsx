@@ -13,6 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Project } from "@/types";
+import { VideoPlayer } from "./VideoPlayer";
 
 interface ProjectCardProps {
   project: Project;
@@ -21,27 +22,13 @@ interface ProjectCardProps {
 export function ProjectCard({ project }: ProjectCardProps) {
   const isExpired = new Date(project.expiryDate) < new Date();
 
-  const getDirectVideoLink = (url: string) => {
-    if (url.includes('/s/') && !url.endsWith('/download')) {
-      return `${url}/download`;
-    }
-    return url;
-  };
-
-  const videoUrl = getDirectVideoLink(project.previewVideoUrl);
+  const videoUrl = project.previewVideoUrl;
 
   return (
     <Card className="flex flex-col">
       <CardHeader>
-        <div className="relative aspect-video w-full overflow-hidden rounded-md">
-            <video
-                src={videoUrl}
-                controls
-                controlsList="nodownload"
-                onContextMenu={(e) => e.preventDefault()}
-                className="w-full h-full object-cover bg-black"
-                preload="metadata"
-            />
+        <div className="relative aspect-video w-full overflow-hidden rounded-md bg-black">
+            <VideoPlayer src={videoUrl} />
         </div>
       </CardHeader>
       <CardContent className="flex-grow">
