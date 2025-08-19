@@ -1,37 +1,44 @@
-
 "use client";
 
-function getProxyPath(directUrl: string): string {
-    if (!directUrl) return "";
+import { useMemo } from 'react';
+
+// This function checks if a URL is a Nextcloud share link and appends /download if needed.
+function getPlayableVideoLink(url: string): string {
+    if (!url) return "";
     try {
-        const url = new URL(directUrl);
-        // We want the path part of the URL, but without the leading slash.
-        // e.g., for "https://example.com/remote.php/dav/files/video.mp4",
-        // we want "remote.php/dav/files/video.mp4"
-        const pathAfterHost = url.href.substring(url.origin.length + 1);
-        return `/api/video/${pathAfterHost}`;
+        // Check for Nextcloud's specific share link structure
+        if (url.includes('/s/') || url.includes('/index.php/s/')) {
+            const urlObj = new URL(url);
+            // Avoid adding /download if it's already there
+            if (!urlObj.pathname.endsWith('/download')) {
+                // Ensure there's no trailing slash before adding /download
+                return `${url.replace(/\/$/, '')}/download`;
+            }
+        }
+        // If it's not a share link or already has /download, return it as is.
+        return url;
     } catch (e) {
-        console.error("Invalid URL for proxy path:", directUrl);
-        return ""; // Return empty string if URL is invalid
+        console.error("Invalid video URL:", url);
+        return ""; // Return empty string for invalid URLs
     }
 }
-
 
 interface VideoPlayerProps {
     src: string;
 }
 
 export function VideoPlayer({ src }: VideoPlayerProps) {
-    // Transform the direct Nextcloud URL into a proxied URL through our API
-    const proxiedSrc = getProxyPath(src);
+    // Memoize the result to avoid re-calculating the URL on every render
+    const playableSrc = useMemo(() => getPlayableVideoLink(src), [src]);
 
-    if (!proxiedSrc) {
+    if (!playableSrc) {
         return <div className="w-full h-full bg-black flex items-center justify-center text-white">Invalid Video URL</div>;
     }
 
     return (
         <video
-            src={proxiedSrc}
+            key={playableSrc} // Use key to force re-render if src changes
+            src={playableSrc}
             controls
             controlsList="nodownload"
             onContextMenu={(e) => e.preventDefault()}
