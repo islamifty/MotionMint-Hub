@@ -1,21 +1,22 @@
 
 'use server';
 
-import { createPayment } from '@/lib/bkash';
+import { createPayment as createBkashPayment } from '@/lib/bkash';
+import { createPipraPayPayment } from '@/lib/piprapay';
 import { readDb } from '@/lib/db';
-import type { Project } from '@/types';
+import type { Project, User } from '@/types';
 import { getSession } from '@/lib/session';
 
-export async function getProjectDetails(projectId: string): Promise<Project | null> {
+export async function getProjectDetails(projectId: string): Promise<{ project: Project | null, user: User | null }> {
     const session = await getSession();
     if (!session?.user) {
-        return null;
+        return { project: null, user: null };
     }
 
     const db = readDb();
     const project = db.projects.find((p) => p.id === projectId && p.clientId === session.user.id);
     
-    return project || null;
+    return { project: project || null, user: session.user };
 }
 
 export async function initiateBkashPayment(projectId: string) {
@@ -26,31 +27,57 @@ export async function initiateBkashPayment(projectId: string) {
         if (!project) {
             throw new Error('Project not found');
         }
-
+        
         const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/bkash/callback`;
-        console.log(`Using callback URL: ${callbackUrl}`);
-
 
         const paymentData = {
             mode: '0011',
             payerReference: 'payment_for_project',
-            callback_url: callbackUrl,
+            callbackURL: callbackUrl,
             amount: project.amount.toString(),
             currency: 'BDT',
             intent: 'sale',
-            merchant_invoice_number: project.orderId,
+            merchantInvoiceNumber: project.orderId,
         };
 
-        const result = await createPayment(paymentData);
+        const result = await createBkashPayment(paymentData);
 
         if (result && result.bkashURL) {
-            return { success: true, bkashURL: result.bkashURL };
+            return { success: true, paymentURL: result.bkashURL };
         } else {
             console.error('bKash payment initiation failed:', result);
             return { success: false, error: 'Could not initiate bKash payment.' };
         }
     } catch (error: any) {
         console.error('Error in initiateBkashPayment:', error.message);
+        return { success: false, error: error.message || 'An unexpected error occurred.' };
+    }
+}
+
+export async function initiatePipraPayPayment(projectId: string, user: User) {
+     try {
+        const db = readDb();
+        const project = db.projects.find((p) => p.id === projectId);
+
+        if (!project) {
+            return { success: false, error: 'Project not found' };
+        }
+        
+        const customerInfo = {
+            name: user.name,
+            email: user.email,
+            phone: '01234567890' // Placeholder phone
+        };
+        
+        const result = await createPipraPayPayment(project, customerInfo);
+
+        if (result.success) {
+            return { success: true, paymentURL: result.payment_url };
+        } else {
+            return { success: false, error: result.error || 'Could not initiate PipraPay payment.' };
+        }
+    } catch (error: any) {
+        console.error('Error in initiatePipraPayPayment:', error.message);
         return { success: false, error: error.message || 'An unexpected error occurred.' };
     }
 }

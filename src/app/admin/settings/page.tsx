@@ -107,10 +107,14 @@ export default function SettingsPage() {
                 username: settings.nextcloudUser || '',
                 appPassword: settings.nextcloudPassword || ''
             });
+            pipraPayForm.reset({
+                apiKey: settings.piprapayApiKey || '',
+                apiSecret: settings.piprapayApiSecret || ''
+            });
         }
     }
     loadSettings();
-  }, [nextcloudForm]);
+  }, [nextcloudForm, pipraPayForm]);
 
   useEffect(() => {
     brandingForm.reset({
@@ -191,13 +195,13 @@ export default function SettingsPage() {
     if (result.success) {
       toast({
         title: "Settings Saved",
-        description: "PipraPay settings have been successfully updated.",
+        description: result.message,
       });
     } else {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to save PipraPay settings. Please try again.",
+        description: result.message,
       });
     }
   };
@@ -384,10 +388,12 @@ export default function SettingsPage() {
                       </FormItem>
                     )}
                   />
-                  <Button type="submit" disabled={pipraPayForm.formState.isSubmitting}>
-                    {pipraPayForm.formState.isSubmitting ? "Saving..." : "Save PipraPay Settings"}
-                  </Button>
                 </CardContent>
+                 <CardFooter>
+                    <Button type="submit" disabled={pipraPayForm.formState.isSubmitting}>
+                        {pipraPayForm.formState.isSubmitting ? "Saving..." : "Save PipraPay Settings"}
+                    </Button>
+                </CardFooter>
               </form>
             </Form>
           </Card>

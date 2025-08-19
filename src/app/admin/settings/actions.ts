@@ -44,12 +44,12 @@ export async function verifyNextcloudConnection(data: unknown) {
 export async function verifyBKashConnection() {
     try {
         // We can simulate a token request to verify credentials
-        const { BKASH_APP_KEY, BKASH_APP_SECRET, BKASH_USERNAME, BKASH_PASSWORD } = process.env;
+        const { BKASH_APP_KEY, BKASH_APP_SECRET, BKASH_USERNAME, BKASH_PASSWORD, BKASH_MODE } = process.env;
         if (!BKASH_APP_KEY || !BKASH_APP_SECRET || !BKASH_USERNAME || !BKASH_PASSWORD) {
             return { success: false, message: 'bKash credentials are not set in the .env file.' };
         }
         
-        const response = await fetch(`${process.env.BKASH_MODE === 'sandbox' ? 'https://tokenized.sandbox.bka.sh/v1.2.0-beta' : 'https://tokenized.pay.bka.sh/v1.2.0-beta'}/tokenized/checkout/token/grant`, {
+        const response = await fetch(`${BKASH_MODE === 'sandbox' ? 'https://tokenized.sandbox.bka.sh/v1.2.0-beta' : 'https://tokenized.pay.bka.sh/v1.2.0-beta'}/tokenized/checkout/token/grant`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -92,14 +92,21 @@ export async function saveNextcloudSettings(data: unknown) {
     }
 }
 
-// bKash settings are now managed in .env file, so this function is no longer needed.
-// We can keep it here but commented out, or remove it. Let's remove it for clarity.
-
 export async function savePipraPaySettings(data: unknown) {
     const result = pipraPaySchema.safeParse(data);
     if (!result.success) {
         return { success: false, error: result.error.flatten() };
     }
-    console.log('Saving PipraPay settings:', result.data);
-    return { success: true };
+    
+    try {
+        const { apiKey, apiSecret } = result.data;
+        const db = readDb();
+        db.settings.piprapayApiKey = apiKey;
+        db.settings.piprapayApiSecret = apiSecret;
+        writeDb(db);
+        return { success: true, message: "PipraPay settings saved successfully." };
+    } catch (error) {
+        console.error("Failed to save PipraPay settings:", error);
+        return { success: false, message: "Failed to save settings." };
+    }
 }

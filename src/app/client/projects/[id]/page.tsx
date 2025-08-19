@@ -15,9 +15,9 @@ import { Button } from "@/components/ui/button";
 import { Download, AlertTriangle, Loader2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { VideoPlayer } from "@/components/client/VideoPlayer";
-import type { Project } from "@/types";
+import type { Project, User } from "@/types";
 import { useEffect, useState } from "react";
-import { getProjectDetails, initiateBkashPayment } from "./actions";
+import { getProjectDetails, initiateBkashPayment, initiatePipraPayPayment } from "./actions";
 import { useToast } from "@/hooks/use-toast";
 
 export default function ProjectDetailPage() {
@@ -25,16 +25,19 @@ export default function ProjectDetailPage() {
   const id = params.id as string;
 
   const [project, setProject] = useState<Project | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isPaying, setIsPaying] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'bkash' | 'piprapay' | null>(null);
   const { toast } = useToast();
   
   useEffect(() => {
     if (!id) return;
     async function fetchProject() {
-        const foundProject = await getProjectDetails(id);
-        if (foundProject) {
+        const { project: foundProject, user: foundUser } = await getProjectDetails(id);
+        if (foundProject && foundUser) {
             setProject(foundProject);
+            setUser(foundUser);
         }
         setLoading(false);
     }
@@ -50,23 +53,31 @@ export default function ProjectDetailPage() {
     )
   }
 
-  if (!project) {
+  if (!project || !user) {
     notFound();
   }
 
-  const handleBkashPayment = async () => {
+  const handlePayment = async (method: 'bkash' | 'piprapay') => {
     setIsPaying(true);
-    const result = await initiateBkashPayment(project.id);
+    setPaymentMethod(method);
 
-    if (result.success && result.bkashURL) {
-      window.location.href = result.bkashURL;
+    let result;
+    if (method === 'bkash') {
+        result = await initiateBkashPayment(project.id);
+    } else {
+        result = await initiatePipraPayPayment(project.id, user);
+    }
+    
+    if (result.success && result.paymentURL) {
+      window.location.href = result.paymentURL;
     } else {
       toast({
         variant: "destructive",
         title: "Payment Error",
-        description: result.error || "Could not connect to bKash. Please try again.",
+        description: result.error || `Could not connect to ${method}. Please try again.`,
       });
       setIsPaying(false);
+      setPaymentMethod(null);
     }
   };
 
@@ -141,13 +152,19 @@ export default function ProjectDetailPage() {
                                         </Button>
                                      ) : (
                                         <>
-                                            <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white" disabled>Pay with PipraPay</Button>
                                             <Button 
-                                                className="w-full bg-pink-500 hover:bg-pink-600 text-white" 
-                                                onClick={handleBkashPayment}
+                                                className="w-full bg-blue-600 hover:bg-blue-700 text-white" 
+                                                onClick={() => handlePayment('piprapay')}
                                                 disabled={isPaying}
                                             >
-                                                {isPaying ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Connecting...</> : 'Pay with bKash'}
+                                                {isPaying && paymentMethod === 'piprapay' ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Connecting...</> : 'Pay with PipraPay'}
+                                            </Button>
+                                            <Button 
+                                                className="w-full bg-pink-500 hover:bg-pink-600 text-white" 
+                                                onClick={() => handlePayment('bkash')}
+                                                disabled={isPaying}
+                                            >
+                                                {isPaying && paymentMethod === 'bkash' ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Connecting...</> : 'Pay with bKash'}
                                             </Button>
                                         </>
                                      )}
