@@ -105,9 +105,7 @@ export default function NewProjectPage() {
       ]);
       setClients(serverClients);
       if (settings?.nextcloudUrl) {
-        // The URL from settings is the WebDAV endpoint, we need the origin for shareable links
-        const url = new URL(settings.nextcloudUrl);
-        setNextcloudBaseUrl(url.origin);
+        setNextcloudBaseUrl(settings.nextcloudUrl);
       }
     }
     loadInitialData();
@@ -151,9 +149,9 @@ export default function NewProjectPage() {
          return;
      }
      
-     // This creates a WebDAV URL, which is good for admin preview but not for clients.
-     // The recommended workflow is to paste a public share link for clients.
-     const fullUrl = `${nextcloudBaseUrl}${file.filename}`;
+     // This creates a WebDAV URL, which is good for admin preview but may not work for clients.
+     // It's better to paste a public share link for the best client experience.
+     const fullUrl = `${nextcloudBaseUrl}${file.filename.substring(file.filename.indexOf('/files'))}`;
      form.setValue("videoUrl", fullUrl, { shouldValidate: true });
      setIsModalOpen(false);
   }
@@ -413,3 +411,5 @@ export default function NewProjectPage() {
     </div>
   );
 }
+
+    
