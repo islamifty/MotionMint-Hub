@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Download, CreditCard, Clock, AlertTriangle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { VideoPlayer } from "@/components/client/VideoPlayer";
 
 export default function ProjectDetailPage({ params }: { params: { id: string } }) {
   const db = readDb();
@@ -40,14 +41,7 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
     <div className="container py-8">
         <div className="max-w-4xl mx-auto">
             <div className="relative mb-6 aspect-video w-full overflow-hidden rounded-lg border shadow-lg bg-black">
-                <video
-                    src={videoUrl}
-                    controls
-                    controlsList="nodownload"
-                    onContextMenu={(e) => e.preventDefault()}
-                    className="w-full h-full object-contain"
-                    preload="auto"
-                />
+                <VideoPlayer src={videoUrl} />
             </div>
 
             <div className="grid md:grid-cols-3 gap-6">
