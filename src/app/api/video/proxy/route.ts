@@ -32,7 +32,8 @@ export async function GET(request: NextRequest) {
 
   const headers = new Headers();
   
-  // Add authentication only if it's a direct file path and credentials exist
+  // Add authentication only if it's a direct file path and credentials exist.
+  // Public share links (/s/...) do not require authentication.
   const isShareLink = targetUrl.pathname.includes('/s/') || targetUrl.pathname.includes('/index.php/s/');
   
   if (!isShareLink && nextcloudUser && nextcloudPassword) {
