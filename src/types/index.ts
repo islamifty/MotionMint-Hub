@@ -47,8 +47,4 @@ export type AppSettings = {
     nextcloudUrl?: string;
     nextcloudUser?: string;
     nextcloudPassword?: string;
-    bkashAppKey?: string;
-    bkashAppSecret?: string;
-    bkashUsername?: string;
-    bkashPassword?: string;
 };

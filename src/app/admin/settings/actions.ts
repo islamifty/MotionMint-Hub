@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -8,13 +9,6 @@ const nextcloudSchema = z.object({
     nextcloudUrl: z.string().url(),
     username: z.string().min(1),
     appPassword: z.string().min(1),
-});
-
-const bKashSchema = z.object({
-    appKey: z.string().min(1),
-    appSecret: z.string().min(1),
-    username: z.string().min(1),
-    password: z.string().min(1),
 });
 
 const pipraPaySchema = z.object({
@@ -47,14 +41,35 @@ export async function verifyNextcloudConnection(data: unknown) {
     }
 }
 
-export async function verifyBKashConnection(data: unknown) {
-    const result = bKashSchema.safeParse(data);
-    if (!result.success) {
-        return { success: false, message: 'Invalid credentials provided.' };
+export async function verifyBKashConnection() {
+    try {
+        // We can simulate a token request to verify credentials
+        const { BKASH_APP_KEY, BKASH_APP_SECRET, BKASH_USERNAME, BKASH_PASSWORD } = process.env;
+        if (!BKASH_APP_KEY || !BKASH_APP_SECRET || !BKASH_USERNAME || !BKASH_PASSWORD) {
+            return { success: false, message: 'bKash credentials are not set in the .env file.' };
+        }
+        
+        const response = await fetch(`${process.env.BKASH_MODE === 'sandbox' ? 'https://tokenized.sandbox.bka.sh/v1.2.0-beta' : 'https://tokenized.pay.bka.sh/v1.2.0-beta'}/tokenized/checkout/token/grant`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'username': BKASH_USERNAME,
+                'password': BKASH_PASSWORD,
+            },
+            body: JSON.stringify({ app_key: BKASH_APP_KEY, app_secret: BKASH_APP_SECRET }),
+        });
+
+        const data = await response.json();
+        if (response.ok && data.id_token) {
+            return { success: true, message: 'bKash connection successful!' };
+        } else {
+            return { success: false, message: data.statusMessage || 'bKash connection failed.' };
+        }
+    } catch (error) {
+        console.error('bKash connection test error:', error);
+        return { success: false, message: 'An error occurred while testing the connection.' };
     }
-    console.log('Verifying bKash credentials (mock):', result.data);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return { success: true, message: 'bKash connection successful! (This is a mock response)' };
 }
 
 export async function saveNextcloudSettings(data: unknown) {
@@ -77,26 +92,8 @@ export async function saveNextcloudSettings(data: unknown) {
     }
 }
 
-export async function saveBKashSettings(data: unknown) {
-    const result = bKashSchema.safeParse(data);
-    if (!result.success) {
-        return { success: false, error: result.error.flatten() };
-    }
-
-    try {
-        const { appKey, appSecret, username, password } = result.data;
-        const db = readDb();
-        db.settings.bkashAppKey = appKey;
-        db.settings.bkashAppSecret = appSecret;
-        db.settings.bkashUsername = username;
-        db.settings.bkashPassword = password;
-        writeDb(db);
-        return { success: true, message: "bKash settings saved successfully." };
-    } catch (error) {
-        console.error("Failed to save bKash settings:", error);
-        return { success: false, message: "Failed to save settings." };
-    }
-}
+// bKash settings are now managed in .env file, so this function is no longer needed.
+// We can keep it here but commented out, or remove it. Let's remove it for clarity.
 
 export async function savePipraPaySettings(data: unknown) {
     const result = pipraPaySchema.safeParse(data);

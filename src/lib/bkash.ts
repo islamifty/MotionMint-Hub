@@ -1,15 +1,15 @@
-import { readDb } from './db';
 
-// This is a simplified bKash API client. In a real-world scenario, you'd want more robust error handling.
+import 'server-only';
 
-const BKASH_API_BASE_URL = 'https://tokenized.pay.bka.sh/v1.2.0-beta'; // Use PRODUCTION URL
+const BKASH_API_BASE_URL = process.env.BKASH_MODE === 'sandbox' 
+    ? 'https://tokenized.sandbox.bka.sh/v1.2.0-beta' 
+    : 'https://tokenized.pay.bka.sh/v1.2.0-beta';
 
 async function getBkashToken(): Promise<string> {
-    const db = readDb();
-    const { bkashAppKey, bkashAppSecret, bkashUsername, bkashPassword } = db.settings;
+    const { BKASH_APP_KEY, BKASH_APP_SECRET, BKASH_USERNAME, BKASH_PASSWORD } = process.env;
 
-    if (!bkashAppKey || !bkashAppSecret || !bkashUsername || !bkashPassword) {
-        throw new Error('bKash credentials are not configured in settings.');
+    if (!BKASH_APP_KEY || !BKASH_APP_SECRET || !BKASH_USERNAME || !BKASH_PASSWORD) {
+        throw new Error('bKash credentials are not configured in environment variables.');
     }
 
     const response = await fetch(`${BKASH_API_BASE_URL}/tokenized/checkout/token/grant`, {
@@ -17,17 +17,20 @@ async function getBkashToken(): Promise<string> {
         headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-            'username': bkashUsername,
-            'password': bkashPassword,
+            'username': BKASH_USERNAME,
+            'password': BKASH_PASSWORD,
         },
         body: JSON.stringify({
-             app_key: bkashAppKey, 
-             app_secret: bkashAppSecret 
+             app_key: BKASH_APP_KEY, 
+             app_secret: BKASH_APP_SECRET 
         }),
+        cache: 'no-store'
     });
 
     const data = await response.json();
+
     if (!response.ok || !data.id_token) {
+        console.error('bKash token grant failed:', data);
         throw new Error(data.statusMessage || 'Failed to get bKash token.');
     }
     return data.id_token;
@@ -35,8 +38,7 @@ async function getBkashToken(): Promise<string> {
 
 export async function createPayment(paymentRequest: any) {
     const id_token = await getBkashToken();
-    const db = readDb();
-    const { bkashAppKey } = db.settings;
+    const { BKASH_APP_KEY } = process.env;
 
     const response = await fetch(`${BKASH_API_BASE_URL}/tokenized/checkout/create`, {
         method: 'POST',
@@ -44,34 +46,28 @@ export async function createPayment(paymentRequest: any) {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
             'Authorization': id_token,
-            'X-App-Key': bkashAppKey || '',
+            'X-App-Key': BKASH_APP_KEY || '',
         },
-        body: JSON.stringify({
-            mode: paymentRequest.mode,
-            payerReference: paymentRequest.payerReference,
-            callbackURL: paymentRequest.callbackURL,
-            amount: paymentRequest.amount,
-            currency: paymentRequest.currency,
-            intent: paymentRequest.intent,
-            merchantInvoiceNumber: paymentRequest.merchantInvoiceNumber,
-        }),
+        body: JSON.stringify(paymentRequest),
+        cache: 'no-store'
     });
-
+    
     const data = await response.json();
+
     if (response.ok && data.statusCode === '0000') {
         return {
             bkashURL: data.bkashURL,
             paymentID: data.paymentID
         };
     } else {
+        console.error("bKash create payment failed:", data);
         throw new Error(data.statusMessage || 'Failed to create bKash payment.');
     }
 }
 
 export async function executePayment(paymentID: string) {
     const id_token = await getBkashToken();
-    const db = readDb();
-    const { bkashAppKey } = db.settings;
+    const { BKASH_APP_KEY } = process.env;
 
     const response = await fetch(`${BKASH_API_BASE_URL}/tokenized/checkout/execute`, {
         method: 'POST',
@@ -79,10 +75,18 @@ export async function executePayment(paymentID: string) {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
             'Authorization': id_token,
-            'X-App-Key': bkashAppKey || '',
+            'X-App-Key': BKASH_APP_KEY || '',
         },
         body: JSON.stringify({ paymentID }),
+        cache: 'no-store'
     });
     
-    return await response.json();
+    const data = await response.json();
+    
+    if (response.ok && data.statusCode === '0000') {
+        return data;
+    } else {
+        console.error("bKash execute payment failed:", data);
+        throw new Error(data.statusMessage || 'Failed to execute bKash payment.');
+    }
 }

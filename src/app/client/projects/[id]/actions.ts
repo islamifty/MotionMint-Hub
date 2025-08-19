@@ -1,6 +1,6 @@
+
 'use server';
 
-import { redirect } from 'next/navigation';
 import { createPayment } from '@/lib/bkash';
 import { readDb } from '@/lib/db';
 import type { Project } from '@/types';
@@ -29,7 +29,7 @@ export async function initiateBkashPayment(projectId: string) {
 
         const paymentData = {
             mode: '0011',
-            payerReference: 'payment_for_project', // Fix: Use a valid non-empty string
+            payerReference: ' ', 
             callbackURL: `${process.env.NEXT_PUBLIC_APP_URL}/api/bkash/callback`,
             amount: project.amount.toString(),
             currency: 'BDT',
@@ -45,8 +45,8 @@ export async function initiateBkashPayment(projectId: string) {
             console.error('bKash payment initiation failed:', result);
             return { success: false, error: 'Could not initiate bKash payment.' };
         }
-    } catch (error) {
-        console.error('Error in initiateBkashPayment:', error);
-        return { success: false, error: 'An unexpected error occurred.' };
+    } catch (error: any) {
+        console.error('Error in initiateBkashPayment:', error.message);
+        return { success: false, error: error.message || 'An unexpected error occurred.' };
     }
 }

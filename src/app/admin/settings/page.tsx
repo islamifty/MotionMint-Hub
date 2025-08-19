@@ -24,7 +24,6 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
   saveNextcloudSettings,
-  saveBKashSettings,
   savePipraPaySettings,
   verifyNextcloudConnection,
   verifyBKashConnection,
@@ -39,20 +38,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useBranding } from "@/context/BrandingContext";
-import { Upload } from "lucide-react";
-import { useFormPersistence } from "@/hooks/use-form-persistence";
+import { Upload, Info } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const nextcloudSchema = z.object({
   nextcloudUrl: z.string().url({ message: "Please enter a valid URL." }),
   username: z.string().min(1, { message: "Username is required." }),
   appPassword: z.string().min(1, { message: "App Password is required." }),
-});
-
-const bKashSchema = z.object({
-  appKey: z.string().min(1, { message: "App Key is required." }),
-  appSecret: z.string().min(1, { message: "App Secret is required." }),
-  username: z.string().min(1, { message: "Username is required." }),
-  password: z.string().min(1, { message: "Password is required." }),
 });
 
 const pipraPaySchema = z.object({
@@ -68,7 +60,6 @@ const brandingSchema = z.object({
 });
 
 type NextcloudFormValues = z.infer<typeof nextcloudSchema>;
-type BKashFormValues = z.infer<typeof bKashSchema>;
 type PipraPayFormValues = z.infer<typeof pipraPaySchema>;
 type BrandingFormValues = z.infer<typeof brandingSchema>;
 
@@ -91,13 +82,6 @@ export default function SettingsPage() {
     resolver: zodResolver(nextcloudSchema),
     defaultValues: { nextcloudUrl: "", username: "", appPassword: "" },
   });
-
-  const bKashForm = useForm<BKashFormValues>({
-    resolver: zodResolver(bKashSchema),
-    defaultValues: { appKey: "", appSecret: "", username: "", password: "" },
-  });
-  
-  useFormPersistence<BKashFormValues>('bKashSettingsForm', bKashForm);
 
   const pipraPayForm = useForm<PipraPayFormValues>({
     resolver: zodResolver(pipraPaySchema),
@@ -123,20 +107,10 @@ export default function SettingsPage() {
                 username: settings.nextcloudUser || '',
                 appPassword: settings.nextcloudPassword || ''
             });
-            // bKash form is now handled by useFormPersistence, but we can still load initial DB values
-            const storedBKash = localStorage.getItem('bKashSettingsForm');
-            if (!storedBKash) {
-                bKashForm.reset({
-                    appKey: settings.bkashAppKey || '',
-                    appSecret: settings.bkashAppSecret || '',
-                    username: settings.bkashUsername || '',
-                    password: settings.bkashPassword || ''
-                });
-            }
         }
     }
     loadSettings();
-  }, [nextcloudForm, bKashForm]);
+  }, [nextcloudForm]);
 
   useEffect(() => {
     brandingForm.reset({
@@ -193,18 +167,8 @@ export default function SettingsPage() {
   };
 
   const handleTestBKashConnection = async () => {
-    const isValid = await bKashForm.trigger();
-    if (!isValid) {
-      toast({
-        variant: "destructive",
-        title: "Validation Error",
-        description: "Please fill in all bKash fields before testing.",
-      });
-      return;
-    }
-
     setIsTestingBKash(true);
-    const result = await verifyBKashConnection(bKashForm.getValues());
+    const result = await verifyBKashConnection();
     setIsTestingBKash(false);
 
     if (result.success) {
@@ -220,24 +184,6 @@ export default function SettingsPage() {
       });
     }
   };
-
-  const onBKashSubmit: SubmitHandler<BKashFormValues> = async (data) =>
-    {
-      const result = await saveBKashSettings(data);
-      if (result.success) {
-        toast({
-          title: "Settings Saved",
-          description: result.message,
-        });
-        localStorage.removeItem('bKashSettingsForm');
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: result.message,
-        });
-      }
-    };
 
   const onPipraPaySubmit: SubmitHandler<PipraPayFormValues> = async (data) =>
   {
@@ -371,80 +317,33 @@ export default function SettingsPage() {
 
         <TabsContent value="bkash">
           <Card>
-            <Form {...bKashForm}>
-              <form onSubmit={bKashForm.handleSubmit(onBKashSubmit)}>
-                <CardHeader>
-                  <CardTitle>bKash Payment Gateway</CardTitle>
-                  <CardDescription>
-                    Enter your bKash API credentials to accept payments. Unsaved changes are stored locally.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <FormField
-                    control={bKashForm.control}
-                    name="appKey"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>App Key</FormLabel>
-                        <FormControl>
-                          <Input type="password" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={bKashForm.control}
-                    name="appSecret"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>App Secret</FormLabel>
-                        <FormControl>
-                          <Input type="password" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={bKashForm.control}
-                    name="username"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Username</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={bKashForm.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-                 <CardFooter>
-                    <div className="flex gap-2">
-                        <Button type="submit" disabled={bKashForm.formState.isSubmitting}>
-                            {bKashForm.formState.isSubmitting ? "Saving..." : "Save bKash Settings"}
-                        </Button>
-                        <Button type="button" variant="outline" onClick={handleTestBKashConnection} disabled={isTestingBKash}>
-                            {isTestingBKash ? "Testing..." : "Test Connection"}
-                        </Button>
-                    </div>
-                </CardFooter>
-              </form>
-            </Form>
+            <CardHeader>
+              <CardTitle>bKash Payment Gateway</CardTitle>
+              <CardDescription>
+                Your bKash API credentials are managed in the project's .env file for security.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Alert>
+                    <Info className="h-4 w-4" />
+                    <AlertTitle>Environment Configuration</AlertTitle>
+                    <AlertDescription>
+                        To configure bKash, please add the following variables to your <strong>.env</strong> file:
+                        <ul className="list-disc pl-5 mt-2 text-xs">
+                            <li>BKASH_APP_KEY</li>
+                            <li>BKASH_APP_SECRET</li>
+                            <li>BKASH_USERNAME</li>
+                            <li>BKASH_PASSWORD</li>
+                            <li>BKASH_MODE (set to 'sandbox' or 'production')</li>
+                        </ul>
+                    </AlertDescription>
+                </Alert>
+            </CardContent>
+             <CardFooter>
+                <Button type="button" variant="outline" onClick={handleTestBKashConnection} disabled={isTestingBKash}>
+                    {isTestingBKash ? "Testing..." : "Test Connection"}
+                </Button>
+            </CardFooter>
           </Card>
         </TabsContent>
 
