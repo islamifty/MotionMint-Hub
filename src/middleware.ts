@@ -4,30 +4,36 @@ import { decrypt } from '@/lib/session';
 import { cookies } from 'next/headers';
 
 const protectedRoutes = ['/admin', '/client', '/profile', '/settings'];
-const publicRoutes = ['/login', '/register', '/forgot-password', '/api/bkash/callback', '/api/piprapay/callback'];
+const publicRoutes = ['/login', '/register', '/forgot-password'];
+const apiCallbackRoutes = ['/api/bkash/callback', '/api/piprapay/callback'];
 
 export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
+  const cookie = cookies().get('session')?.value;
+  const session = await decrypt(cookie);
+  const currentUser = session?.user;
 
-  // Check if the route is public
-  if (publicRoutes.some(route => path.startsWith(route))) {
+  // Allow API callbacks to pass through without checks
+  if (apiCallbackRoutes.some(route => path.startsWith(route))) {
     return NextResponse.next();
   }
 
-  // Check if the route is protected
   const isProtectedRoute = protectedRoutes.some((prefix) => path.startsWith(prefix));
 
-  if (isProtectedRoute) {
-    const cookie = cookies().get('session')?.value;
-    const session = await decrypt(cookie);
+  if (!currentUser && isProtectedRoute) {
+    // If no user and trying to access a protected route, redirect to login
+    return NextResponse.redirect(new URL('/login', req.nextUrl));
+  }
+  
+  if (currentUser) {
+    const isAdmin = currentUser.role === 'admin';
 
-    if (!session?.user) {
-      return NextResponse.redirect(new URL('/login', req.nextUrl));
+    // If user is logged in, prevent access to login/register pages
+    if (publicRoutes.includes(path)) {
+       return NextResponse.redirect(new URL(isAdmin ? '/admin/dashboard' : '/client/dashboard', req.nextUrl));
     }
     
-    // Role-based access control
-    const isAdmin = session.user.role === 'admin';
-
+    // Role-based access control for protected routes
     if (path.startsWith('/admin') && !isAdmin) {
       // If a non-admin tries to access an admin route, redirect to client dashboard
       return NextResponse.redirect(new URL('/client/dashboard', req.nextUrl));
@@ -45,12 +51,12 @@ export default async function middleware(req: NextRequest) {
 export const config = {
   /*
    * Match all request paths except for the ones starting with:
-   * - api (API routes, except specific callbacks that are handled in publicRoutes)
    * - _next/static (static files)
    * - _next/image (image optimization files)
    * - favicon.ico (favicon file)
+   * - api routes that are not callbacks
    */
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!api/((?!bkash/callback|piprapay/callback).)*$|_next/static|_next/image|favicon.ico).*)'
   ],
 };
