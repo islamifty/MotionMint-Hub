@@ -17,14 +17,13 @@ export type Project = {
   description: string;
   clientId: string;
   clientName: string;
-  previewVideoUrl: string; // This will now point to the HLS playlist (.m3u8)
-  finalVideoUrl?: string; // This can remain the original MP4 for download after payment
+  previewVideoUrl: string;
+  finalVideoUrl?: string; 
   expiryDate: string;
   paymentStatus: "pending" | "paid" | "overdue";
   orderId: string;
   createdAt: string;
   amount: number;
-  processingStatus?: 'processing' | 'completed' | 'failed';
 };
 
 export type Client = {

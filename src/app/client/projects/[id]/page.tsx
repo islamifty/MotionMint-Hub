@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, CreditCard, Clock, AlertTriangle, Loader } from "lucide-react";
+import { Download, AlertTriangle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { VideoPlayer } from "@/components/client/VideoPlayer";
 
@@ -38,17 +38,13 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
   const isPaid = project.paymentStatus === 'paid';
 
   const getDirectVideoLink = (url: string) => {
-    // This logic is important for the final download link
     if (url.includes('/s/') && !url.endsWith('/download')) {
       return `${url}/download`;
     }
     return url;
   };
 
-  const videoUrl = project.processingStatus === 'completed' && project.previewVideoUrl
-    ? getProxyUrl(project.previewVideoUrl)
-    : "";
-
+  const videoUrl = getProxyUrl(project.previewVideoUrl);
   const finalVideoUrl = getDirectVideoLink(project.finalVideoUrl || '');
 
 
@@ -73,12 +69,6 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
                             <CardTitle>Project Status</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            {project.processingStatus === 'processing' && (
-                                <div className="flex items-center gap-2 text-blue-600">
-                                    <Loader className="h-4 w-4 animate-spin" />
-                                    <span className="text-sm font-medium">Processing video...</span>
-                                </div>
-                             )}
                             <div className="flex items-center justify-between">
                                 <span className="text-sm font-medium">Payment</span>
                                 <Badge variant={isPaid ? 'default' : 'secondary'}>{project.paymentStatus}</Badge>

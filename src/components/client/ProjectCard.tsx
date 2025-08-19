@@ -14,7 +14,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Project } from "@/types";
 import { VideoPlayer } from "./VideoPlayer";
-import { Loader } from "lucide-react";
 
 interface ProjectCardProps {
   project: Project;
@@ -23,7 +22,6 @@ interface ProjectCardProps {
 export function ProjectCard({ project }: ProjectCardProps) {
   const isExpired = new Date(project.expiryDate) < new Date();
   
-  // Use the proxy for HLS streams as well to hide the Nextcloud URL
   const getProxyUrl = (originalSrc: string): string => {
     if (!originalSrc) return "";
     try {
@@ -35,9 +33,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
     }
   }
 
-  const videoUrl = project.processingStatus === 'completed' && project.previewVideoUrl 
-    ? getProxyUrl(project.previewVideoUrl)
-    : "";
+  const videoUrl = getProxyUrl(project.previewVideoUrl);
 
 
   return (
@@ -54,15 +50,6 @@ export function ProjectCard({ project }: ProjectCardProps) {
                 {project.paymentStatus}
             </Badge>
             {isExpired && <Badge variant="destructive">Expired</Badge>}
-            {project.processingStatus === 'processing' && (
-                <Badge variant="outline" className="flex items-center gap-1">
-                    <Loader className="h-3 w-3 animate-spin" />
-                    Processing
-                </Badge>
-            )}
-             {project.processingStatus === 'failed' && (
-                <Badge variant="destructive">Processing Failed</Badge>
-            )}
         </div>
         <CardDescription className="mt-2 line-clamp-2">{project.description}</CardDescription>
       </CardContent>
