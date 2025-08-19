@@ -13,6 +13,7 @@ const nextcloudSchema = z.object({
 
 const pipraPaySchema = z.object({
     apiKey: z.string().min(1),
+    piprapayBaseUrl: z.string().url({ message: "Please enter a valid Base URL." }),
 });
 
 export async function getSettings() {
@@ -98,9 +99,10 @@ export async function savePipraPaySettings(data: unknown) {
     }
     
     try {
-        const { apiKey } = result.data;
+        const { apiKey, piprapayBaseUrl } = result.data;
         const db = readDb();
         db.settings.piprapayApiKey = apiKey;
+        db.settings.piprapayBaseUrl = piprapayBaseUrl;
         writeDb(db);
         return { success: true, message: "PipraPay settings saved successfully." };
     } catch (error) {

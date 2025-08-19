@@ -49,6 +49,7 @@ const nextcloudSchema = z.object({
 
 const pipraPaySchema = z.object({
   apiKey: z.string().min(1, { message: "API Key is required." }),
+  piprapayBaseUrl: z.string().url({ message: "Please enter a valid Base URL." }),
 });
 
 const brandingSchema = z.object({
@@ -84,7 +85,7 @@ export default function SettingsPage() {
 
   const pipraPayForm = useForm<PipraPayFormValues>({
     resolver: zodResolver(pipraPaySchema),
-    defaultValues: { apiKey: "" },
+    defaultValues: { apiKey: "", piprapayBaseUrl: "" },
   });
 
   const brandingForm = useForm<BrandingFormValues>({
@@ -108,6 +109,7 @@ export default function SettingsPage() {
             });
             pipraPayForm.reset({
                 apiKey: settings.piprapayApiKey || '',
+                piprapayBaseUrl: settings.piprapayBaseUrl || '',
             });
         }
     }
@@ -360,6 +362,19 @@ export default function SettingsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  <FormField
+                    control={pipraPayForm.control}
+                    name="piprapayBaseUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Base URL</FormLabel>
+                        <FormControl>
+                          <Input placeholder="https://pay.motionmint.top/api" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   <FormField
                     control={pipraPayForm.control}
                     name="apiKey"

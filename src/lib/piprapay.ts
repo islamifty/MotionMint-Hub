@@ -3,17 +3,15 @@ import 'server-only';
 import { readDb } from '@/lib/db';
 import type { Project } from '@/types';
 
-const PIPRAPAY_API_URL = 'https://piprapay.com/api/v2/create-payment';
-const PIPRAPAY_VERIFY_URL = 'https://piprapay.com/api/v2/verify-payment';
-
 export async function createPipraPayPayment(project: Project, customerInfo: { name: string, email: string, phone: string }) {
     const db = readDb();
-    const { piprapayApiKey } = db.settings;
+    const { piprapayApiKey, piprapayBaseUrl } = db.settings;
 
-    if (!piprapayApiKey) {
-        return { success: false, error: 'PipraPay API Key is not configured.' };
+    if (!piprapayApiKey || !piprapayBaseUrl) {
+        return { success: false, error: 'PipraPay API Key or Base URL is not configured.' };
     }
 
+    const createPaymentUrl = `${piprapayBaseUrl}/create-payment`;
     const successUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/piprapay/callback?status=success&invoiceId=${project.orderId}`;
     const cancelUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/piprapay/callback?status=cancel&invoiceId=${project.orderId}`;
 
@@ -28,7 +26,7 @@ export async function createPipraPayPayment(project: Project, customerInfo: { na
     };
 
     try {
-        const response = await fetch(PIPRAPAY_API_URL, {
+        const response = await fetch(createPaymentUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -52,11 +50,13 @@ export async function createPipraPayPayment(project: Project, customerInfo: { na
 
 export async function verifyPipraPayPayment(invoiceId: string) {
     const db = readDb();
-    const { piprapayApiKey } = db.settings;
+    const { piprapayApiKey, piprapayBaseUrl } = db.settings;
 
-    if (!piprapayApiKey) {
-        return { success: false, error: 'PipraPay API Key is not configured.' };
+    if (!piprapayApiKey || !piprapayBaseUrl) {
+        return { success: false, error: 'PipraPay API Key or Base URL is not configured.' };
     }
+
+    const verifyPaymentUrl = `${piprapayBaseUrl}/verify-payment`;
 
     const body = {
         apiKey: piprapayApiKey,
@@ -64,7 +64,7 @@ export async function verifyPipraPayPayment(invoiceId: string) {
     };
 
     try {
-        const response = await fetch(PIPRAPAY_VERIFY_URL, {
+        const response = await fetch(verifyPaymentUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

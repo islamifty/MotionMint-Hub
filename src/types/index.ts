@@ -48,4 +48,5 @@ export type AppSettings = {
     nextcloudUser?: string;
     nextcloudPassword?: string;
     piprapayApiKey?: string;
+    piprapayBaseUrl?: string;
 };
