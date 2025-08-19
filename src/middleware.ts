@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { decrypt } from '@/lib/session';
 import { cookies } from 'next/headers';
@@ -51,12 +50,10 @@ export default async function middleware(req: NextRequest) {
 export const config = {
   /*
    * Match all request paths except for the ones starting with:
+   * - api (API routes)
    * - _next/static (static files)
    * - _next/image (image optimization files)
    * - favicon.ico (favicon file)
-   * - api routes that are not callbacks
    */
-  matcher: [
-    '/((?!api/((?!bkash/callback|piprapay/callback).)*$|_next/static|_next/image|favicon.ico).*)'
-  ],
+   matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 };
