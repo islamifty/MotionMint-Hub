@@ -18,7 +18,7 @@ export type Project = {
   clientId: string;
   clientName: string;
   previewVideoUrl: string;
-  finalVideoUrl?: string; 
+  finalVideoUrl: string; 
   expiryDate: string;
   paymentStatus: "pending" | "paid" | "overdue";
   orderId: string;

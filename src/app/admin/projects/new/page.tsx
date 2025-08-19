@@ -6,10 +6,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
-import { CalendarIcon, ArrowLeft, Folder, FileVideo, LinkIcon, X, ServerCrash } from "lucide-react";
+import { CalendarIcon, ArrowLeft, LinkIcon } from "lucide-react";
 import { format } from "date-fns";
 import { useEffect, useState } from "react";
-import type { FileStat } from "webdav";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -43,23 +42,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter
-} from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
-import { addProject, getDirectoryContents } from "./actions";
+import { addProject } from "./actions";
 import { cn } from "@/lib/utils";
 import type { Client } from "@/types";
 import { getClients } from "../../clients/actions";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { getSettings } from "../../settings/actions";
 
 
 const projectSchema = z.object({
@@ -70,7 +58,8 @@ const projectSchema = z.object({
   expiryDate: z.date({
     required_error: "An expiry date is required.",
   }),
-  videoUrl: z.string().url({ message: "Please select a file or provide a valid video URL." }),
+  previewVideoUrl: z.string().url({ message: "Please provide a valid preview video URL." }),
+  finalVideoUrl: z.string().url({ message: "Please provide a valid final video URL." }),
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
@@ -79,12 +68,6 @@ export default function NewProjectPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [clients, setClients] = useState<Client[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [nextcloudFiles, setNextcloudFiles] = useState<FileStat[]>([]);
-  const [currentPath, setCurrentPath] = useState("/");
-  const [isLoadingFiles, setIsLoadingFiles] = useState(false);
-  const [fileError, setFileError] = useState<string | null>(null);
-  const [nextcloudBaseUrl, setNextcloudBaseUrl] = useState('');
 
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectSchema),
@@ -93,75 +76,18 @@ export default function NewProjectPage() {
       description: "",
       clientId: "",
       amount: 0,
-      videoUrl: ""
+      previewVideoUrl: "",
+      finalVideoUrl: "",
     },
   });
 
   useEffect(() => {
     async function loadInitialData() {
-      const [serverClients, settings] = await Promise.all([
-        getClients(),
-        getSettings()
-      ]);
+      const serverClients = await getClients();
       setClients(serverClients);
-      if (settings?.nextcloudUrl) {
-        setNextcloudBaseUrl(settings.nextcloudUrl);
-      }
     }
     loadInitialData();
   }, []);
-
-  const fetchFiles = async (path: string) => {
-    setIsLoadingFiles(true);
-    setFileError(null);
-    try {
-      const files = await getDirectoryContents(path);
-      setNextcloudFiles(files);
-      setCurrentPath(path);
-    } catch (error: any) {
-      setFileError(error.message);
-    } finally {
-      setIsLoadingFiles(false);
-    }
-  };
-
-  const handleOpenModal = () => {
-    if (!nextcloudBaseUrl) {
-        toast({
-            variant: "destructive",
-            title: "Nextcloud Not Configured",
-            description: "Please configure your Nextcloud settings first.",
-        });
-        return;
-    }
-    fetchFiles('/');
-    setIsModalOpen(true);
-  };
-  
-  const handleDirectoryClick = (path: string) => {
-    fetchFiles(path);
-  };
-
-  const handleFileSelect = (file: FileStat) => {
-     if (!nextcloudBaseUrl) {
-         console.error("Nextcloud base URL is not set.");
-         toast({ variant: "destructive", title: "Configuration Error", description: "Cannot generate file URL." });
-         return;
-     }
-     
-     // This creates a WebDAV URL, which is good for admin preview but may not work for clients.
-     // It's better to paste a public share link for the best client experience.
-     const fullUrl = `${nextcloudBaseUrl}${file.filename.substring(file.filename.indexOf('/files'))}`;
-     form.setValue("videoUrl", fullUrl, { shouldValidate: true });
-     setIsModalOpen(false);
-  }
-
-  const handleParentDirectory = () => {
-    if (currentPath === '/') return;
-    const parent = currentPath.split('/').slice(0, -1).join('/') || '/';
-    fetchFiles(parent);
-  };
-
 
   const onSubmit = async (data: ProjectFormValues) => {
     const result = await addProject(data);
@@ -238,24 +164,37 @@ export default function NewProjectPage() {
                     
                     <FormField
                       control={form.control}
-                      name="videoUrl"
+                      name="previewVideoUrl"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Project Video</FormLabel>
-                          <div className="flex gap-2">
+                          <FormLabel>Preview Video URL</FormLabel>
+                           <div className="relative w-full">
+                                <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <FormControl>
+                                    <Input placeholder="Paste a public shareable link for the preview video" className="pl-10" {...field} />
+                                </FormControl>
+                            </div>
+                           <FormDescription>
+                            Create a public share link in Nextcloud and paste it here for the client to preview.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                     <FormField
+                      control={form.control}
+                      name="finalVideoUrl"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Final Video URL (for after payment)</FormLabel>
+                          <div className="relative w-full">
+                            <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <FormControl>
-                                <div className="relative w-full">
-                                    <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                    <Input placeholder="Paste a public shareable link here for clients" className="pl-10" {...field} />
-                                </div>
+                                <Input placeholder="Paste the public shareable link for the final downloadable video" className="pl-10" {...field} />
                             </FormControl>
-                            <Button type="button" variant="outline" onClick={handleOpenModal}>
-                              <Folder className="h-4 w-4 mr-2" />
-                              Browse (For Admin)
-                            </Button>
                           </div>
                            <FormDescription>
-                            For the best client experience, create a public share link in Nextcloud and paste it above. The browse feature uses a WebDAV link that may not be playable for clients.
+                             This link will be available to the client only after successful payment.
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -354,62 +293,6 @@ export default function NewProjectPage() {
             </Card>
         </form>
       </Form>
-
-       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Browse Nextcloud Files</DialogTitle>
-            <DialogDescription>
-              Select a video file from your Nextcloud storage. Current path: {currentPath}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            {fileError ? (
-                <Alert variant="destructive">
-                    <ServerCrash className="h-4 w-4" />
-                    <AlertTitle>Connection Error</AlertTitle>
-                    <AlertDescription>{fileError}</AlertDescription>
-                </Alert>
-            ) : isLoadingFiles ? (
-              <div className="flex justify-center items-center h-48">
-                <p>Loading files...</p>
-              </div>
-            ) : (
-              <ScrollArea className="h-72 w-full rounded-md border">
-                <div className="p-4">
-                   {currentPath !== '/' && (
-                    <button onClick={handleParentDirectory} className="flex items-center p-2 rounded-md hover:bg-accent w-full text-left">
-                      .. (Parent Directory)
-                    </button>
-                  )}
-                  {nextcloudFiles.map((file) => (
-                    <div key={file.filename}>
-                      {file.type === 'directory' ? (
-                        <button onClick={() => handleDirectoryClick(file.filename)} className="flex items-center p-2 rounded-md hover:bg-accent w-full text-left">
-                          <Folder className="h-4 w-4 mr-2" />
-                          {file.basename}
-                        </button>
-                      ) : (
-                        <button onClick={() => handleFileSelect(file)} className="flex items-center p-2 rounded-md hover:bg-accent w-full text-left">
-                          <FileVideo className="h-4 w-4 mr-2" />
-                          {file.basename}
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsModalOpen(false)}>
-              Cancel
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
-
-    

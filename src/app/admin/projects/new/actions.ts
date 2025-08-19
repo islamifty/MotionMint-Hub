@@ -3,7 +3,6 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { createClient, type WebDAVClient, type FileStat } from 'webdav';
 import { readDb, writeDb } from '@/lib/db';
 import type { Project } from '@/types';
 
@@ -13,7 +12,8 @@ const projectSchema = z.object({
   clientId: z.string().min(1, "Please select a client."),
   amount: z.coerce.number().min(0, "Amount must be a positive number."),
   expiryDate: z.date(),
-  videoUrl: z.string().url("Please provide a valid video URL."),
+  previewVideoUrl: z.string().url("Please provide a valid preview video URL."),
+  finalVideoUrl: z.string().url("Please provide a valid final video URL."),
 });
 
 
@@ -47,8 +47,8 @@ export async function addProject(data: unknown) {
             paymentStatus: 'pending' as const,
             orderId: `ORD-${Date.now()}`,
             createdAt: new Date().toISOString(),
-            previewVideoUrl: result.data.videoUrl, // Use the direct URL
-            finalVideoUrl: result.data.videoUrl, 
+            previewVideoUrl: result.data.previewVideoUrl,
+            finalVideoUrl: result.data.finalVideoUrl, 
         };
         db.projects.unshift(newProject);
         writeDb(db);
@@ -62,34 +62,5 @@ export async function addProject(data: unknown) {
     } catch (error) {
         console.error("Project creation failed:", error);
         return { success: false, error: { formErrors: ["An unexpected error occurred during project creation."], fieldErrors: {} }};
-    }
-}
-
-
-export async function getDirectoryContents(path: string = '/'): Promise<FileStat[]> {
-    const db = readDb();
-    const { nextcloudUrl, nextcloudUser, nextcloudPassword } = db.settings;
-
-    if (!nextcloudUrl || !nextcloudUser || !nextcloudPassword) {
-        throw new Error("Nextcloud credentials are not configured.");
-    }
-
-    try {
-        const client: WebDAVClient = createClient(nextcloudUrl, {
-            username: nextcloudUser,
-            password: nextcloudPassword,
-        });
-
-        const contents = await client.getDirectoryContents(path) as FileStat[];
-        // Sort with directories first, then by name
-        return contents.sort((a, b) => {
-            if (a.type === 'directory' && b.type !== 'directory') return -1;
-            if (a.type !== 'directory' && b.type === 'directory') return 1;
-            return a.basename.localeCompare(b.basename);
-        });
-    } catch (error) {
-        console.error("Failed to get Nextcloud directory contents:", error);
-        // It's better to throw the error so the client-side can know something went wrong
-        throw new Error("Could not connect to Nextcloud or read directory. Please check your settings.");
     }
 }
