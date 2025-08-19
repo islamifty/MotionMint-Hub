@@ -28,11 +28,11 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
   return (
     <div className="container py-8">
         <div className="max-w-4xl mx-auto">
-            <div className="relative mb-6 aspect-video w-full overflow-hidden rounded-lg border shadow-lg">
+            <div className="relative mb-6 aspect-video w-full overflow-hidden rounded-lg border shadow-lg bg-black">
                 <video
                     src={project.previewVideoUrl}
                     controls
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                 />
             </div>
 
@@ -58,7 +58,7 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
                                 <span className="text-sm font-medium">Expires</span>
                                 <span className="text-sm text-muted-foreground">{new Date(project.expiryDate).toLocaleDateString()}</span>
                             </div>
-                            {isExpired && (
+                            {isExpired && !isPaid && (
                                  <div className="flex items-center gap-2 text-destructive">
                                     <AlertTriangle className="h-4 w-4" />
                                     <span className="text-sm font-medium">Project Expired</span>
@@ -68,15 +68,25 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
                         <Separator />
                         <CardFooter className="pt-6">
                              {isPaid ? (
-                                <Button className="w-full" disabled={isExpired}>
-                                    <Download className="mr-2 h-4 w-4" />
-                                    {isExpired ? "Download Expired" : "Download Final Video"}
+                                <Button className="w-full" asChild>
+                                    <a href={project.finalVideoUrl || project.previewVideoUrl} target="_blank" rel="noopener noreferrer" download>
+                                        <Download className="mr-2 h-4 w-4" />
+                                        Download Final Video
+                                    </a>
                                 </Button>
                              ) : (
                                 <div className="w-full space-y-2">
-                                    <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">Pay with PipraPay</Button>
-
-                                    <Button className="w-full bg-pink-500 hover:bg-pink-600 text-white">Pay with bKash</Button>
+                                     {isExpired ? (
+                                        <Button className="w-full" disabled>
+                                            <AlertTriangle className="mr-2 h-4 w-4" />
+                                            Payment Expired
+                                        </Button>
+                                     ) : (
+                                        <>
+                                            <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">Pay with PipraPay</Button>
+                                            <Button className="w-full bg-pink-500 hover:bg-pink-600 text-white">Pay with bKash</Button>
+                                        </>
+                                     )}
                                 </div>
                              )}
                         </CardFooter>

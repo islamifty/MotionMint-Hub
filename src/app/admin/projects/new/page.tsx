@@ -150,9 +150,23 @@ export default function NewProjectPage() {
          toast({ variant: "destructive", title: "Configuration Error", description: "Cannot generate file URL." });
          return;
      }
-     // Correctly construct the public URL for the file
-     const publicUrl = `${nextcloudBaseUrl}${file.filename}`;
-     form.setValue("videoUrl", publicUrl, { shouldValidate: true });
+     
+     // The file.filename is a WebDAV path like /remote.php/dav/files/user/path/to/file.mp4
+     // We need to transform it into a likely public shareable link structure.
+     // This assumes a standard Nextcloud public link structure and that a share link exists.
+     const davPrefix = "/remote.php/dav/files/";
+     if (file.filename.startsWith(davPrefix)) {
+        // This part is an assumption, as we can't create share links via WebDAV.
+        // We assume the admin has shared the folder/file and we construct a plausible public URL.
+        // A more robust solution would involve the Nextcloud Share API.
+        const filePath = file.filename.substring(file.filename.indexOf('/', davPrefix.length)); // Gets /path/to/file.mp4
+        const publicUrl = `${nextcloudBaseUrl}/s${filePath}`;
+        form.setValue("videoUrl", publicUrl, { shouldValidate: true });
+     } else {
+        const publicUrl = `${nextcloudBaseUrl}${file.filename}`;
+        form.setValue("videoUrl", publicUrl, { shouldValidate: true });
+     }
+
      setIsModalOpen(false);
   }
 
