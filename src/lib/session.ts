@@ -3,7 +3,7 @@ import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import type { User } from '@/types';
 
-const secretKey = process.env.SESSION_SECRET;
+const secretKey = process.env.SESSION_SECRET || 'default-secret-key-for-development-env';
 const key = new TextEncoder().encode(secretKey);
 
 export async function encrypt(payload: any) {
@@ -21,32 +21,37 @@ export async function decrypt(input: string): Promise<any> {
     });
     return payload;
   } catch (error) {
-    // console.error('JWT verification failed:', error);
+    // This is expected for invalid tokens
     return null;
   }
 }
 
-export async function createSession(user: Omit<User, 'id'> & { id: string }) {
-  const oneDayInSeconds = 24 * 60 * 60;
-  const expires = new Date(Date.now() + oneDayInSeconds * 1000);
+export async function createSession(user: User) {
+  const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // Expires in 1 day
   const session = await encrypt({ user, expires });
 
-  // Save the session in a cookie, including maxAge for better compatibility
   cookies().set('session', session, { 
     expires, 
     httpOnly: true,
-    maxAge: oneDayInSeconds, // Explicitly set max age in seconds
+    path: '/',
   });
 }
 
 export async function getSession(): Promise<{ user: User } | null> {
-  const session = cookies().get('session')?.value;
-  if (!session) return null;
-  const decrypted = await decrypt(session);
+  const sessionCookie = cookies().get('session')?.value;
+  if (!sessionCookie) return null;
+  
+  const decrypted = await decrypt(sessionCookie);
   if (!decrypted) return null;
+
+  // Validate expiration
+  if (new Date(decrypted.expires) < new Date()) {
+    return null;
+  }
+
   return { user: decrypted.user };
 }
 
 export async function deleteSession() {
-  cookies().delete('session');
+  cookies().set('session', '', { expires: new Date(0), path: '/' });
 }

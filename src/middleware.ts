@@ -1,73 +1,50 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { decrypt } from '@/lib/session';
-import { cookies } from 'next/headers';
-import { readDb } from '@/lib/db';
+import { getSession } from '@/lib/session';
 
 const protectedRoutes = ['/admin', '/client', '/profile', '/settings'];
 const publicRoutes = ['/login', '/register', '/forgot-password'];
-const paymentCallbackRoutes = ['/api/bkash/callback', '/api/piprapay/callback'];
 
 export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
 
-  // Allow specific public API routes (like payment callbacks) to pass through without checks.
-  // This logic is now part of the main function to handle all API routes correctly.
+  // Allow API routes to pass through, they have their own auth checks if needed.
   if (path.startsWith('/api')) {
-    if (paymentCallbackRoutes.some(route => path.startsWith(route))) {
-      return NextResponse.next();
-    }
-    // Let other api routes pass through as well, they are handled by their own logic
-    // or are implicitly public. Crucially, /api/user needs to be accessible.
     return NextResponse.next();
   }
 
-  const isProtectedRoute = protectedRoutes.some((prefix) => path.startsWith(prefix));
-  const isPublicRoute = publicRoutes.includes(path);
-
-  const cookie = cookies().get('session')?.value;
-  const session = await decrypt(cookie);
+  const session = await getSession();
   const user = session?.user;
 
-  // 1. If user is not logged in and trying to access a protected route
-  if (isProtectedRoute && !user) {
-    return NextResponse.redirect(new URL('/login', req.nextUrl));
-  }
-  
-  // 2. If user is logged in
+  const isProtectedRoute = protectedRoutes.some((prefix) => path.startsWith(prefix));
+  const isPublicRoute = publicRoutes.some((p) => path === p);
+
+  // If the user is logged in
   if (user) {
-    // 2a. If they try to access a public route (like /login), redirect to the appropriate dashboard
+    // And trying to access a public route (like login), redirect to dashboard
     if (isPublicRoute) {
-      const isAdmin = user.role === 'admin';
-      return NextResponse.redirect(new URL(isAdmin ? '/admin/dashboard' : '/client/dashboard', req.nextUrl));
+      const url = user.role === 'admin' ? '/admin/dashboard' : '/client/dashboard';
+      return NextResponse.redirect(new URL(url, req.nextUrl));
     }
 
-    // 2b. Role-based access control for protected routes
-    const db = readDb();
-    const dbUser = db.users.find(u => u.id === user.id);
-
-    // If user from session is not in DB (e.g., deleted), redirect to login and clear cookie
-    if (!dbUser) {
-        const response = NextResponse.redirect(new URL('/login', req.nextUrl));
-        response.cookies.delete('session');
-        return response;
+    // Role-based access control
+    if (path.startsWith('/admin') && user.role !== 'admin') {
+      return NextResponse.redirect(new URL('/client/dashboard', req.nextUrl));
     }
-    
-    // Enforce admin-only access to admin routes
-    if (path.startsWith('/admin') && dbUser.role !== 'admin') {
-        return NextResponse.redirect(new URL('/client/dashboard', req.nextUrl));
+    if (path.startsWith('/client') && user.role === 'admin') {
+      return NextResponse.redirect(new URL('/admin/dashboard', req.nextUrl));
     }
-
-    // Prevent admins from accessing client-specific routes
-    if (path.startsWith('/client') && dbUser.role === 'admin') {
-        return NextResponse.redirect(new URL('/admin/dashboard', req.nextUrl));
+  } 
+  // If the user is not logged in
+  else {
+    // And trying to access a protected route, redirect to login
+    if (isProtectedRoute) {
+      return NextResponse.redirect(new URL('/login', req.nextUrl));
     }
   }
 
-  // 3. If none of the above conditions are met, continue to the requested path
   return NextResponse.next();
 }
 
-// This config matches all request paths except for files in _next/static, _next/image, and favicon.ico.
 export const config = {
   matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 };
