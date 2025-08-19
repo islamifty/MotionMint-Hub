@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/form";
 import { useBranding } from "@/context/BrandingContext";
 import { Upload } from "lucide-react";
+import { useFormPersistence } from "@/hooks/use-form-persistence";
 
 const nextcloudSchema = z.object({
   nextcloudUrl: z.string().url({ message: "Please enter a valid URL." }),
@@ -95,6 +96,8 @@ export default function SettingsPage() {
     resolver: zodResolver(bKashSchema),
     defaultValues: { appKey: "", appSecret: "", username: "", password: "" },
   });
+  
+  useFormPersistence<BKashFormValues>('bKashSettingsForm', bKashForm);
 
   const pipraPayForm = useForm<PipraPayFormValues>({
     resolver: zodResolver(pipraPaySchema),
@@ -120,12 +123,16 @@ export default function SettingsPage() {
                 username: settings.nextcloudUser || '',
                 appPassword: settings.nextcloudPassword || ''
             });
-            bKashForm.reset({
-                appKey: settings.bkashAppKey || '',
-                appSecret: settings.bkashAppSecret || '',
-                username: settings.bkashUsername || '',
-                password: settings.bkashPassword || ''
-            });
+            // bKash form is now handled by useFormPersistence, but we can still load initial DB values
+            const storedBKash = localStorage.getItem('bKashSettingsForm');
+            if (!storedBKash) {
+                bKashForm.reset({
+                    appKey: settings.bkashAppKey || '',
+                    appSecret: settings.bkashAppSecret || '',
+                    username: settings.bkashUsername || '',
+                    password: settings.bkashPassword || ''
+                });
+            }
         }
     }
     loadSettings();
@@ -222,6 +229,7 @@ export default function SettingsPage() {
           title: "Settings Saved",
           description: result.message,
         });
+        localStorage.removeItem('bKashSettingsForm');
       } else {
         toast({
           variant: "destructive",
@@ -368,7 +376,7 @@ export default function SettingsPage() {
                 <CardHeader>
                   <CardTitle>bKash Payment Gateway</CardTitle>
                   <CardDescription>
-                    Enter your bKash API credentials to accept payments.
+                    Enter your bKash API credentials to accept payments. Unsaved changes are stored locally.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
