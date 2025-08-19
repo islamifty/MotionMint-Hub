@@ -59,6 +59,7 @@ import type { Client } from "@/types";
 import { getClients } from "../../clients/actions";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { getSettings } from "../../settings/actions";
 
 
 const projectSchema = z.object({
@@ -83,6 +84,7 @@ export default function NewProjectPage() {
   const [currentPath, setCurrentPath] = useState("/");
   const [isLoadingFiles, setIsLoadingFiles] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [nextcloudBaseUrl, setNextcloudBaseUrl] = useState('');
 
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectSchema),
@@ -96,11 +98,19 @@ export default function NewProjectPage() {
   });
 
   useEffect(() => {
-    async function loadClients() {
-      const serverClients = await getClients();
+    async function loadInitialData() {
+      const [serverClients, settings] = await Promise.all([
+        getClients(),
+        getSettings()
+      ]);
       setClients(serverClients);
+      if (settings?.nextcloudUrl) {
+        // Extract the base part of the URL for constructing public links
+        const url = new URL(settings.nextcloudUrl);
+        setNextcloudBaseUrl(url.origin);
+      }
     }
-    loadClients();
+    loadInitialData();
   }, []);
 
   const fetchFiles = async (path: string) => {
@@ -118,6 +128,14 @@ export default function NewProjectPage() {
   };
 
   const handleOpenModal = () => {
+    if (!nextcloudBaseUrl) {
+        toast({
+            variant: "destructive",
+            title: "Nextcloud Not Configured",
+            description: "Please configure your Nextcloud settings first.",
+        });
+        return;
+    }
     fetchFiles('/');
     setIsModalOpen(true);
   };
@@ -127,9 +145,13 @@ export default function NewProjectPage() {
   };
 
   const handleFileSelect = (file: FileStat) => {
-     // This constructs a public-friendly URL. Adjust if your Nextcloud setup differs.
-     const url = new URL(file.filename);
-     const publicUrl = `${url.origin}/remote.php/dav/files${url.pathname}`;
+     if (!nextcloudBaseUrl) {
+         console.error("Nextcloud base URL is not set.");
+         toast({ variant: "destructive", title: "Configuration Error", description: "Cannot generate file URL." });
+         return;
+     }
+     // Correctly construct the public URL for the file
+     const publicUrl = `${nextcloudBaseUrl}${file.filename}`;
      form.setValue("videoUrl", publicUrl, { shouldValidate: true });
      setIsModalOpen(false);
   }
@@ -151,7 +173,12 @@ export default function NewProjectPage() {
       });
       router.push("/admin/projects");
     } else {
-      const errorMessage = result.error?.formErrors?.join(', ') || "Failed to create project. Please try again.";
+      let errorMessage = "Failed to create project. Please try again.";
+      if (typeof result.error === 'string') {
+        errorMessage = result.error;
+      } else if (result.error?.formErrors?.length) {
+        errorMessage = result.error.formErrors.join(', ');
+      }
       toast({
         variant: "destructive",
         title: "Error",
