@@ -2,7 +2,7 @@ import { readDb } from './db';
 
 // This is a simplified bKash API client. In a real-world scenario, you'd want more robust error handling.
 
-const BKASH_API_BASE_URL = 'https://tokenized.sandbox.bka.sh/v1.2.0-beta'; // Use sandbox for testing
+const BKASH_API_BASE_URL = 'https://tokenized.pay.bka.sh/v1.2.0-beta'; // Use PRODUCTION URL
 
 async function getBkashToken(): Promise<string> {
     const db = readDb();
