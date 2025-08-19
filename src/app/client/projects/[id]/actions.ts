@@ -29,7 +29,7 @@ export async function initiateBkashPayment(projectId: string) {
 
         const paymentData = {
             mode: '0011',
-            payerReference: ' ',
+            payerReference: 'payment_for_project', // Fix: Use a valid non-empty string
             callbackURL: `${process.env.NEXT_PUBLIC_APP_URL}/api/bkash/callback`,
             amount: project.amount.toString(),
             currency: 'BDT',
