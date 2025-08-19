@@ -1,47 +1,42 @@
+
 "use client";
 
 import { useMemo } from 'react';
 
-// This function checks if a URL is a Nextcloud share link and appends /download if needed.
-function getPlayableVideoLink(url: string): string {
-    if (!url) return "";
+// This function creates a secure proxy URL for the video source.
+// It takes the original Nextcloud URL and encodes it to be passed to our server-side proxy.
+function getProxyUrl(originalSrc: string): string {
+    if (!originalSrc) return "";
     try {
-        // Check for Nextcloud's specific share link structure
-        if (url.includes('/s/') || url.includes('/index.php/s/')) {
-            const urlObj = new URL(url);
-            // Avoid adding /download if it's already there
-            if (!urlObj.pathname.endsWith('/download')) {
-                // Ensure there's no trailing slash before adding /download
-                return `${url.replace(/\/$/, '')}/download`;
-            }
-        }
-        // If it's not a share link or already has /download, return it as is.
-        return url;
+        // We encode the entire URL to ensure all special characters are handled correctly.
+        const encodedUrl = encodeURIComponent(originalSrc);
+        return `/api/video/proxy?url=${encodedUrl}`;
     } catch (e) {
-        console.error("Invalid video URL:", url);
-        return ""; // Return empty string for invalid URLs
+        console.error("Failed to create proxy URL from:", originalSrc, e);
+        return "";
     }
 }
+
 
 interface VideoPlayerProps {
     src: string;
 }
 
 export function VideoPlayer({ src }: VideoPlayerProps) {
-    // Memoize the result to avoid re-calculating the URL on every render
-    const playableSrc = useMemo(() => getPlayableVideoLink(src), [src]);
+    // useMemo ensures the proxy URL is calculated only when the src prop changes.
+    const proxySrc = useMemo(() => getProxyUrl(src), [src]);
 
-    if (!playableSrc) {
+    if (!proxySrc) {
         return <div className="w-full h-full bg-black flex items-center justify-center text-white">Invalid Video URL</div>;
     }
 
     return (
         <video
-            key={playableSrc} // Use key to force re-render if src changes
-            src={playableSrc}
+            key={proxySrc} // Use key to force re-render if src changes, ensuring the player reloads with the new source.
+            src={proxySrc}
             controls
-            controlsList="nodownload"
-            onContextMenu={(e) => e.preventDefault()}
+            controlsList="nodownload" // Disables the download button in the browser's default video controls.
+            onContextMenu={(e) => e.preventDefault()} // Prevents right-clicking on the video to access "Save video as...".
             className="w-full h-full object-contain"
             preload="auto"
         />
