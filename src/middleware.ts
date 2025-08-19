@@ -35,9 +35,12 @@ export default async function middleware(req: NextRequest) {
 
   // Role-based access control can be added here if needed
   // For example:
-  // if (path.startsWith('/admin') && session.user.role !== 'admin') {
-  //   return NextResponse.redirect(new URL('/client/dashboard', req.nextUrl));
-  // }
+  if (path.startsWith('/admin') && session.user.role !== 'admin') {
+    return NextResponse.redirect(new URL('/client/dashboard', req.nextUrl));
+  }
+   if (path.startsWith('/client') && session.user.role !== 'client') {
+    return NextResponse.redirect(new URL('/admin/dashboard', req.nextUrl));
+  }
 
   return NextResponse.next();
 }
@@ -45,9 +48,10 @@ export default async function middleware(req: NextRequest) {
 export const config = {
   /*
    * Match all request paths except for the ones starting with:
+   * - api (API routes)
    * - _next/static (static files)
    * - _next/image (image optimization files)
    * - favicon.ico (favicon file)
    */
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 };
