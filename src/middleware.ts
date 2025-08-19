@@ -3,17 +3,13 @@ import { decrypt } from '@/lib/session';
 import { cookies } from 'next/headers';
 
 const protectedRoutes = ['/admin', '/client', '/profile', '/settings'];
-const publicRoutes = ['/login', '/register', '/forgot-password'];
-const apiRoutes = ['/api'];
+const publicRoutes = ['/login', '/register', '/forgot-password', '/api/bkash/callback'];
 
 export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
-
-  // Allow public routes and API routes to pass through
-  if (
-    publicRoutes.some(route => path.startsWith(route)) ||
-    apiRoutes.some(route => path.startsWith(route))
-  ) {
+  
+  // Allow public routes, including the bKash callback, to pass through
+  if (publicRoutes.some(route => path.startsWith(route))) {
     return NextResponse.next();
   }
 
@@ -27,20 +23,18 @@ export default async function middleware(req: NextRequest) {
   const session = await decrypt(cookie);
 
   if (!session?.user) {
-    const loginUrl = new URL('/login', req.nextUrl.origin);
-    // You can optionally add a 'from' query parameter to redirect back after login
-    // loginUrl.searchParams.set('from', path);
-    return NextResponse.redirect(loginUrl);
+    return NextResponse.redirect(new URL('/login', req.nextUrl));
   }
-
-  // Role-based access control can be added here if needed
-  // For example:
+  
+  // Role-based access control
   if (path.startsWith('/admin') && session.user.role !== 'admin') {
     return NextResponse.redirect(new URL('/client/dashboard', req.nextUrl));
   }
-   if (path.startsWith('/client') && session.user.role !== 'client') {
+  if (path.startsWith('/client') && session.user.role === 'admin') {
+    // Admins can be redirected from client pages to their dashboard
     return NextResponse.redirect(new URL('/admin/dashboard', req.nextUrl));
   }
+
 
   return NextResponse.next();
 }
@@ -48,10 +42,9 @@ export default async function middleware(req: NextRequest) {
 export const config = {
   /*
    * Match all request paths except for the ones starting with:
-   * - api (API routes)
    * - _next/static (static files)
    * - _next/image (image optimization files)
-   * - favicon.ico (favicon file)
+   * - any files with an extension (e.g., favicon.ico, logo.png)
    */
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/((?!_next/static|_next/image|.*\\..*).*)'],
 };
