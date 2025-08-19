@@ -8,10 +8,10 @@ const PIPRAPAY_VERIFY_URL = 'https://piprapay.com/api/v2/verify-payment';
 
 export async function createPipraPayPayment(project: Project, customerInfo: { name: string, email: string, phone: string }) {
     const db = readDb();
-    const { piprapayApiKey, piprapayApiSecret } = db.settings;
+    const { piprapayApiKey } = db.settings;
 
-    if (!piprapayApiKey || !piprapayApiSecret) {
-        return { success: false, error: 'PipraPay credentials are not configured.' };
+    if (!piprapayApiKey) {
+        return { success: false, error: 'PipraPay API Key is not configured.' };
     }
 
     const successUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/piprapay/callback?status=success&invoiceId=${project.orderId}`;
@@ -19,7 +19,6 @@ export async function createPipraPayPayment(project: Project, customerInfo: { na
 
     const body = {
         apiKey: piprapayApiKey,
-        apiSecret: piprapayApiSecret,
         amount: project.amount,
         currency: 'BDT',
         invoiceId: project.orderId,
@@ -53,15 +52,14 @@ export async function createPipraPayPayment(project: Project, customerInfo: { na
 
 export async function verifyPipraPayPayment(invoiceId: string) {
     const db = readDb();
-    const { piprapayApiKey, piprapayApiSecret } = db.settings;
+    const { piprapayApiKey } = db.settings;
 
-    if (!piprapayApiKey || !piprapayApiSecret) {
-        return { success: false, error: 'PipraPay credentials are not configured.' };
+    if (!piprapayApiKey) {
+        return { success: false, error: 'PipraPay API Key is not configured.' };
     }
 
     const body = {
         apiKey: piprapayApiKey,
-        apiSecret: piprapayApiSecret,
         invoiceId: invoiceId
     };
 

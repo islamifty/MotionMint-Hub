@@ -49,7 +49,6 @@ const nextcloudSchema = z.object({
 
 const pipraPaySchema = z.object({
   apiKey: z.string().min(1, { message: "API Key is required." }),
-  apiSecret: z.string().min(1, { message: "API Secret is required." }),
 });
 
 const brandingSchema = z.object({
@@ -85,7 +84,7 @@ export default function SettingsPage() {
 
   const pipraPayForm = useForm<PipraPayFormValues>({
     resolver: zodResolver(pipraPaySchema),
-    defaultValues: { apiKey: "", apiSecret: "" },
+    defaultValues: { apiKey: "" },
   });
 
   const brandingForm = useForm<BrandingFormValues>({
@@ -109,7 +108,6 @@ export default function SettingsPage() {
             });
             pipraPayForm.reset({
                 apiKey: settings.piprapayApiKey || '',
-                apiSecret: settings.piprapayApiSecret || ''
             });
         }
     }
@@ -368,19 +366,6 @@ export default function SettingsPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>API Key</FormLabel>
-                        <FormControl>
-                          <Input type="password" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={pipraPayForm.control}
-                    name="apiSecret"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>API Secret</FormLabel>
                         <FormControl>
                           <Input type="password" {...field} />
                         </FormControl>
