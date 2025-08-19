@@ -3,6 +3,20 @@
 import { redirect } from 'next/navigation';
 import { createPayment } from '@/lib/bkash';
 import { readDb } from '@/lib/db';
+import type { Project } from '@/types';
+import { getSession } from '@/lib/session';
+
+export async function getProjectDetails(projectId: string): Promise<Project | null> {
+    const session = await getSession();
+    if (!session?.user) {
+        return null;
+    }
+
+    const db = readDb();
+    const project = db.projects.find((p) => p.id === projectId && p.clientId === session.user.id);
+    
+    return project || null;
+}
 
 export async function initiateBkashPayment(projectId: string) {
     try {

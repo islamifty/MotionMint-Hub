@@ -1,12 +1,12 @@
 'use server';
 import { createSession } from '@/lib/session';
-import { users } from '@/lib/data';
+import { readDb } from '@/lib/db';
 import { adminEmails } from '@/lib/data';
 
 export async function login(credentials: {email: string, password: string}) {
     const { email, password } = credentials;
-
-    const user = users.find((u) => u.email === email);
+    const db = readDb();
+    const user = db.users.find((u) => u.email === email);
 
     if (!user) {
         return { success: false, error: "Invalid email or password." };

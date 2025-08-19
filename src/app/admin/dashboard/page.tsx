@@ -17,7 +17,7 @@ import {
   } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { StatCard } from "@/components/shared/StatCard";
-import { projects } from "@/lib/data";
+import { readDb } from "@/lib/db";
 import type { StatCard as StatCardType } from "@/types";
 
 const statCards: StatCardType[] = [
@@ -28,7 +28,8 @@ const statCards: StatCardType[] = [
 ];
 
 export default function DashboardPage() {
-  const recentProjects = projects.slice(0, 5);
+  const db = readDb();
+  const recentProjects = db.projects.slice(0, 5);
 
   return (
     <div className="space-y-6">
