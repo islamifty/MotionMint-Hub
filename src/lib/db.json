@@ -1,27 +1,20 @@
 {
-  "users": [],
+  "users": [
+    {
+      "id": "admin-main",
+      "name": "Md Iftekharul Islam",
+      "email": "mdiftekharulislamifty@gmail.com",
+      "phone": "01234567890",
+      "role": "admin",
+      "initials": "AD",
+      "password": "$2a$10$v87XHLoiNoxgRHr0vt66WO0CI2Kv2gkJQgSRzKV2uAFNU/yvEZuEq"
+    }
+  ],
   "clients": [],
   "projects": [],
   "settings": {
-    "nextcloudUrl": "https://mydrive.motionmint.top/remote.php/dav/files/islamifty",
-    "nextcloudUser": "islamifty",
-    "nextcloudPassword": "WJNSK-7pG5s-WXNie-3w6DZ-Qx2QG",
-    "piprapayApiKey": "123504360668a3583081ed41601947378127387162768a3583081ed8648939280",
-    "piprapayBaseUrl": "https://pay.motionmint.top/api",
-    "bKashEnabled": true,
-    "pipraPayEnabled": true,
-    "whatsappLink": "https://wa.link/ge8fgx",
-    "piprapayWebhookVerifyKey": "123504360668a3583081ed41601947378127387162768a3583081ed8648939280",
-    "bKashAppKey": "aDgqtKHfBF2wLYYXYRGfwaTQtc",
-    "bKashAppSecret": "gFd5EivEGDmENxUOK9Ne7o64WWskRc6HtP8i94Fb3YsVxnbOYwFJ",
-    "bKashUsername": "01580720711",
-    "bKashPassword": "w2mj!V$]p^G",
-    "bKashMode": "production",
-    "logoUrl": "https://motionmint.top/wp-content/uploads/2025/08/motionmint.top-3-1.png",
-    "smtpHost": "smtp.zoho.com",
-    "smtpPort": 587,
-    "smtpUser": "edit@motionmint.top",
-    "smtpPass": "W1JGy7gMWxLH",
-    "greenwebSmsToken": "1061917534417556812848c1a2e790a5a67c1e549d443425032"
+    "nextcloudUrl": "",
+    "nextcloudUser": "",
+    "nextcloudPassword": ""
   }
 }

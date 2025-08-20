@@ -367,3 +367,27 @@
 }
 ---END DATA---
 
+2025-08-20T17:43:57.666Z [ERROR] - Failed to send password reset email:
+---DATA---
+{
+  "error": "SMTP settings are not configured.",
+  "email": "mdiftekharulislamifty@gmail.com"
+}
+---END DATA---
+
+2025-08-20T17:50:24.670Z [INFO] - User logged in successfully
+---DATA---
+{
+  "userId": "admin-main",
+  "email": "mdiftekharulislamifty@gmail.com"
+}
+---END DATA---
+
+2025-08-20T17:52:13.741Z [INFO] - User logged in successfully
+---DATA---
+{
+  "userId": "admin-main",
+  "email": "mdiftekharulislamifty@gmail.com"
+}
+---END DATA---
+
