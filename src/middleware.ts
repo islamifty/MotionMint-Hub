@@ -3,51 +3,58 @@ import { NextRequest, NextResponse } from 'next/server';
 import { decrypt } from '@/lib/session';
 import { cookies } from 'next/headers';
 
-// The root path '/' is added to protectedRoutes to ensure logged-in users are redirected to their dashboard.
-const protectedRoutes = ['/', '/admin', '/client', '/profile', '/settings'];
+const protectedAdminRoutes = ['/admin'];
+const protectedClientRoutes = ['/client'];
+const protectedSharedRoutes = ['/profile', '/settings'];
 const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
 const apiRoutes = ['/api'];
 
 export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
 
-  const isApiRoute = apiRoutes.some((prefix) => path.startsWith(prefix));
-  if (isApiRoute) {
+  // 1. Allow API routes to pass through
+  if (apiRoutes.some((prefix) => path.startsWith(prefix))) {
     return NextResponse.next();
   }
 
-  const isProtectedRoute = protectedRoutes.some((prefix) => path.startsWith(prefix));
-  const isPublicRoute = publicRoutes.includes(path);
-
+  // 2. Get session
   const cookie = cookies().get('session')?.value;
-  // Safely decrypt the session only if the cookie exists
   const session = cookie ? await decrypt(cookie) : null;
   const user = session?.user;
 
-  // Handle redirection for the root path specifically for logged-in users.
-  if (path === '/' && user) {
-    const url = user.role === 'admin' ? '/admin/dashboard' : '/client/dashboard';
-    return NextResponse.redirect(new URL(url, req.nextUrl));
-  }
+  const isPublicRoute = publicRoutes.includes(path);
+  const isAdminRoute = protectedAdminRoutes.some((prefix) => path.startsWith(prefix));
+  const isClientRoute = protectedClientRoutes.some((prefix) => path.startsWith(prefix));
+  const isSharedRoute = protectedSharedRoutes.some((prefix) => path.startsWith(prefix));
   
-  if (isProtectedRoute && !user) {
-    return NextResponse.redirect(new URL('/login', req.nextUrl));
-  }
+  const isProtectedRoute = isAdminRoute || isClientRoute || isSharedRoute || path === '/';
 
-  if (isPublicRoute && user) {
-     const url = user.role === 'admin' ? '/admin/dashboard' : '/client/dashboard';
-     return NextResponse.redirect(new URL(url, req.nextUrl));
-  }
-  
+
+  // 3. Handle redirects for logged-in users
   if (user) {
-    if (path.startsWith('/admin') && user.role !== 'admin') {
+    const dashboardUrl = user.role === 'admin' ? '/admin/dashboard' : '/client/dashboard';
+    
+    // If logged-in user tries to access a public route (like /login) or the root, redirect to their dashboard
+    if (isPublicRoute || path === '/') {
+      return NextResponse.redirect(new URL(dashboardUrl, req.nextUrl));
+    }
+
+    // Role-based access control
+    if (isAdminRoute && user.role !== 'admin') {
       return NextResponse.redirect(new URL('/client/dashboard', req.nextUrl));
     }
-    if (path.startsWith('/client') && user.role === 'admin') {
-       return NextResponse.redirect(new URL('/admin/dashboard', req.nextUrl));
+    if (isClientRoute && user.role === 'admin') {
+      return NextResponse.redirect(new URL('/admin/dashboard', req.nextUrl));
+    }
+    
+  } else {
+    // 4. Handle redirects for logged-out users
+    if (isProtectedRoute) {
+      return NextResponse.redirect(new URL('/login', req.nextUrl));
     }
   }
-
+  
+  // 5. If no rules match, allow the request
   return NextResponse.next();
 }
 
