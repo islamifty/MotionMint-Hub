@@ -1,6 +1,8 @@
+
 "use client";
 
 import React, { useState, useEffect, useTransition } from "react";
+import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   Folder,
@@ -235,8 +237,10 @@ export default function FileManagerPage() {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbLink href="/admin/files?path=/" className="flex items-center gap-2">
-                  <Home className="h-4 w-4" /> Home
+                <BreadcrumbLink asChild>
+                    <Link href="/admin/files?path=/" className="flex items-center gap-2">
+                        <Home className="h-4 w-4" /> Home
+                    </Link>
                 </BreadcrumbLink>
               </BreadcrumbItem>
               {pathSegments.map((segment, index) => {
@@ -245,7 +249,9 @@ export default function FileManagerPage() {
                   <React.Fragment key={segment}>
                     <BreadcrumbSeparator />
                     <BreadcrumbItem>
-                      <BreadcrumbLink href={href}>{segment}</BreadcrumbLink>
+                      <BreadcrumbLink asChild>
+                        <Link href={href}>{segment}</Link>
+                      </BreadcrumbLink>
                     </BreadcrumbItem>
                   </React.Fragment>
                 );
