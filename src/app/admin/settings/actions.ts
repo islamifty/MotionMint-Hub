@@ -118,12 +118,12 @@ export async function verifyPipraPayConnection(data: unknown) {
             cache: "no-store",
         });
 
-        const data = await res.json().catch(() => ({}));
+        const responseData = await res.json().catch(() => ({}));
         
-        if (res.status === 404 && data?.status === false) {
+        if (res.status === 404 && responseData?.status === false) {
              return { success: true, message: "Connection successful! (Test invoice not found as expected)" };
         } else if (!res.ok) {
-            return { success: false, message: `Connection failed: ${data.message || "Invalid API Key or Base URL."}` };
+            return { success: false, message: `Connection failed: ${responseData.message || "Invalid API Key or Base URL."}` };
         }
         
         return { success: true, message: "Connection successful!" };
