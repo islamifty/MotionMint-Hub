@@ -19,8 +19,11 @@ export async function sendSms(options: SmsOptions, smsConfig?: SmsConfig): Promi
     const db = await readDb();
     
     // Start with saved settings and override with any provided config.
+    // This ensures that even if only one field is provided for testing,
+    // the other one is picked up from the saved settings.
     const settings: SmsConfig = {
-        ...db.settings,
+        smsApiKey: db.settings.smsApiKey,
+        smsSenderId: db.settings.smsSenderId,
         ...smsConfig,
     };
 
