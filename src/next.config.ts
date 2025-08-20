@@ -22,6 +22,12 @@ const nextConfig: NextConfig = {
         hostname: 'mydrive.motionmint.top',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'motionmint.top',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
