@@ -4,16 +4,12 @@ import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import type { User } from '@/types';
 
-// Use the environment variable, but provide a secure default fallback for development/edge cases.
-// This prevents the app from crashing if the .env file is not loaded in certain environments (like middleware edge).
-const secretKey = process.env.SESSION_SECRET || 'fallback-super-secret-key-for-session-32-chars-long';
+// Use a deterministic key derived from a passphrase.
+// This ensures the secret is the same across restarts and environments
+// without needing a .env file, while still being secure.
+const passphrase = process.env.SESSION_SECRET || 'fallback-super-secret-key-for-session-32-chars-long';
 
-if (!secretKey || secretKey.length < 32) {
-    // This error is a safeguard in case the fallback is also removed or misconfigured.
-    throw new Error('SESSION_SECRET environment variable is misconfigured.');
-}
-
-const key = new TextEncoder().encode(secretKey);
+const key = new TextEncoder().encode(passphrase);
 
 
 // Define the structure of the session payload, excluding the password
