@@ -33,12 +33,12 @@ export async function initiateBkashPayment(projectId: string) {
 
         const paymentData = {
             mode: '0011',
-            payerReference: project.orderId, // Using a unique reference like orderId
-            callbackURL: callbackUrl, // Correct key is callbackURL
+            payerReference: project.orderId,
+            callbackURL: callbackUrl,
             amount: project.amount.toString(),
             currency: 'BDT',
             intent: 'sale',
-            merchantInvoiceNumber: project.orderId, // Correct key is merchantInvoiceNumber
+            merchantInvoiceNumber: project.orderId,
         };
 
         const result = await createBkashPayment(paymentData);
@@ -67,7 +67,7 @@ export async function initiatePipraPayPayment(projectId: string, user: User) {
         const customerInfo = {
             name: user.name,
             email: user.email,
-            phone: '01234567890' // Placeholder phone
+            phone: user.phone || '01000000000' // Use user's phone or a default
         };
         
         const result = await createPipraPayPayment(project, customerInfo);
