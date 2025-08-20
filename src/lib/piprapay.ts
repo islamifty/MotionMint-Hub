@@ -35,6 +35,13 @@ export async function createPipraPayPayment(project: Project, customerInfo: { na
             cache: 'no-store'
         });
         
+        if (!response.ok) {
+            // If the response is not OK, read it as text to see the raw error message
+            const errorText = await response.text();
+            console.error(`PipraPay API Error (Status: ${response.status}):`, errorText);
+            return { success: false, error: `PipraPay API returned an error: ${errorText}` };
+        }
+        
         try {
             const data = await response.json();
             if (data.success) {
