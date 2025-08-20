@@ -3,8 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { decrypt } from '@/lib/session';
 import { cookies } from 'next/headers';
 
-const protectedAdminRoutes = ['/admin'];
-const protectedClientRoutes = ['/client'];
+const protectedAdminRoutes = ['/admin/dashboard', '/admin/projects', '/admin/clients', '/admin/users', '/admin/files', '/admin/reports', '/admin/logs'];
+const protectedClientRoutes = ['/client/dashboard'];
 const protectedSharedRoutes = ['/profile', '/settings'];
 const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
 const apiRoutes = ['/api'];
@@ -27,7 +27,7 @@ export default async function middleware(req: NextRequest) {
   const isClientRoute = protectedClientRoutes.some((prefix) => path.startsWith(prefix));
   const isSharedRoute = protectedSharedRoutes.some((prefix) => path.startsWith(prefix));
   
-  const isProtectedRoute = isAdminRoute || isClientRoute || isSharedRoute || path === '/';
+  const isProtectedRoute = isAdminRoute || isClientRoute || isSharedRoute;
 
 
   // 3. Handle redirects for logged-in users
