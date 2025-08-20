@@ -11,32 +11,31 @@ interface SmsOptions {
 }
 
 interface SmsConfig {
-    smsApiKey?: string;
-    smsSenderId?: string;
+    greenwebSmsToken?: string;
 }
 
 export async function sendSms(options: SmsOptions, smsConfig?: SmsConfig): Promise<void> {
     const db = await readDb();
     
     const settings: SmsConfig = {
-        smsApiKey: db.settings.smsApiKey,
-        smsSenderId: db.settings.smsSenderId,
+        greenwebSmsToken: db.settings.greenwebSmsToken,
         ...smsConfig,
     };
 
-    const { smsApiKey, smsSenderId } = settings;
+    const { greenwebSmsToken } = settings;
 
-    if (!smsApiKey || !smsSenderId) {
-        logger.error('SMS settings (API Key or Sender ID) are not configured.');
+    if (!greenwebSmsToken) {
+        logger.error('SMS settings (Token) are not configured.');
         throw new Error('SMS settings are not configured.');
     }
 
-    const url = 'http://sms.bdbulksms.net/api/v2/send';
+    const url = 'http://api.greenweb.com.bd/api.php';
     
     const params = new URLSearchParams();
-    params.append('api_key', smsApiKey);
-    params.append('senderid', smsSenderId);
-    params.append('number', options.to);
+    params.append('token', greenwebSmsToken);
+    // Ensure the 'to' number is in the correct format if it includes '+'
+    const toNumber = options.to.startsWith('+') ? options.to.substring(1) : options.to;
+    params.append('to', toNumber);
     params.append('message', options.message);
     
     try {
@@ -48,18 +47,19 @@ export async function sendSms(options: SmsOptions, smsConfig?: SmsConfig): Promi
             body: params,
             cache: 'no-store',
         });
-
-        const responseData = await response.json();
         
-        if (!response.ok || responseData.status !== 'SUCCESS') {
-            logger.error(`Failed to send SMS to ${options.to}`, { response: responseData });
-            throw new Error(responseData.message || 'Unknown error from SMS gateway.');
+        // Greenweb API returns plain text, so we read it as text
+        const responseText = await response.text();
+        
+        if (!response.ok) {
+            logger.error(`Failed to send SMS to ${options.to}`, { response: responseText, status: response.status });
+            throw new Error(`Unknown error from SMS gateway. Status: ${response.status}. Response: ${responseText}`);
         }
 
-        logger.info(`SMS sent successfully to ${options.to}`, { response: responseData });
+        logger.info(`SMS sent successfully to ${options.to}`, { response: responseText });
 
     } catch (error: any) {
-        logger.error('Error sending SMS via bdbulksms.net', { 
+        logger.error('Error sending SMS via greenweb.com.bd', { 
             errorMessage: error.message,
         });
         throw new Error('Could not send SMS.');

@@ -78,9 +78,8 @@ export type AppSettings = {
     smtpUser?: string;
     smtpPass?: string;
 
-    // SMS
-    smsApiKey?: string;
-    smsSenderId?: string;
+    // SMS - Greenweb
+    greenwebSmsToken?: string;
     
     // General
     whatsappLink?: string;

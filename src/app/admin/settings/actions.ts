@@ -42,13 +42,11 @@ const smtpSchema = z.object({
 });
 
 const smsSchema = z.object({
-    smsApiKey: z.string().min(1, "API Key is required."),
-    smsSenderId: z.string().min(1, "Sender ID is required."),
+    greenwebSmsToken: z.string().min(1, "Token is required."),
 });
 
 const smsTestSchema = z.object({
-    smsApiKey: z.string().min(1, "API Key is required."),
-    smsSenderId: z.string().min(1, "Sender ID is required."),
+    greenwebSmsToken: z.string().min(1, "Token is required."),
     testPhoneNumber: z.string().min(1, "A phone number is required to send a test SMS."),
 });
 
@@ -194,8 +192,7 @@ export async function verifySmsConnection(data: unknown) {
             to: result.data.testPhoneNumber,
             message: 'Hello from MotionMint Hub! This is a test message.',
         }, {
-            smsApiKey: result.data.smsApiKey,
-            smsSenderId: result.data.smsSenderId
+            greenwebSmsToken: result.data.greenwebSmsToken,
         });
         return { success: true, message: 'Test SMS sent successfully!' };
     } catch (error: any) {

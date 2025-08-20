@@ -82,8 +82,7 @@ const smtpSchema = z.object({
 });
 
 const smsSchema = z.object({
-    smsApiKey: z.string().min(1, "API Key is required."),
-    smsSenderId: z.string().min(1, "Sender ID is required."),
+    greenwebSmsToken: z.string().min(1, "Token is required."),
 });
 
 const generalSchema = z.object({
@@ -151,8 +150,7 @@ export default function SettingsPage() {
   const smsForm = useForm<SmsFormValues>({
     resolver: zodResolver(smsSchema),
     defaultValues: {
-        smsApiKey: "",
-        smsSenderId: "",
+        greenwebSmsToken: "",
     }
   });
 
@@ -197,8 +195,7 @@ export default function SettingsPage() {
                 smtpPass: settings.smtpPass || "",
             });
             smsForm.reset({
-                smsApiKey: settings.smsApiKey || "",
-                smsSenderId: settings.smsSenderId || "",
+                greenwebSmsToken: settings.greenwebSmsToken || "",
             });
             generalForm.reset({
                 ...generalForm.getValues(),
@@ -754,30 +751,19 @@ export default function SettingsPage() {
             <Form {...smsForm}>
               <form onSubmit={smsForm.handleSubmit(onSmsSubmit)}>
                 <CardHeader>
-                  <CardTitle>SMS Gateway Settings</CardTitle>
+                  <CardTitle>SMS Gateway (greenweb.com.bd)</CardTitle>
                   <CardDescription>
-                    Configure your bdbulksms.net credentials to send SMS notifications.
+                    Configure your greenweb.com.bd credentials to send SMS notifications.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <FormField
                       control={smsForm.control}
-                      name="smsApiKey"
+                      name="greenwebSmsToken"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>API Key</FormLabel>
-                          <FormControl><Input placeholder="Your bdbulksms.net API Key" {...field} /></FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={smsForm.control}
-                      name="smsSenderId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Sender ID</FormLabel>
-                          <FormControl><Input placeholder="Your Sender ID (e.g., 880xxxxxxxxx)" {...field} /></FormControl>
+                          <FormLabel>Token</FormLabel>
+                          <FormControl><Input placeholder="Your greenweb.com.bd Token" {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
