@@ -10,8 +10,8 @@ export function Logo() {
   return (
     <div className="flex items-center gap-2">
       <div className="rounded-full h-8 w-8 flex items-center justify-center">
-        {branding.logo ? (
-          <Image src={branding.logo} alt="Custom Logo" width={32} height={32} className="rounded-full object-cover" />
+        {branding.logoUrl ? (
+          <Image src={branding.logoUrl} alt="Custom Logo" width={32} height={32} className="rounded-full object-cover" />
         ) : (
           <svg
             xmlns="http://www.w3.org/2000/svg"

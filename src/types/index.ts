@@ -1,4 +1,5 @@
 
+
 import type { LucideIcon } from "lucide-react";
 import type { FileStat as WebDAVFile } from "webdav";
 
@@ -59,6 +60,7 @@ export type AppSettings = {
     pipraPayEnabled?: boolean;
     bKashEnabled?: boolean;
     whatsappLink?: string;
+    logoUrl?: string;
 };
 
 // Define the structure of our database

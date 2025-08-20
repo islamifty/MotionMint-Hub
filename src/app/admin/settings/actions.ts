@@ -23,6 +23,7 @@ const pipraPaySchema = z.object({
 
 const generalSettingsSchema = z.object({
     whatsappLink: z.string().url("Please enter a valid WhatsApp link.").or(z.literal('')),
+    logoUrl: z.string().url("Please enter a valid image URL.").or(z.literal('')),
 });
 
 export async function getSettings() {
@@ -146,9 +147,10 @@ export async function saveGeneralSettings(data: unknown) {
     }
     
     try {
-        const { whatsappLink } = result.data;
+        const { whatsappLink, logoUrl } = result.data;
         const db = await readDb();
         db.settings.whatsappLink = whatsappLink;
+        db.settings.logoUrl = logoUrl;
         await writeDb(db);
         return { success: true, message: "General settings saved successfully." };
     } catch (error) {

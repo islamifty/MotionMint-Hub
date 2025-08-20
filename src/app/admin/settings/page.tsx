@@ -63,7 +63,7 @@ const pipraPaySchema = z.object({
 });
 
 const generalSchema = z.object({
-    logo: z.any().optional(),
+    logoUrl: z.string().url("Please enter a valid image URL.").or(z.literal('')),
     primaryColor: z.string(),
     backgroundColor: z.string(),
     accentColor: z.string(),
@@ -74,15 +74,6 @@ type NextcloudFormValues = z.infer<typeof nextcloudSchema>;
 type BKashFormValues = z.infer<typeof bKashSchema>;
 type PipraPayFormValues = z.infer<typeof pipraPaySchema>;
 type GeneralFormValues = z.infer<typeof generalSchema>;
-
-function fileToBase64(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = error => reject(error);
-    });
-}
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -108,7 +99,7 @@ export default function SettingsPage() {
   const generalForm = useForm<GeneralFormValues>({
       resolver: zodResolver(generalSchema),
       defaultValues: {
-          logo: null,
+          logoUrl: branding.logoUrl || '',
           primaryColor: branding.primaryColor,
           backgroundColor: branding.backgroundColor,
           accentColor: branding.accentColor,
@@ -136,6 +127,7 @@ export default function SettingsPage() {
             generalForm.reset({
                 ...generalForm.getValues(),
                 whatsappLink: settings.whatsappLink || '',
+                logoUrl: settings.logoUrl || '',
             });
         }
     }
@@ -144,7 +136,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     generalForm.reset({
-        logo: null,
+        logoUrl: branding.logoUrl || '',
         primaryColor: branding.primaryColor,
         backgroundColor: branding.backgroundColor,
         accentColor: branding.accentColor,
@@ -184,29 +176,22 @@ export default function SettingsPage() {
     let settingsUpdated = false;
     
     try {
-        // --- Branding Logic ---
-        let logoUrl = branding.logo;
-        const logoFile = data.logo?.[0];
-
-        if (logoFile) {
-            logoUrl = await fileToBase64(logoFile);
-        }
-
         const newBranding = {
-            logo: logoUrl,
+            logoUrl: data.logoUrl,
             primaryColor: data.primaryColor,
             backgroundColor: data.backgroundColor,
             accentColor: data.accentColor,
         };
 
-        // Only update if branding actually changed
         if (JSON.stringify(newBranding) !== JSON.stringify(branding)) {
             setBranding(newBranding);
             brandingUpdated = true;
         }
 
-        // --- General Settings Logic ---
-        const generalSettingsResult = await saveGeneralSettings({ whatsappLink: data.whatsappLink });
+        const generalSettingsResult = await saveGeneralSettings({ 
+            whatsappLink: data.whatsappLink,
+            logoUrl: data.logoUrl,
+        });
         if (generalSettingsResult.success) {
             settingsUpdated = true;
         } else {
@@ -501,25 +486,20 @@ export default function SettingsPage() {
                 <CardContent className="space-y-6">
                   <FormField
                     control={generalForm.control}
-                    name="logo"
-                    render={({ field: { onChange, value, ...rest } }) => (
+                    name="logoUrl"
+                    render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Custom Logo</FormLabel>
-                        <FormControl>
-                            <div className="relative">
-                                <Input
-                                    type="file"
-                                    accept="image/png, image/jpeg, image/svg+xml"
-                                    className="pl-12"
-                                    onChange={(e) => {
-                                        onChange(e.target.files);
-                                    }}
-                                    {...rest}
-                                />
-                                <Upload className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                            <FormLabel>Custom Logo URL</FormLabel>
+                            <div className="relative w-full">
+                                <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <FormControl>
+                                    <Input placeholder="https://example.com/logo.png" className="pl-10" {...field} />
+                                </FormControl>
                             </div>
-                        </FormControl>
-                        <FormMessage />
+                            <FormDescription>
+                                Paste a direct link to your logo image.
+                            </FormDescription>
+                            <FormMessage />
                         </FormItem>
                     )}
                     />

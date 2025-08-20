@@ -48,7 +48,7 @@ const parseHsl = (hslStr: string): [number, number, number] | null => {
 
 
 interface Branding {
-  logo: string | null;
+  logoUrl: string | null;
   primaryColor: string;
   backgroundColor: string;
   accentColor: string;
@@ -60,7 +60,7 @@ interface BrandingContextType {
 }
 
 const defaultBranding: Branding = {
-  logo: null,
+  logoUrl: null,
   primaryColor: '#16a34a', // Default green
   backgroundColor: '#f5f5f5', // Default light gray
   accentColor: '#15803d', // Default dark green
