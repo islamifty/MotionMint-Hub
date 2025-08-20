@@ -14,7 +14,17 @@ const key = new TextEncoder().encode(secretKey);
 // Define the structure of the session payload, excluding the password
 type UserForSession = Omit<User, 'password'>;
 
-export async function encrypt(payload: any) {
+// The payload can contain user data or other temporary data like OTP
+export type SessionPayload = {
+  user?: UserForSession;
+  otp?: string;
+  otpExpiry?: string;
+  expires?: Date;
+  [key: string]: any; // Allow other properties
+};
+
+
+export async function encrypt(payload: SessionPayload) {
   return await new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
@@ -22,12 +32,12 @@ export async function encrypt(payload: any) {
     .sign(key);
 }
 
-export async function decrypt(input: string): Promise<any> {
+export async function decrypt(input: string): Promise<SessionPayload | null> {
   try {
     const { payload } = await jwtVerify(input, key, {
       algorithms: ['HS256'],
     });
-    return payload;
+    return payload as SessionPayload;
   } catch (error) {
     // This is expected for invalid tokens
     console.error("JWT decryption failed:", error);
@@ -35,9 +45,10 @@ export async function decrypt(input: string): Promise<any> {
   }
 }
 
-export async function createSession(user: UserForSession) {
-  const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // Expires in 1 day
-  const session = await encrypt({ user, expires });
+export async function createSession(payload: SessionPayload) {
+  const expires = payload.user ? new Date(Date.now() + 24 * 60 * 60 * 1000) : new Date(Date.now() + 10 * 60 * 1000); // User session 1 day, OTP session 10 mins
+  const sessionData = { ...payload, expires };
+  const session = await encrypt(sessionData);
 
   cookies().set('session', session, { 
     expires, 
@@ -48,7 +59,7 @@ export async function createSession(user: UserForSession) {
   });
 }
 
-export async function getSession(): Promise<{ user: UserForSession } | null> {
+export async function getSession(): Promise<SessionPayload | null> {
   const sessionCookie = cookies().get('session')?.value;
   if (!sessionCookie) return null;
   
@@ -56,11 +67,11 @@ export async function getSession(): Promise<{ user: UserForSession } | null> {
   if (!decrypted) return null;
 
   // Validate expiration
-  if (new Date(decrypted.expires) < new Date()) {
+  if (decrypted.expires && new Date(decrypted.expires) < new Date()) {
     return null;
   }
 
-  return { user: decrypted.user };
+  return decrypted;
 }
 
 export async function deleteSession() {
