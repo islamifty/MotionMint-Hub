@@ -503,3 +503,42 @@
 }
 ---END DATA---
 
+2025-08-20T19:12:10.526Z [INFO] - User logged in successfully
+---DATA---
+{
+  "userId": "admin-main",
+  "email": "mdiftekharulislamifty@gmail.com"
+}
+---END DATA---
+
+2025-08-20T19:12:31.773Z [WARN] - Login failed: Invalid password
+---DATA---
+{
+  "email": "mdiftekharulislamifty@gmail.com"
+}
+---END DATA---
+
+2025-08-20T19:12:36.483Z [INFO] - User logged in successfully
+---DATA---
+{
+  "userId": "admin-main",
+  "email": "mdiftekharulislamifty@gmail.com"
+}
+---END DATA---
+
+2025-08-20T19:15:49.048Z [ERROR] - Failed to send password reset email:
+---DATA---
+{
+  "error": "SMTP settings are not configured.",
+  "email": "mdiftekharulislamifty@gmail.com"
+}
+---END DATA---
+
+2025-08-20T19:16:06.386Z [INFO] - User logged in successfully
+---DATA---
+{
+  "userId": "admin-main",
+  "email": "mdiftekharulislamifty@gmail.com"
+}
+---END DATA---
+

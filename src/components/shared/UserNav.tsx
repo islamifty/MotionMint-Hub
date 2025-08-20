@@ -31,13 +31,19 @@ export function UserNav() {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/logout', { method: 'POST' });
+      const response = await fetch('/api/logout', { method: 'POST' });
       
+      if (!response.ok) {
+        throw new Error('Logout failed');
+      }
+
       toast({
         title: "Logged Out",
         description: "You have been successfully logged out.",
       });
+
       // Use window.location.href for a full page reload to ensure session is cleared
+      // and user context is properly updated across the app.
       window.location.href = '/login';
     } catch (error) {
       toast({

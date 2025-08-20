@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 
 // The root path '/' is added to protectedRoutes to ensure logged-in users are redirected to their dashboard.
 const protectedRoutes = ['/', '/admin', '/client', '/profile', '/settings'];
-const publicRoutes = ['/login', '/register', '/forgot-password'];
+const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
 const apiRoutes = ['/api'];
 
 export default async function middleware(req: NextRequest) {
