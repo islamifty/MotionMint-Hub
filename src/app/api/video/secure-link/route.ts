@@ -3,7 +3,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
 import { createHmac } from 'crypto';
 
-const SECRET_KEY = process.env.VIDEO_SIGNING_SECRET || 'default-secret-key-for-video-security';
+const SECRET_KEY = process.env.VIDEO_SIGNING_SECRET;
+if (!SECRET_KEY) {
+    throw new Error('VIDEO_SIGNING_SECRET environment variable is not set.');
+}
 const LINK_EXPIRATION_SECONDS = 300; // 5 minutes
 
 export async function POST(request: NextRequest) {

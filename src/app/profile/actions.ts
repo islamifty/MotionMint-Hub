@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { readDb, writeDb } from '@/lib/db';
 import { getSession, createSession } from '@/lib/session';
 import type { User } from '@/types';
+import { hashPassword, verifyPassword } from '@/lib/password';
 
 const profileSchema = z.object({
   name: z.string().min(1, "Name cannot be empty."),
@@ -36,7 +37,8 @@ export async function updateProfile(data: unknown) {
             return { success: false, error: "User not found." };
         }
 
-        const updatedUser: User = { ...db.users[userIndex], name: result.data.name };
+        const userFromDb = db.users[userIndex];
+        const updatedUser: User = { ...userFromDb, name: result.data.name };
         db.users[userIndex] = updatedUser;
         
         // Also update client name if user is a client
@@ -47,8 +49,9 @@ export async function updateProfile(data: unknown) {
         
         await writeDb(db);
         
-        // Update session
-        await createSession(updatedUser);
+        // Update session, ensuring password is not included
+        const { password, ...userForSession } = updatedUser;
+        await createSession(userForSession);
 
         revalidatePath('/profile');
         revalidatePath('/admin/users');
@@ -78,16 +81,16 @@ export async function changePassword(data: unknown) {
         const db = await readDb();
         const user = db.users.find(u => u.id === session.user.id);
 
-        if (!user) {
-            return { success: false, error: "User not found." };
+        if (!user || !user.password) {
+            return { success: false, error: "User not found or has no password set." };
         }
-
-        // In a real app, compare hashed passwords
-        if (user.password !== currentPassword) {
+        
+        const isPasswordValid = await verifyPassword(currentPassword, user.password);
+        if (!isPasswordValid) {
             return { success: false, error: { currentPassword: ["Incorrect current password."] }};
         }
 
-        user.password = newPassword;
+        user.password = await hashPassword(newPassword);
         await writeDb(db);
 
         return { success: true };

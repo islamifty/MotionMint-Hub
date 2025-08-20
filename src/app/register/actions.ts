@@ -1,8 +1,10 @@
+
 'use server';
 
 import { readDb, writeDb } from "@/lib/db";
 import type { User, Client } from '@/types';
 import { revalidatePath } from "next/cache";
+import { hashPassword } from "@/lib/password";
 
 export async function addNewUser(userData: { name: string, email: string, password: string, phone: string }) {
     
@@ -13,6 +15,7 @@ export async function addNewUser(userData: { name: string, email: string, passwo
     }
 
     const newUserId = `user-${Date.now()}`;
+    const hashedPassword = await hashPassword(userData.password);
 
     const newUser: User = {
         id: newUserId,
@@ -21,7 +24,7 @@ export async function addNewUser(userData: { name: string, email: string, passwo
         phone: userData.phone,
         role: "client", // Automatically set role to client
         initials: (userData.name || userData.email).substring(0,2).toUpperCase(),
-        password: userData.password, // In a real app, you would hash this
+        password: hashedPassword,
     };
     
     const newClient: Client = {
