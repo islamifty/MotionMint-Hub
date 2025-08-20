@@ -31,7 +31,8 @@ export async function createPipraPayPayment(project: Project, customerInfo: { na
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(body)
+            body: JSON.stringify(body),
+            cache: 'no-store'
         });
         
         try {
@@ -73,7 +74,8 @@ export async function verifyPipraPayPayment(invoiceId: string) {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(body)
+            body: JSON.stringify(body),
+            cache: 'no-store'
         });
 
         try {
@@ -100,6 +102,7 @@ export async function verifyPipraPayCredentials(apiKey: string, baseUrl: string)
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ apiKey, invoiceId: 'test-connection' }),
+            cache: 'no-store'
         });
         const data = await response.json();
         if (data.message === "Invalid API key") {
