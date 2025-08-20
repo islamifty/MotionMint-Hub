@@ -73,8 +73,8 @@ export async function initiatePipraPayPayment(project: Project, user: User) {
             },
             body: JSON.stringify({
                 amount: project.amount,
-                customer_name: user.name,
-                customer_email_mobile: user.email || user.phone,
+                customer_name: user.name || 'Customer',
+                customer_email_mobile: user.email || user.phone || 'N/A',
                 metadata: { 
                     orderId: project.orderId,
                     projectId: project.id,
