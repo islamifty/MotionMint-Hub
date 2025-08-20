@@ -66,7 +66,7 @@
     "piprapayApiKey": "123504360668a3583081ed41601947378127387162768a3583081ed8648939280",
     "piprapayBaseUrl": "https://pay.motionmint.top/api",
     "bKashEnabled": false,
-    "pipraPayEnabled": false,
+    "pipraPayEnabled": true,
     "whatsappLink": "https://wa.link/ge8fgx"
   }
 }
