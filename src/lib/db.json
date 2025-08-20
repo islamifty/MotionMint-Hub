@@ -81,6 +81,12 @@
     "piprapayBaseUrl": "https://pay.motionmint.top/api",
     "bKashEnabled": true,
     "pipraPayEnabled": true,
-    "whatsappLink": "https://wa.link/ge8fgx"
+    "whatsappLink": "https://wa.link/ge8fgx",
+    "piprapayWebhookVerifyKey": "123504360668a3583081ed41601947378127387162768a3583081ed8648939280",
+    "bKashAppKey": "aDgqtKHfBF2wLYYXYRGfwaTQtc",
+    "bKashAppSecret": "gFd5EivEGDmENxUOK9Ne7o64WWskRc6HtP8i94Fb3YsVxnbOYwFJ",
+    "bKashUsername": "01580720711",
+    "bKashPassword": "w2mj!V$]p^G",
+    "bKashMode": "production"
   }
 }

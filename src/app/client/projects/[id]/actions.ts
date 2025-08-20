@@ -56,7 +56,7 @@ export async function initiateBkashPayment(projectId: string) {
 
 export async function initiatePipraPayPayment(project: Project, user: User) {
      try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/payments/piprapay/charge`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/payments/piprapay/charge`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
