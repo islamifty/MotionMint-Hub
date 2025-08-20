@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { readDb } from "@/lib/db";
-import { headers } from 'next/headers';
 
 export async function POST(req: Request) {
   const db = await readDb();
@@ -23,10 +22,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, message: "amount required" }, { status: 400 });
   }
 
-  const headersList = headers();
-  const host = headersList.get('host');
-  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
-  const appUrl = `${protocol}://${host}`;
+  const appUrl = process.env.APP_URL;
+   if (!appUrl) {
+    console.error("APP_URL is not configured in environment variables.");
+    return NextResponse.json({ ok: false, message: "Application URL is not configured." }, { status: 500 });
+  }
 
   const res = await fetch(`${piprapayBaseUrl}/api/create-charge`, {
     method: "POST",
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
       webhook_url: `${appUrl}/api/webhooks/piprapay`,
       metadata,
     }),
-    cache: "no-store",
+    next: { revalidate: 0 },
   });
 
   const data = await res.json().catch(() => ({}));

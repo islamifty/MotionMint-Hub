@@ -5,7 +5,6 @@ import { createPayment as createBkashPayment } from '@/lib/bkash';
 import { readDb } from '@/lib/db';
 import type { Project, User, AppSettings } from '@/types';
 import { getSession } from '@/lib/session';
-import { headers } from 'next/headers';
 
 export async function getProjectDetails(projectId: string): Promise<{ project: Project | null, user: User | null, settings: AppSettings | null }> {
     const session = await getSession();
@@ -20,12 +19,6 @@ export async function getProjectDetails(projectId: string): Promise<{ project: P
     return { project: project || null, user: session.user, settings: settings || null };
 }
 
-function getAppUrl() {
-    const headersList = headers();
-    const host = headersList.get('host');
-    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
-    return `${protocol}://${host}`;
-}
 
 export async function initiateBkashPayment(projectId: string) {
     try {
@@ -36,7 +29,10 @@ export async function initiateBkashPayment(projectId: string) {
             throw new Error('Project not found');
         }
         
-        const appUrl = getAppUrl();
+        const appUrl = process.env.APP_URL;
+        if (!appUrl) {
+            throw new Error("APP_URL is not configured in environment variables.");
+        }
         const callbackUrl = `${appUrl}/api/bkash/callback`;
 
         const paymentData = {
@@ -65,10 +61,16 @@ export async function initiateBkashPayment(projectId: string) {
 
 export async function initiatePipraPayPayment(project: Project, user: User) {
      try {
-        const appUrl = getAppUrl();
+        const appUrl = process.env.APP_URL;
+        if (!appUrl) {
+            throw new Error("APP_URL is not configured in environment variables.");
+        }
+
         const res = await fetch(`${appUrl}/api/payments/piprapay/charge`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json' 
+            },
             body: JSON.stringify({
                 amount: project.amount,
                 customer_name: user.name,
@@ -79,6 +81,7 @@ export async function initiatePipraPayPayment(project: Project, user: User) {
                     userId: user.id
                 },
             }),
+            next: { revalidate: 0 } // Prevents caching
         });
         
         const data = await res.json();
