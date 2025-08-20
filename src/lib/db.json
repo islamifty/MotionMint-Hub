@@ -27,6 +27,7 @@
     "bKashAppSecret": "gFd5EivEGDmENxUOK9Ne7o64WWskRc6HtP8i94Fb3YsVxnbOYwFJ",
     "bKashUsername": "01580720711",
     "bKashPassword": "w2mj!V$]p^G",
-    "bKashMode": "production"
+    "bKashMode": "production",
+    "greenwebSmsToken": "8887150534175568073482ebcc3c79f20372a10bf0536e8ac8f6"
   }
 }
