@@ -18,7 +18,7 @@ interface SmsConfig {
 export async function sendSms(options: SmsOptions, smsConfig?: SmsConfig): Promise<void> {
     const db = await readDb();
     
-    // Merge saved settings with any provided config. Provided config takes precedence.
+    // Start with saved settings and override with any provided config.
     const settings: SmsConfig = {
         ...db.settings,
         ...smsConfig,

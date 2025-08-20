@@ -6,3 +6,19 @@
 }
 ---END DATA---
 
+2025-08-20T08:52:02.519Z [ERROR] - Error sending SMS via bdbulksms.net
+---DATA---
+{
+  "errorMessage": "Request failed with status code 404",
+  "response": "\r\n<h1 style=\"text-align: center;\"><span style=\"color: #ff0000;\"><strong>Oops ! Page not found !</strong></span></h1>\r\n<p><img style=\"max-width: 100%; display: block; margin-left: auto; margin-right: auto;\" src=\"https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhQAlVsYsXwo9YxwAeh3ycPI_AHwWBlBt98Lvd-SXZkw0XIIa1r1GMgAJF_CpikEpmcE8Krivuz1PaLWjic3t_mM4xgN-FCa011y-f5YcVhDdfTOuXJimuPPap_5Ox49DcUnUn3BTUTkPxXY7y7a6-qJz7Rr2jTEsS_RrOEI4nHx6ujmrKswhnz3awRjuc/s1600/lost.gif\" /></p>\r\n<p style=\"text-align: center;\">Let start from the begining ...</p>\r\n<a href=\"https://bdbulksms.net\"><h1 style=\"text-align: center;\"><span style=\"color: #ffffff; background-color: #800080;\"><strong>&nbsp; VISIT HOMEPAGE&nbsp;&nbsp;</strong></span></h1></a>\r\n<p>&nbsp;</p>"
+}
+---END DATA---
+
+2025-08-20T08:52:34.572Z [ERROR] - Error sending SMS via bdbulksms.net
+---DATA---
+{
+  "errorMessage": "Request failed with status code 404",
+  "response": "\r\n<h1 style=\"text-align: center;\"><span style=\"color: #ff0000;\"><strong>Oops ! Page not found !</strong></span></h1>\r\n<p><img style=\"max-width: 100%; display: block; margin-left: auto; margin-right: auto;\" src=\"https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhQAlVsYsXwo9YxwAeh3ycPI_AHwWBlBt98Lvd-SXZkw0XIIa1r1GMgAJF_CpikEpmcE8Krivuz1PaLWjic3t_mM4xgN-FCa011y-f5YcVhDdfTOuXJimuPPap_5Ox49DcUnUn3BTUTkPxXY7y7a6-qJz7Rr2jTEsS_RrOEI4nHx6ujmrKswhnz3awRjuc/s1600/lost.gif\" /></p>\r\n<p style=\"text-align: center;\">Let start from the begining ...</p>\r\n<a href=\"https://bdbulksms.net\"><h1 style=\"text-align: center;\"><span style=\"color: #ffffff; background-color: #800080;\"><strong>&nbsp; VISIT HOMEPAGE&nbsp;&nbsp;</strong></span></h1></a>\r\n<p>&nbsp;</p>"
+}
+---END DATA---
+
