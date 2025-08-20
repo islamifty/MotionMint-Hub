@@ -31,7 +31,7 @@ export async function sendSms(options: SmsOptions, smsConfig?: SmsConfig): Promi
         throw new Error('SMS settings are not configured.');
     }
 
-    const url = 'http://bulksms.bdbulksms.net/api/v2/send';
+    const url = 'http://sms.bdbulksms.net/api/v2/send';
     
     const params = new URLSearchParams();
     params.append('api_key', smsApiKey);
