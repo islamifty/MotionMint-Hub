@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Loader2, Trash2 } from 'lucide-react';
+import { FileText, Loader2, Trash2, Clipboard } from 'lucide-react';
 import { getLogs, clearLogs } from './actions';
 import { useToast } from '@/hooks/use-toast';
 
@@ -43,6 +43,30 @@ export default function LogsPage() {
     setIsClearing(false);
   };
 
+  const handleCopyLogs = async () => {
+    if (!logs) {
+        toast({
+            variant: 'destructive',
+            title: 'Nothing to Copy',
+            description: 'The log file is empty.',
+        });
+        return;
+    }
+    try {
+        await navigator.clipboard.writeText(logs);
+        toast({
+            title: 'Copied!',
+            description: 'Logs have been copied to your clipboard.',
+        });
+    } catch (err) {
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not copy logs to clipboard.',
+        });
+    }
+  };
+
   return (
     <div className="space-y-6">
        <div>
@@ -62,10 +86,16 @@ export default function LogsPage() {
                 Showing the contents of `app-logs.log`. Newest entries are at the bottom.
             </CardDescription>
           </div>
-          <Button onClick={handleClearLogs} variant="destructive" size="sm" disabled={isClearing}>
-            {isClearing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
-            Clear Logs
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={handleCopyLogs} variant="outline" size="sm">
+                <Clipboard className="mr-2 h-4 w-4" />
+                Copy Logs
+            </Button>
+            <Button onClick={handleClearLogs} variant="destructive" size="sm" disabled={isClearing}>
+              {isClearing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+              Clear Logs
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="bg-muted rounded-md p-4 h-[60vh] overflow-auto">

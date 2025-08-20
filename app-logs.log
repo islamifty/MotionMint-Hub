@@ -67,3 +67,24 @@
 }
 ---END DATA---
 
+2025-08-20T09:08:31.306Z [ERROR] - Error sending SMS via bdbulksms.net
+---DATA---
+{
+  "errorMessage": "fetch failed"
+}
+---END DATA---
+
+2025-08-20T09:08:40.794Z [ERROR] - Error sending SMS via bdbulksms.net
+---DATA---
+{
+  "errorMessage": "fetch failed"
+}
+---END DATA---
+
+2025-08-20T09:09:07.959Z [ERROR] - Error sending SMS via bdbulksms.net
+---DATA---
+{
+  "errorMessage": "fetch failed"
+}
+---END DATA---
+
