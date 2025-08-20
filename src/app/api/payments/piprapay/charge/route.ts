@@ -28,7 +28,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, message: "Application URL is not configured." }, { status: 500 });
   }
 
-  const res = await fetch(`${piprapayBaseUrl}/api/create-charge`, {
+  const res = await fetch(`${piprapayBaseUrl}/create-charge`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

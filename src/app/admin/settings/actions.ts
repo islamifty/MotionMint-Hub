@@ -108,7 +108,7 @@ export async function verifyPipraPayConnection(data: unknown) {
     }
 
     try {
-        const res = await fetch(`${piprapayBaseUrl}/api/verify-payments`, {
+        const res = await fetch(`${piprapayBaseUrl}/verify-payments`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

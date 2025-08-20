@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, message: "invoice_id required" }, { status: 400 });
   }
 
-  const res = await fetch(`${piprapayBaseUrl}/api/verify-payments`, {
+  const res = await fetch(`${piprapayBaseUrl}/verify-payments`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
