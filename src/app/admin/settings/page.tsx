@@ -50,6 +50,7 @@ import { Link as LinkIcon, Loader2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 const nextcloudSchema = z.object({
   nextcloudUrl: z.string().url({ message: "Please enter a valid URL." }),
