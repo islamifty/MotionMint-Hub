@@ -18,7 +18,7 @@ const bKashSchema = z.object({
 
 const pipraPaySchema = z.object({
     apiKey: z.string().min(1),
-    piprapayBaseUrl: z.string().url({ message: "Please enter a valid Base URL." }),
+    piprapayBaseUrl: z.string().min(1, { message: "Please enter a Base URL." }),
     pipraPayEnabled: z.boolean(),
 });
 
