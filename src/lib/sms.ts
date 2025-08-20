@@ -3,7 +3,6 @@ import 'server-only';
 import axios from 'axios';
 import { readDb } from '@/lib/db';
 import { logger } from './logger';
-import type { AppSettings } from '@/types';
 
 interface SmsOptions {
   to: string;
@@ -18,9 +17,6 @@ interface SmsConfig {
 export async function sendSms(options: SmsOptions, smsConfig?: SmsConfig): Promise<void> {
     const db = await readDb();
     
-    // Start with saved settings and override with any provided config.
-    // This ensures that even if only one field is provided for testing,
-    // the other one is picked up from the saved settings.
     const settings: SmsConfig = {
         smsApiKey: db.settings.smsApiKey,
         smsSenderId: db.settings.smsSenderId,
@@ -34,14 +30,21 @@ export async function sendSms(options: SmsOptions, smsConfig?: SmsConfig): Promi
         throw new Error('SMS settings are not configured.');
     }
 
-    const params = new URLSearchParams();
-    params.append('api_key', smsApiKey);
-    params.append('senderid', smsSenderId);
-    params.append('number', options.to);
-    params.append('message', options.message);
+    const url = 'https://bulksms.bdbulksms.net/api/v2/send';
+    
+    // Per official documentation, data should be form-urlencoded in the body of a POST request.
+    const data = new URLSearchParams();
+    data.append('api_key', smsApiKey);
+    data.append('senderid', smsSenderId);
+    data.append('number', options.to);
+    data.append('message', options.message);
     
     try {
-        const response = await axios.get('https://bdbulksms.net/api/v2/send', { params });
+        const response = await axios.post(url, data, {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+        });
         
         if (response.data.status === 'SUCCESS') {
             logger.info(`SMS sent successfully to ${options.to}`, { response: response.data });
