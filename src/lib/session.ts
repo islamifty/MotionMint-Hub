@@ -33,7 +33,10 @@ export async function encrypt(payload: SessionPayload) {
     .sign(key);
 }
 
-export async function decrypt(input: string): Promise<SessionPayload | null> {
+export async function decrypt(input: string | undefined): Promise<SessionPayload | null> {
+  if (!input) {
+    return null;
+  }
   try {
     const { payload } = await jwtVerify(input, key, {
       algorithms: ['HS256'],
