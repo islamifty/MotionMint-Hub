@@ -73,3 +73,12 @@ export async function getDownloadLink(path: string): Promise<string> {
     const encodedPath = path.split('/').map(encodeURIComponent).join('/');
     return `${baseUrl}/s/${encodedPath}`; // This might need adjustment based on Nextcloud share link structure
 }
+
+export async function getThumbnailBaseUrl(): Promise<string> {
+    const db = readDb();
+    const { nextcloudUrl, nextcloudUser } = db.settings;
+    if (!nextcloudUrl || !nextcloudUser) {
+        return '';
+    }
+    return nextcloudUrl.replace('/remote.php/dav/files' + nextcloudUser, '') || '';
+}

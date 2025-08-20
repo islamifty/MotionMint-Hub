@@ -1,3 +1,5 @@
+'use server';
+
 // This is a simple file-based database.
 // In a real-world application, you would use a proper database like PostgreSQL, MySQL, or a NoSQL database.
 import fs from 'fs';
@@ -60,7 +62,7 @@ export function readDb(): DbData {
 }
 
 // Function to write to the database file
-export function writeDb(data: DbData): void {
+export async function writeDb(data: DbData): Promise<void> {
     try {
         fs.writeFileSync(dbPath, JSON.stringify(data, null, 2), 'utf8');
     } catch (error) {

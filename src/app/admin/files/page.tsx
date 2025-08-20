@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import React, { useState, useEffect, useTransition } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   Folder,
@@ -53,9 +53,8 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 
-import { getDirectoryContents, createDirectory, deleteFileOrFolder } from "./actions";
+import { getDirectoryContents, createDirectory, deleteFileOrFolder, getThumbnailBaseUrl } from "./actions";
 import type { WebDAVFile } from "@/types";
-import { readDb } from "@/lib/db";
 
 
 type UploadingFile = {
@@ -73,6 +72,7 @@ export default function FileManagerPage() {
   const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<WebDAVFile | null>(null);
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
+  const [thumbnailBaseUrl, setThumbnailBaseUrl] = useState('');
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -82,6 +82,12 @@ export default function FileManagerPage() {
     const path = searchParams.get("path") || "/";
     setCurrentPath(path);
     fetchFiles(path);
+    
+    async function loadBaseUrl() {
+        const url = await getThumbnailBaseUrl();
+        setThumbnailBaseUrl(url);
+    }
+    loadBaseUrl();
   }, [searchParams]);
 
   const fetchFiles = async (path: string) => {
@@ -180,9 +186,8 @@ export default function FileManagerPage() {
   const pathSegments = currentPath.split("/").filter(Boolean);
 
   const getFileIcon = (filename: string) => {
-     const db = readDb();
-     const baseUrl = db.settings.nextcloudUrl?.replace('/remote.php/dav/files' + db.settings.nextcloudUser, '') || '';
-     const thumbUrl = `${baseUrl}/apps/files/api/v1/thumbnail/256/256/${filename}`;
+     if (!thumbnailBaseUrl) return null;
+     const thumbUrl = `${thumbnailBaseUrl}/apps/files/api/v1/thumbnail/256/256/${filename}`;
      return thumbUrl;
   }
 
