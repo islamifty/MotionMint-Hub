@@ -109,3 +109,54 @@
 }
 ---END DATA---
 
+2025-08-20T09:47:34.109Z [INFO] - SMS sent successfully to 01791241152
+---DATA---
+{
+  "response": "Ok: SMS Sent Successfully To +8801791241152</br>"
+}
+---END DATA---
+
+2025-08-20T09:48:52.230Z [WARN] - Login failed: Invalid password
+---DATA---
+{
+  "email": "mdiftekharulislamifty@gmail.com"
+}
+---END DATA---
+
+2025-08-20T09:49:06.512Z [WARN] - Login failed: Invalid password
+---DATA---
+{
+  "email": "mdiftekharulislamifty@gmail.com"
+}
+---END DATA---
+
+2025-08-20T09:49:31.393Z [INFO] - Password reset link sent to mdiftekharulislamifty@gmail.com
+
+2025-08-20T09:49:49.041Z [WARN] - Login failed: Invalid password
+---DATA---
+{
+  "email": "mdiftekharulislamifty@gmail.com"
+}
+---END DATA---
+
+2025-08-20T09:50:42.952Z [WARN] - Login failed: Invalid password
+---DATA---
+{
+  "email": "mdiftekharulislamifty@gmail.com"
+}
+---END DATA---
+
+2025-08-20T09:53:46.447Z [WARN] - Login failed: Invalid password
+---DATA---
+{
+  "email": "edit@motionmint.top"
+}
+---END DATA---
+
+2025-08-20T09:55:08.345Z [WARN] - Login failed: Invalid password
+---DATA---
+{
+  "email": "mdiftekharulislamifty@gmail.com"
+}
+---END DATA---
+

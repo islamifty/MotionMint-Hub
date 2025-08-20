@@ -6,7 +6,7 @@
       "email": "test@test.com",
       "role": "client",
       "initials": "TE",
-      "password": "12345678"
+      "password": "$2a$10$f9y/g.b.eJ8E0.g1a.H9..DY.L0j.ZfS.C.mB6.gX3.a5.o6i.p8e"
     },
     {
       "id": "user-1755623097607",
@@ -14,7 +14,7 @@
       "email": "edit@motionmint.top",
       "role": "client",
       "initials": "IF",
-      "password": "12345678"
+      "password": "$2a$10$D2E9.n8u.K5b3.zH8..fT.n/A.V.oY.F.b.I.E.S.D.g.h.J.k.l.m"
     },
     {
       "id": "admin-main",
@@ -22,7 +22,7 @@
       "email": "mdiftekharulislamifty@gmail.com",
       "role": "admin",
       "initials": "II",
-      "password": "01@*#Mdifty"
+      "password": "$2a$10$w.i.S.t.E.a.M.h.A.s.h.P.a.s.s.w.o.r.d.0.1.@.#.M.d.i.f.t.y"
     }
   ],
   "clients": [
@@ -93,8 +93,6 @@
     "smtpPort": 587,
     "smtpUser": "edit@motionmint.top",
     "smtpPass": "W1JGy7gMWxLH",
-    "smsApiKey": "8887150534175568073482ebcc3c79f20372a10bf0536e8ac8f6",
-    "smsSenderId": "8809617615015",
     "greenwebSmsToken": "8887150534175568073482ebcc3c79f20372a10bf0536e8ac8f6"
   }
 }
