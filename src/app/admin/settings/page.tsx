@@ -24,8 +24,10 @@ import { useToast } from "@/hooks/use-toast";
 import {
   saveNextcloudSettings,
   saveBKashSettings,
+  savePipraPaySettings,
   verifyNextcloudConnection,
   verifyBKashConnection,
+  verifyPipraPayConnection,
   getSettings,
   saveGeneralSettings,
 } from "./actions";
@@ -39,10 +41,10 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useBranding } from "@/context/BrandingContext";
-import { Upload, Info, Link as LinkIcon } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Link as LinkIcon, Loader2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const nextcloudSchema = z.object({
   nextcloudUrl: z.string().url({ message: "Please enter a valid URL." }),
@@ -52,10 +54,18 @@ const nextcloudSchema = z.object({
 
 const bKashSchema = z.object({
   bKashEnabled: z.boolean().default(false),
+  bKashAppKey: z.string().optional(),
+  bKashAppSecret: z.string().optional(),
+  bKashUsername: z.string().optional(),
+  bKashPassword: z.string().optional(),
+  bKashMode: z.enum(["sandbox", "production"]).default("sandbox"),
 });
 
 const pipraPaySchema = z.object({
   pipraPayEnabled: z.boolean().default(false),
+  piprapayApiKey: z.string().optional(),
+  piprapayBaseUrl: z.string().min(1, "Base URL is required.").optional().or(z.literal('')),
+  piprapayWebhookVerifyKey: z.string().optional(),
 });
 
 const generalSchema = z.object({
@@ -75,6 +85,7 @@ export default function SettingsPage() {
   const { toast } = useToast();
   const [isTestingNextcloud, setIsTestingNextcloud] = useState(false);
   const [isTestingBKash, setIsTestingBKash] = useState(false);
+  const [isTestingPipraPay, setIsTestingPipraPay] = useState(false);
   const { branding, setBranding } = useBranding();
 
   const nextcloudForm = useForm<NextcloudFormValues>({
@@ -84,12 +95,24 @@ export default function SettingsPage() {
 
   const bKashForm = useForm<BKashFormValues>({
     resolver: zodResolver(bKashSchema),
-    defaultValues: { bKashEnabled: false },
+    defaultValues: { 
+      bKashEnabled: false,
+      bKashAppKey: "",
+      bKashAppSecret: "",
+      bKashUsername: "",
+      bKashPassword: "",
+      bKashMode: "sandbox",
+    },
   });
 
   const pipraPayForm = useForm<PipraPayFormValues>({
     resolver: zodResolver(pipraPaySchema),
-    defaultValues: { pipraPayEnabled: false },
+    defaultValues: { 
+      pipraPayEnabled: false,
+      piprapayApiKey: "",
+      piprapayBaseUrl: "",
+      piprapayWebhookVerifyKey: "",
+    },
   });
 
   const generalForm = useForm<GeneralFormValues>({
@@ -113,7 +136,18 @@ export default function SettingsPage() {
                 appPassword: settings.nextcloudPassword || ''
             });
              bKashForm.reset({
-                bKashEnabled: settings.bKashEnabled || false
+                bKashEnabled: settings.bKashEnabled || false,
+                bKashAppKey: settings.bKashAppKey || "",
+                bKashAppSecret: settings.bKashAppSecret || "",
+                bKashUsername: settings.bKashUsername || "",
+                bKashPassword: settings.bKashPassword || "",
+                bKashMode: settings.bKashMode || "sandbox",
+            });
+             pipraPayForm.reset({
+                pipraPayEnabled: settings.pipraPayEnabled || false,
+                piprapayApiKey: settings.piprapayApiKey || "",
+                piprapayBaseUrl: settings.piprapayBaseUrl || "",
+                piprapayWebhookVerifyKey: settings.piprapayWebhookVerifyKey || "",
             });
             generalForm.reset({
                 ...generalForm.getValues(),
@@ -135,7 +169,7 @@ export default function SettingsPage() {
     });
   }, [branding, generalForm]);
 
-  const onNextcloudSubmit = async (data: NextcloudFormValues) => {
+  const onNextcloudSubmit: SubmitHandler<NextcloudFormValues> = async (data) => {
     const result = await saveNextcloudSettings(data);
     toast({
         title: result.success ? "Settings Saved" : "Error",
@@ -144,7 +178,7 @@ export default function SettingsPage() {
     });
   };
   
-  const onBKashSubmit = async (data: BKashFormValues) => {
+  const onBKashSubmit: SubmitHandler<BKashFormValues> = async (data) => {
     const result = await saveBKashSettings(data);
     toast({
         title: result.success ? "Settings Saved" : "Error",
@@ -154,9 +188,11 @@ export default function SettingsPage() {
   };
 
   const onPipraPaySubmit: SubmitHandler<PipraPayFormValues> = async (data) => {
-     toast({
-        title: "Info",
-        description: "PipraPay settings are now managed in the .env file for better security.",
+     const result = await savePipraPaySettings(data);
+      toast({
+        title: result.success ? "Settings Saved" : "Error",
+        description: result.message,
+        variant: result.success ? "default" : "destructive",
     });
   };
 
@@ -221,13 +257,26 @@ export default function SettingsPage() {
 
   const handleTestBKashConnection = async () => {
     setIsTestingBKash(true);
-    const result = await verifyBKashConnection();
+    const data = bKashForm.getValues();
+    const result = await verifyBKashConnection(data);
     toast({
         title: result.success ? "Success" : "Connection Failed",
         description: result.message,
         variant: result.success ? "default" : "destructive",
     });
     setIsTestingBKash(false);
+  };
+  
+   const handleTestPipraPayConnection = async () => {
+    setIsTestingPipraPay(true);
+    const data = pipraPayForm.getValues();
+    const result = await verifyPipraPayConnection(data);
+    toast({
+      title: result.success ? "Success" : "Connection Failed",
+      description: result.message,
+      variant: result.success ? "default" : "destructive",
+    });
+    setIsTestingPipraPay(false);
   };
 
   return (
@@ -313,9 +362,7 @@ export default function SettingsPage() {
                       type="submit"
                       disabled={nextcloudForm.formState.isSubmitting}
                     >
-                      {nextcloudForm.formState.isSubmitting
-                        ? "Saving..."
-                        : "Save Nextcloud Settings"}
+                      {nextcloudForm.formState.isSubmitting ? "Saving..." : "Save Nextcloud Settings"}
                     </Button>
                     <Button
                       type="button"
@@ -323,7 +370,7 @@ export default function SettingsPage() {
                       onClick={handleTestNextcloudConnection}
                       disabled={isTestingNextcloud}
                     >
-                      {isTestingNextcloud ? "Testing..." : "Test Connection"}
+                      {isTestingNextcloud ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Testing...</> : "Test Connection"}
                     </Button>
                   </div>
                 </CardFooter>
@@ -339,7 +386,7 @@ export default function SettingsPage() {
                 <CardHeader>
                   <CardTitle>bKash Payment Gateway</CardTitle>
                   <CardDescription>
-                    Manage your bKash payment gateway settings. Credentials are in the .env file.
+                    Manage your bKash payment gateway settings.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -363,20 +410,71 @@ export default function SettingsPage() {
                         </FormItem>
                       )}
                     />
-                    <Alert>
-                        <Info className="h-4 w-4" />
-                        <AlertTitle>Environment Configuration</AlertTitle>
-                        <AlertDescription>
-                            To configure bKash, please add the following variables to your <strong>.env</strong> file:
-                            <ul className="list-disc pl-5 mt-2 text-xs">
-                                <li>BKASH_APP_KEY</li>
-                                <li>BKASH_APP_SECRET</li>
-                                <li>BKASH_USERNAME</li>
-                                <li>BKASH_PASSWORD</li>
-                                <li>BKASH_MODE (set to 'sandbox' or 'production')</li>
-                            </ul>
-                        </AlertDescription>
-                    </Alert>
+                    <FormField
+                      control={bKashForm.control}
+                      name="bKashAppKey"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>App Key</FormLabel>
+                          <FormControl><Input placeholder="Your bKash App Key" {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={bKashForm.control}
+                      name="bKashAppSecret"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>App Secret</FormLabel>
+                          <FormControl><Input type="password" placeholder="Your bKash App Secret" {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                     <FormField
+                      control={bKashForm.control}
+                      name="bKashUsername"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Username</FormLabel>
+                          <FormControl><Input placeholder="Your bKash Username" {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={bKashForm.control}
+                      name="bKashPassword"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Password</FormLabel>
+                          <FormControl><Input type="password" placeholder="Your bKash Password" {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={bKashForm.control}
+                      name="bKashMode"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Mode</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a mode" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="sandbox">Sandbox</SelectItem>
+                              <SelectItem value="production">Production</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                 </CardContent>
                  <CardFooter className="flex-col items-start gap-4">
                     <div className="flex gap-2">
@@ -384,7 +482,7 @@ export default function SettingsPage() {
                             {bKashForm.formState.isSubmitting ? "Saving..." : "Save bKash Settings"}
                         </Button>
                         <Button type="button" variant="outline" onClick={handleTestBKashConnection} disabled={isTestingBKash}>
-                            {isTestingBKash ? "Testing..." : "Test Connection"}
+                            {isTestingBKash ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Testing...</> : "Test Connection"}
                         </Button>
                     </div>
                 </CardFooter>
@@ -400,27 +498,82 @@ export default function SettingsPage() {
                 <CardHeader>
                   <CardTitle>PipraPay Payment Gateway</CardTitle>
                   <CardDescription>
-                    Manage your PipraPay payment gateway settings. Credentials are in the .env file.
+                    Manage your PipraPay payment gateway settings.
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                   <Alert>
-                        <Info className="h-4 w-4" />
-                        <AlertTitle>Environment Configuration</AlertTitle>
-                        <AlertDescription>
-                            To configure PipraPay, please add the following variables to your <strong>.env</strong> file:
-                            <ul className="list-disc pl-5 mt-2 text-xs">
-                                <li>PIPRAPAY_API_KEY</li>
-                                <li>PIPRAPAY_BASE_URL (e.g., https://sandbox.piprapay.com)</li>
-                                <li>PIPRAPAY_RETURN_URL</li>
-                                <li>PIPRAPAY_WEBHOOK_VERIFY_KEY</li>
-                                <li>NEXT_PUBLIC_BASE_URL (your app's public URL)</li>
-                            </ul>
-                        </AlertDescription>
-                    </Alert>
+                <CardContent className="space-y-6">
+                  <FormField
+                      control={pipraPayForm.control}
+                      name="pipraPayEnabled"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">Enable PipraPay</FormLabel>
+                            <FormDescription>
+                              Allow clients to pay using PipraPay.
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={pipraPayForm.control}
+                      name="piprapayApiKey"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>API Key</FormLabel>
+                          <FormControl><Input placeholder="Your PipraPay API Key" {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                     <FormField
+                      control={pipraPayForm.control}
+                      name="piprapayWebhookVerifyKey"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Webhook Verification Key</FormLabel>
+                          <FormControl><Input placeholder="Your Webhook Verification Key" {...field} /></FormControl>
+                           <FormDescription>
+                            Usually the same as your API key, unless a dedicated secret is used.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={pipraPayForm.control}
+                      name="piprapayBaseUrl"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Base URL</FormLabel>
+                          <FormControl><Input placeholder="https://sandbox.piprapay.com" {...field} /></FormControl>
+                          <FormDescription>
+                            Use https://sandbox.piprapay.com for testing or https://piprapay.com for production.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                 </CardContent>
-                 <CardFooter>
-                   <Button type="submit" disabled>Save PipraPay Settings</Button>
+                 <CardFooter className="flex gap-2">
+                   <Button type="submit" disabled={pipraPayForm.formState.isSubmitting}>
+                     {pipraPayForm.formState.isSubmitting ? "Saving..." : "Save PipraPay Settings"}
+                   </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleTestPipraPayConnection}
+                      disabled={isTestingPipraPay}
+                    >
+                      {isTestingPipraPay ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Testing...</> : "Test Connection"}
+                    </Button>
                 </CardFooter>
               </form>
             </Form>

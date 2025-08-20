@@ -1,28 +1,30 @@
 
 import 'server-only';
-
-const BKASH_API_BASE_URL = process.env.BKASH_MODE === 'sandbox' 
-    ? 'https://tokenized.sandbox.bka.sh/v1.2.0-beta' 
-    : 'https://tokenized.pay.bka.sh/v1.2.0-beta';
+import { readDb } from '@/lib/db';
 
 async function getBkashToken(): Promise<string> {
-    const { BKASH_APP_KEY, BKASH_APP_SECRET, BKASH_USERNAME, BKASH_PASSWORD } = process.env;
+    const db = await readDb();
+    const { bKashAppKey, bKashAppSecret, bKashUsername, bKashPassword, bKashMode } = db.settings;
 
-    if (!BKASH_APP_KEY || !BKASH_APP_SECRET || !BKASH_USERNAME || !BKASH_PASSWORD) {
-        throw new Error('bKash credentials are not configured in environment variables.');
+    if (!bKashAppKey || !bKashAppSecret || !bKashUsername || !bKashPassword) {
+        throw new Error('bKash credentials are not configured in settings.');
     }
 
-    const response = await fetch(`${BKASH_API_BASE_URL}/tokenized/checkout/token/grant`, {
+    const baseUrl = bKashMode === 'sandbox' 
+        ? 'https://tokenized.sandbox.bka.sh/v1.2.0-beta' 
+        : 'https://tokenized.pay.bka.sh/v1.2.0-beta';
+
+    const response = await fetch(`${baseUrl}/tokenized/checkout/token/grant`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-            'username': BKASH_USERNAME,
-            'password': BKASH_PASSWORD,
+            'username': bKashUsername,
+            'password': bKashPassword,
         },
         body: JSON.stringify({
-             app_key: BKASH_APP_KEY, 
-             app_secret: BKASH_APP_SECRET 
+             app_key: bKashAppKey, 
+             app_secret: bKashAppSecret 
         }),
         cache: 'no-store'
     });
@@ -37,16 +39,26 @@ async function getBkashToken(): Promise<string> {
 }
 
 export async function createPayment(paymentRequest: any) {
-    const id_token = await getBkashToken();
-    const { BKASH_APP_KEY } = process.env;
+    const db = await readDb();
+    const { bKashAppKey, bKashMode } = db.settings;
+    
+    if (!bKashAppKey) {
+        throw new Error('bKash App Key is not configured.');
+    }
 
-    const response = await fetch(`${BKASH_API_BASE_URL}/tokenized/checkout/create`, {
+    const id_token = await getBkashToken();
+    
+    const baseUrl = bKashMode === 'sandbox' 
+        ? 'https://tokenized.sandbox.bka.sh/v1.2.0-beta' 
+        : 'https://tokenized.pay.bka.sh/v1.2.0-beta';
+
+    const response = await fetch(`${baseUrl}/tokenized/checkout/create`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
             'Authorization': id_token,
-            'X-App-Key': BKASH_APP_KEY || '',
+            'X-App-Key': bKashAppKey,
         },
         body: JSON.stringify(paymentRequest),
         cache: 'no-store'
@@ -66,16 +78,26 @@ export async function createPayment(paymentRequest: any) {
 }
 
 export async function executePayment(paymentID: string) {
+    const db = await readDb();
+    const { bKashAppKey, bKashMode } = db.settings;
+    
+    if (!bKashAppKey) {
+        throw new Error('bKash App Key is not configured.');
+    }
+    
     const id_token = await getBkashToken();
-    const { BKASH_APP_KEY } = process.env;
 
-    const response = await fetch(`${BKASH_API_BASE_URL}/tokenized/checkout/execute`, {
+    const baseUrl = bKashMode === 'sandbox' 
+        ? 'https://tokenized.sandbox.bka.sh/v1.2.0-beta' 
+        : 'https://tokenized.pay.bka.sh/v1.2.0-beta';
+
+    const response = await fetch(`${baseUrl}/tokenized/checkout/execute`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
             'Authorization': id_token,
-            'X-App-Key': BKASH_APP_KEY || '',
+            'X-App-Key': bKashAppKey,
         },
         body: JSON.stringify({ paymentID }),
         cache: 'no-store'

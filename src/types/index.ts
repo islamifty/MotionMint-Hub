@@ -52,10 +52,26 @@ export type StatCard = {
 };
 
 export type AppSettings = {
+    // Nextcloud
     nextcloudUrl?: string;
     nextcloudUser?: string;
     nextcloudPassword?: string;
+    
+    // bKash
     bKashEnabled?: boolean;
+    bKashAppKey?: string;
+    bKashAppSecret?: string;
+    bKashUsername?: string;
+    bKashPassword?: string;
+    bKashMode?: "sandbox" | "production";
+    
+    // PipraPay
+    pipraPayEnabled?: boolean;
+    piprapayApiKey?: string;
+    piprapayBaseUrl?: string;
+    piprapayWebhookVerifyKey?: string;
+    
+    // General
     whatsappLink?: string;
     logoUrl?: string;
 };

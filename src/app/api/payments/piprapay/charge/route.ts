@@ -1,6 +1,14 @@
 import { NextResponse } from "next/server";
+import { readDb } from "@/lib/db";
 
 export async function POST(req: Request) {
+  const db = await readDb();
+  const { piprapayApiKey, piprapayBaseUrl } = db.settings;
+
+  if (!piprapayApiKey || !piprapayBaseUrl) {
+    return NextResponse.json({ ok: false, message: "PipraPay is not configured." }, { status: 500 });
+  }
+
   const body = await req.json().catch(() => ({}));
   const {
     amount,
@@ -14,21 +22,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, message: "amount required" }, { status: 400 });
   }
 
-  const res = await fetch(`${process.env.PIPRAPAY_BASE_URL}/api/create-charge`, {
+  const res = await fetch(`${piprapayBaseUrl}/api/create-charge`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      // PipraPay expects API key in header
-      "mh-piprapay-api-key": process.env.PIPRAPAY_API_KEY as string,
+      "mh-piprapay-api-key": piprapayApiKey,
     },
     body: JSON.stringify({
       amount,
       currency,
       customer_name,
       customer_email_mobile,
-      // user will be redirected here after success; PipraPay sends invoice_id to this URL
       pp_url: process.env.PIPRAPAY_RETURN_URL,
-      // recommended: receive async events
       webhook_url: `${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/api/webhooks/piprapay`,
       metadata,
     }),
@@ -42,7 +47,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: data }, { status: res.status });
   }
 
-  // Different installs may return "url" or "payment_url"—handle both
   const paymentUrl = data?.url || data?.payment_url || data?.data?.url;
   const ppId = data?.pp_id || data?.data?.pp_id;
 
