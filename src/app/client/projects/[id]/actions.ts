@@ -33,12 +33,12 @@ export async function initiateBkashPayment(projectId: string) {
 
         const paymentData = {
             mode: '0011',
-            payerReference: 'payment_for_project',
-            callback_url: callbackUrl,
+            payerReference: project.orderId, // Using a unique reference like orderId
+            callbackURL: callbackUrl, // Correct key is callbackURL
             amount: project.amount.toString(),
             currency: 'BDT',
             intent: 'sale',
-            merchant_invoice_number: project.orderId,
+            merchantInvoiceNumber: project.orderId, // Correct key is merchantInvoiceNumber
         };
 
         const result = await createBkashPayment(paymentData);
