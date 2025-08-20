@@ -16,13 +16,13 @@ export async function sendEmail(mailOptions: MailOptions, smtpConfig?: Partial<A
 
 // Main implementation
 export async function sendEmail(mailOptions: MailOptions, smtpConfig?: Partial<AppSettings>): Promise<void> {
-    let settings = smtpConfig;
-
-    // If no specific config is provided, read from the database
-    if (!settings) {
-        const db = await readDb();
-        settings = db.settings;
-    }
+    const db = await readDb();
+    
+    // Merge saved settings with any provided config. Provided config takes precedence.
+    const settings = {
+        ...db.settings,
+        ...smtpConfig,
+    };
 
     const { smtpHost, smtpPort, smtpUser, smtpPass } = settings;
 
