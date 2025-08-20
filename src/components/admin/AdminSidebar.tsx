@@ -8,6 +8,7 @@ import {
   Settings,
   User,
   Files,
+  FileText,
 } from "lucide-react";
 
 import {
@@ -25,6 +26,7 @@ const navItems = [
     { href: "/admin/users", icon: User, label: "Users" },
     { href: "/admin/files", icon: Files, label: "File Manager"},
     { href: "/admin/reports", icon: LineChart, label: "Reports" },
+    { href: "/admin/logs", icon: FileText, label: "Logs" },
 ];
 
 export function AdminSidebar() {
