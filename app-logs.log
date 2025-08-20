@@ -210,3 +210,68 @@
 }
 ---END DATA---
 
+2025-08-20T17:14:48.168Z [WARN] - Login failed: Invalid password
+---DATA---
+{
+  "email": "mdiftekharulislamifty@gmail.com"
+}
+---END DATA---
+
+2025-08-20T17:15:25.031Z [WARN] - Login failed: User not found
+---DATA---
+{
+  "email": "islamifty11@gmail.com"
+}
+---END DATA---
+
+2025-08-20T17:15:39.107Z [WARN] - Login failed: User not found
+---DATA---
+{
+  "email": "islamifty11@gmail.com"
+}
+---END DATA---
+
+2025-08-20T17:15:40.264Z [WARN] - Login failed: User not found
+---DATA---
+{
+  "email": "islamifty11@gmail.com"
+}
+---END DATA---
+
+2025-08-20T17:17:39.377Z [WARN] - Login failed: Invalid password
+---DATA---
+{
+  "email": "mdiftekharulislamifty@gmail.com"
+}
+---END DATA---
+
+2025-08-20T17:22:53.213Z [WARN] - Login failed: Invalid password
+---DATA---
+{
+  "email": "mdiftekharulislamifty@gmail.com"
+}
+---END DATA---
+
+2025-08-20T17:23:27.823Z [INFO] - User logged in successfully
+---DATA---
+{
+  "userId": "user-1755710599440",
+  "email": "get@occasionbd.com"
+}
+---END DATA---
+
+2025-08-20T17:23:42.680Z [WARN] - Login failed: Invalid password
+---DATA---
+{
+  "email": "mdiftekharulislamifty@gmail.com"
+}
+---END DATA---
+
+2025-08-20T17:23:51.740Z [INFO] - User logged in successfully
+---DATA---
+{
+  "userId": "user-1755710599440",
+  "email": "get@occasionbd.com"
+}
+---END DATA---
+
