@@ -630,3 +630,11 @@
 }
 ---END DATA---
 
+2025-08-20T20:14:48.185Z [INFO] - User logged in successfully
+---DATA---
+{
+  "userId": "admin-main",
+  "email": "mdiftekharulislamifty@gmail.com"
+}
+---END DATA---
+
