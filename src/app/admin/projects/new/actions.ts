@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { readDb, writeDb } from '@/lib/db';
 import type { Project } from '@/types';
+import { sendEmail } from '@/lib/email';
 
 const projectSchema = z.object({
   title: z.string().min(1, "Project title is required."),
@@ -34,6 +35,10 @@ export async function addProject(data: unknown) {
     
     try {
         const clientInfo = db.clients.find(c => c.id === result.data.clientId);
+        if (!clientInfo) {
+             return { success: false, error: { formErrors: ["Selected client not found."], fieldErrors: {} }};
+        }
+
         const projectId = `proj-${Date.now()}`;
 
         const newProject: Project = {
@@ -43,7 +48,7 @@ export async function addProject(data: unknown) {
             clientId: result.data.clientId,
             amount: result.data.amount,
             expiryDate: result.data.expiryDate.toISOString(),
-            clientName: clientInfo?.name || 'Unknown Client',
+            clientName: clientInfo.name,
             paymentStatus: 'pending' as const,
             orderId: `ORD-${Date.now()}`,
             createdAt: new Date().toISOString(),
@@ -53,9 +58,31 @@ export async function addProject(data: unknown) {
         db.projects.unshift(newProject);
         await writeDb(db);
 
+        // Revalidate paths
         revalidatePath('/admin/projects');
         revalidatePath('/admin/dashboard');
         revalidatePath('/client/dashboard');
+        
+        // Send email notification
+        const appUrl = process.env.APP_URL || 'http://localhost:9000';
+        try {
+            await sendEmail({
+                to: clientInfo.email,
+                subject: `New Project Created: ${newProject.title}`,
+                html: `
+                    <h1>New Project Alert!</h1>
+                    <p>Hello ${clientInfo.name},</p>
+                    <p>A new project titled "<strong>${newProject.title}</strong>" has been created for you.</p>
+                    <p>You can view the project details and make payments by clicking the link below:</p>
+                    <a href="${appUrl}/client/projects/${newProject.id}">View Project</a>
+                    <p>Thank you!</p>
+                `,
+            });
+        } catch (emailError) {
+            console.error("Failed to send new project email:", emailError);
+            // Don't block the success response for an email failure, but log it.
+        }
+
 
         return { success: true };
 

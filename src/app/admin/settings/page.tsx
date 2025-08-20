@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm, type SubmitHandler } from "react-hook-form";
@@ -25,9 +26,11 @@ import {
   saveNextcloudSettings,
   saveBKashSettings,
   savePipraPaySettings,
+  saveSmtpSettings,
   verifyNextcloudConnection,
   verifyBKashConnection,
   verifyPipraPayConnection,
+  verifySmtpConnection,
   getSettings,
   saveGeneralSettings,
 } from "./actions";
@@ -68,6 +71,13 @@ const pipraPaySchema = z.object({
   piprapayWebhookVerifyKey: z.string().optional(),
 });
 
+const smtpSchema = z.object({
+    smtpHost: z.string().min(1, "Host is required."),
+    smtpPort: z.coerce.number().min(1, "Port is required."),
+    smtpUser: z.string().min(1, "User is required."),
+    smtpPass: z.string().min(1, "Password is required."),
+});
+
 const generalSchema = z.object({
     logoUrl: z.string().url("Please enter a valid image URL.").or(z.literal('')),
     primaryColor: z.string(),
@@ -79,6 +89,7 @@ const generalSchema = z.object({
 type NextcloudFormValues = z.infer<typeof nextcloudSchema>;
 type BKashFormValues = z.infer<typeof bKashSchema>;
 type PipraPayFormValues = z.infer<typeof pipraPaySchema>;
+type SmtpFormValues = z.infer<typeof smtpSchema>;
 type GeneralFormValues = z.infer<typeof generalSchema>;
 
 export default function SettingsPage() {
@@ -86,6 +97,7 @@ export default function SettingsPage() {
   const [isTestingNextcloud, setIsTestingNextcloud] = useState(false);
   const [isTestingBKash, setIsTestingBKash] = useState(false);
   const [isTestingPipraPay, setIsTestingPipraPay] = useState(false);
+  const [isTestingSmtp, setIsTestingSmtp] = useState(false);
   const { branding, setBranding } = useBranding();
 
   const nextcloudForm = useForm<NextcloudFormValues>({
@@ -112,6 +124,16 @@ export default function SettingsPage() {
       piprapayApiKey: "",
       piprapayBaseUrl: "",
       piprapayWebhookVerifyKey: "",
+    },
+  });
+  
+  const smtpForm = useForm<SmtpFormValues>({
+    resolver: zodResolver(smtpSchema),
+    defaultValues: {
+      smtpHost: "",
+      smtpPort: 587,
+      smtpUser: "",
+      smtpPass: "",
     },
   });
 
@@ -149,6 +171,12 @@ export default function SettingsPage() {
                 piprapayBaseUrl: settings.piprapayBaseUrl || "",
                 piprapayWebhookVerifyKey: settings.piprapayWebhookVerifyKey || "",
             });
+            smtpForm.reset({
+                smtpHost: settings.smtpHost || "",
+                smtpPort: settings.smtpPort || 587,
+                smtpUser: settings.smtpUser || "",
+                smtpPass: settings.smtpPass || "",
+            });
             generalForm.reset({
                 ...generalForm.getValues(),
                 whatsappLink: settings.whatsappLink || '',
@@ -157,7 +185,7 @@ export default function SettingsPage() {
         }
     }
     loadSettings();
-  }, [nextcloudForm, bKashForm, pipraPayForm, generalForm]);
+  }, [nextcloudForm, bKashForm, pipraPayForm, smtpForm, generalForm]);
 
   useEffect(() => {
     generalForm.reset({
@@ -190,6 +218,15 @@ export default function SettingsPage() {
   const onPipraPaySubmit: SubmitHandler<PipraPayFormValues> = async (data) => {
      const result = await savePipraPaySettings(data);
       toast({
+        title: result.success ? "Settings Saved" : "Error",
+        description: result.message,
+        variant: result.success ? "default" : "destructive",
+    });
+  };
+  
+  const onSmtpSubmit: SubmitHandler<SmtpFormValues> = async (data) => {
+    const result = await saveSmtpSettings(data);
+    toast({
         title: result.success ? "Settings Saved" : "Error",
         description: result.message,
         variant: result.success ? "default" : "destructive",
@@ -278,6 +315,18 @@ export default function SettingsPage() {
     });
     setIsTestingPipraPay(false);
   };
+  
+  const handleTestSmtpConnection = async () => {
+    setIsTestingSmtp(true);
+    const data = smtpForm.getValues();
+    const result = await verifySmtpConnection(data);
+    toast({
+        title: result.success ? "Success" : "Connection Failed",
+        description: result.message,
+        variant: result.success ? "default" : "destructive",
+    });
+    setIsTestingSmtp(false);
+  };
 
   return (
     <div className="space-y-6">
@@ -294,6 +343,7 @@ export default function SettingsPage() {
           <TabsTrigger value="nextcloud">Nextcloud</TabsTrigger>
           <TabsTrigger value="bkash">bKash</TabsTrigger>
           <TabsTrigger value="piprapay">PipraPay</TabsTrigger>
+          <TabsTrigger value="smtp">SMTP</TabsTrigger>
           <TabsTrigger value="general">General</TabsTrigger>
         </TabsList>
 
@@ -573,6 +623,80 @@ export default function SettingsPage() {
                       disabled={isTestingPipraPay}
                     >
                       {isTestingPipraPay ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Testing...</> : "Test Connection"}
+                    </Button>
+                </CardFooter>
+              </form>
+            </Form>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="smtp">
+          <Card>
+            <Form {...smtpForm}>
+              <form onSubmit={smtpForm.handleSubmit(onSmtpSubmit)}>
+                <CardHeader>
+                  <CardTitle>SMTP Settings</CardTitle>
+                  <CardDescription>
+                    Configure your SMTP server to send application emails.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <FormField
+                      control={smtpForm.control}
+                      name="smtpHost"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>SMTP Host</FormLabel>
+                          <FormControl><Input placeholder="smtp.example.com" {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={smtpForm.control}
+                      name="smtpPort"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>SMTP Port</FormLabel>
+                          <FormControl><Input type="number" placeholder="587" {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={smtpForm.control}
+                      name="smtpUser"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>SMTP User</FormLabel>
+                          <FormControl><Input placeholder="user@example.com" {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={smtpForm.control}
+                      name="smtpPass"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>SMTP Password</FormLabel>
+                          <FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                </CardContent>
+                 <CardFooter className="flex gap-2">
+                   <Button type="submit" disabled={smtpForm.formState.isSubmitting}>
+                     {smtpForm.formState.isSubmitting ? "Saving..." : "Save SMTP Settings"}
+                   </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleTestSmtpConnection}
+                      disabled={isTestingSmtp}
+                    >
+                      {isTestingSmtp ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Testing...</> : "Test Connection"}
                     </Button>
                 </CardFooter>
               </form>

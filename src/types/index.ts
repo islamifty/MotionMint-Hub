@@ -1,3 +1,4 @@
+
 import type { LucideIcon } from "lucide-react";
 import type { FileStat as WebDAVFile } from "webdav";
 
@@ -70,6 +71,12 @@ export type AppSettings = {
     piprapayApiKey?: string;
     piprapayBaseUrl?: string;
     piprapayWebhookVerifyKey?: string;
+    
+    // SMTP
+    smtpHost?: string;
+    smtpPort?: number;
+    smtpUser?: string;
+    smtpPass?: string;
     
     // General
     whatsappLink?: string;

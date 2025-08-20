@@ -4,6 +4,7 @@
 import { z } from 'zod';
 import { createClient, type WebDAVClient } from 'webdav';
 import { readDb, writeDb } from '@/lib/db';
+import { sendEmail } from '@/lib/email';
 
 const nextcloudSchema = z.object({
     nextcloudUrl: z.string().url(),
@@ -30,6 +31,13 @@ const pipraPaySchema = z.object({
 const generalSettingsSchema = z.object({
     whatsappLink: z.string().url("Please enter a valid WhatsApp link.").or(z.literal('')),
     logoUrl: z.string().url("Please enter a valid image URL.").or(z.literal('')),
+});
+
+const smtpSchema = z.object({
+    smtpHost: z.string().min(1, "Host is required."),
+    smtpPort: z.coerce.number().min(1, "Port is required."),
+    smtpUser: z.string().min(1, "User is required."),
+    smtpPass: z.string().min(1, "Password is required."),
 });
 
 export async function getSettings() {
@@ -137,6 +145,33 @@ export async function verifyPipraPayConnection(data: unknown) {
     }
 }
 
+export async function verifySmtpConnection(data: unknown) {
+    const result = smtpSchema.safeParse(data);
+    if (!result.success) {
+        return { success: false, message: 'Invalid SMTP data provided.' };
+    }
+
+    try {
+        // We'll use the provided data directly, not from the DB
+        await sendEmail({
+            to: result.data.smtpUser,
+            subject: 'SMTP Connection Test',
+            text: 'If you received this email, your SMTP settings are correct!',
+            html: '<p>If you received this email, your SMTP settings are correct!</p>'
+        }, {
+             host: result.data.smtpHost,
+             port: result.data.smtpPort,
+             user: result.data.smtpUser,
+             pass: result.data.smtpPass
+        });
+        return { success: true, message: 'Test email sent successfully!' };
+    } catch (error: any) {
+        console.error('SMTP connection test error:', error);
+        return { success: false, message: `Failed to send test email: ${error.message}` };
+    }
+}
+
+
 export async function saveNextcloudSettings(data: unknown) {
     const result = nextcloudSchema.safeParse(data);
     if (!result.success) {
@@ -206,6 +241,23 @@ export async function saveGeneralSettings(data: unknown) {
         return { success: true, message: "General settings saved successfully." };
     } catch (error) {
         console.error("Failed to save General settings:", error);
+        return { success: false, message: "Failed to save settings." };
+    }
+}
+
+export async function saveSmtpSettings(data: unknown) {
+    const result = smtpSchema.safeParse(data);
+    if (!result.success) {
+        return { success: false, message: "Invalid data", error: result.error.flatten() };
+    }
+    
+    try {
+        const db = await readDb();
+        db.settings = { ...db.settings, ...result.data };
+        await writeDb(db);
+        return { success: true, message: "SMTP settings saved successfully." };
+    } catch (error) {
+        console.error("Failed to save SMTP settings:", error);
         return { success: false, message: "Failed to save settings." };
     }
 }

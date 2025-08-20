@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/shared/Logo";
 import { useToast } from "@/hooks/use-toast";
 import { Mail } from "lucide-react";
+import { sendPasswordResetLink } from "./actions";
 
 export default function ForgotPasswordPage() {
   const { toast } = useToast();
@@ -35,16 +36,24 @@ export default function ForgotPasswordPage() {
       return;
     }
     setIsLoading(true);
-    // This is a placeholder for a real password reset flow
-    // In a real app you'd send an email with a unique token
-    setTimeout(() => {
-        setIsSent(true);
-        toast({
-            title: "Check Your Email",
-            description: `If an account with ${email} exists, a password reset link has been sent.`,
-        });
-        setIsLoading(false);
-    }, 1000);
+
+    const result = await sendPasswordResetLink({ email });
+    
+    setIsLoading(false);
+
+    if (result.success) {
+      setIsSent(true);
+      toast({
+        title: "Check Your Email",
+        description: `If an account with ${email} exists, a password reset link has been sent.`,
+      });
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: result.error || "Could not send reset link. Please try again later.",
+      });
+    }
   };
 
   return (
