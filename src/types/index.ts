@@ -8,7 +8,7 @@ export type User = {
   id: string;
   name: string;
   email: string;
-  phone?: string;
+  phone: string;
   role: "admin" | "client" | "user";
   avatarUrl?: string;
   initials: string;
@@ -38,7 +38,7 @@ export type Client = {
   id: string;
   name: string;
   email: string;
-  phone?: string;
+  phone: string;
   company?: string;
   projectIds: string[];
   createdAt: string;
@@ -77,6 +77,10 @@ export type AppSettings = {
     smtpPort?: number;
     smtpUser?: string;
     smtpPass?: string;
+
+    // SMS
+    smsApiKey?: string;
+    smsSenderId?: string;
     
     // General
     whatsappLink?: string;

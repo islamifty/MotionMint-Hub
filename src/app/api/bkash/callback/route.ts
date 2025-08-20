@@ -2,17 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { executePayment } from '@/lib/bkash';
 import { readDb, writeDb } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
-import { headers } from 'next/headers';
+import { sendSms } from '@/lib/sms';
 
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const paymentID = searchParams.get('paymentID');
     const status = searchParams.get('status');
 
-    const headersList = headers();
-    const host = headersList.get('host');
-    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
-    const appUrl = `${protocol}://${host}`;
+    const appUrl = process.env.APP_URL;
+    if (!appUrl) {
+        console.error("APP_URL is not configured in environment variables.");
+        // Redirect to a generic failure page if APP_URL is not set
+        return NextResponse.redirect(new URL('/payment/failure?message=Configuration+error', request.url));
+    }
+
 
     if (!paymentID || !status) {
         const failureUrl = new URL('/payment/failure', appUrl);
@@ -41,18 +44,32 @@ export async function GET(request: NextRequest) {
             const projectIndex = db.projects.findIndex(p => p.orderId === executeResult.merchantInvoiceNumber);
 
             if (projectIndex !== -1) {
-                db.projects[projectIndex].paymentStatus = 'paid';
-                await writeDb(db);
+                const project = db.projects[projectIndex];
                 
-                const projectId = db.projects[projectIndex].id;
+                if (project.paymentStatus !== 'paid') {
+                    project.paymentStatus = 'paid';
+                    await writeDb(db);
+                    
+                    const client = db.clients.find(c => c.id === project.clientId);
+                    if (client?.phone) {
+                        try {
+                            await sendSms({
+                                to: client.phone,
+                                message: `Dear ${client.name}, your payment for project "${project.title}" has been confirmed. You can now download the final video. Thank you!`,
+                            });
+                        } catch (smsError) {
+                            console.error("Failed to send payment confirmation SMS:", smsError);
+                        }
+                    }
+                }
 
                 // Revalidate paths to reflect updated status
-                revalidatePath(`/client/projects/${projectId}`);
+                revalidatePath(`/client/projects/${project.id}`);
                 revalidatePath('/client/dashboard');
                 revalidatePath('/admin/projects');
                 revalidatePath('/admin/dashboard');
 
-                const successUrl = new URL(`/client/projects/${projectId}`, appUrl);
+                const successUrl = new URL(`/client/projects/${project.id}`, appUrl);
                 successUrl.searchParams.set('payment_status', 'success');
                 return NextResponse.redirect(successUrl);
             } else {

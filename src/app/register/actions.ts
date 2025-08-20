@@ -4,7 +4,7 @@ import { readDb, writeDb } from "@/lib/db";
 import type { User, Client } from '@/types';
 import { revalidatePath } from "next/cache";
 
-export async function addNewUser(userData: { name: string, email: string, password: string, phone?: string }) {
+export async function addNewUser(userData: { name: string, email: string, password: string, phone: string }) {
     
     const db = await readDb();
 

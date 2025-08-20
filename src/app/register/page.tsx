@@ -91,11 +91,12 @@ export default function RegisterPage() {
             />
           </div>
            <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number (Optional)</Label>
+            <Label htmlFor="phone">Phone Number</Label>
             <Input
               id="phone"
               type="tel"
               placeholder="01712345678"
+              required
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
             />

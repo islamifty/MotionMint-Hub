@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { readDb, writeDb } from "@/lib/db";
 import { logger } from "@/lib/logger";
+import { sendSms } from "@/lib/sms";
 
 export async function POST(req: Request) {
   const db = await readDb();
@@ -36,7 +37,8 @@ export async function POST(req: Request) {
         const projectIndex = db.projects.findIndex(p => p.id === projectId);
 
         if (projectIndex !== -1 && db.projects[projectIndex].paymentStatus !== 'paid') {
-            db.projects[projectIndex].paymentStatus = 'paid';
+            const project = db.projects[projectIndex];
+            project.paymentStatus = 'paid';
             await writeDb(db);
             
             revalidatePath(`/client/projects/${projectId}`);
@@ -45,6 +47,18 @@ export async function POST(req: Request) {
             revalidatePath('/admin/dashboard');
 
             logger.info(`Payment status updated to 'paid' for project ${projectId} via webhook.`);
+            
+            const client = db.clients.find(c => c.id === project.clientId);
+            if (client?.phone) {
+                 try {
+                    await sendSms({
+                        to: client.phone,
+                        message: `Dear ${client.name}, your payment for project "${project.title}" has been confirmed. You can now download the final video. Thank you!`,
+                    });
+                } catch (smsError) {
+                    logger.error("Failed to send payment confirmation SMS via webhook:", smsError);
+                }
+            }
         }
     }
 

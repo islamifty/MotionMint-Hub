@@ -40,6 +40,11 @@ const smtpSchema = z.object({
     smtpPass: z.string().min(1, "Password is required."),
 });
 
+const smsSchema = z.object({
+    smsApiKey: z.string().min(1, "API Key is required."),
+    smsSenderId: z.string().min(1, "Sender ID is required."),
+});
+
 export async function getSettings() {
     const db = await readDb();
     return db.settings || {};
@@ -258,6 +263,23 @@ export async function saveSmtpSettings(data: unknown) {
         return { success: true, message: "SMTP settings saved successfully." };
     } catch (error) {
         console.error("Failed to save SMTP settings:", error);
+        return { success: false, message: "Failed to save settings." };
+    }
+}
+
+export async function saveSmsSettings(data: unknown) {
+    const result = smsSchema.safeParse(data);
+    if (!result.success) {
+        return { success: false, message: "Invalid data", error: result.error.flatten() };
+    }
+    
+    try {
+        const db = await readDb();
+        db.settings = { ...db.settings, ...result.data };
+        await writeDb(db);
+        return { success: true, message: "SMS settings saved successfully." };
+    } catch (error) {
+        console.error("Failed to save SMS settings:", error);
         return { success: false, message: "Failed to save settings." };
     }
 }

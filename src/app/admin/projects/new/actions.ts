@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { readDb, writeDb } from '@/lib/db';
 import type { Project } from '@/types';
 import { sendEmail } from '@/lib/email';
+import { sendSms } from '@/lib/sms';
 
 const projectSchema = z.object({
   title: z.string().min(1, "Project title is required."),
@@ -63,8 +64,8 @@ export async function addProject(data: unknown) {
         revalidatePath('/admin/dashboard');
         revalidatePath('/client/dashboard');
         
-        // Send email notification
         const appUrl = process.env.APP_URL || 'http://localhost:9000';
+        // Send email notification
         try {
             await sendEmail({
                 to: clientInfo.email,
@@ -81,6 +82,18 @@ export async function addProject(data: unknown) {
         } catch (emailError) {
             console.error("Failed to send new project email:", emailError);
             // Don't block the success response for an email failure, but log it.
+        }
+        
+        // Send SMS notification
+        if (clientInfo.phone) {
+             try {
+                await sendSms({
+                    to: clientInfo.phone,
+                    message: `Hello ${clientInfo.name}, a new project "${newProject.title}" has been created for you. Please log in to your dashboard to view details.`,
+                });
+            } catch (smsError) {
+                console.error("Failed to send new project SMS:", smsError);
+            }
         }
 
 

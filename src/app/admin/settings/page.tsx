@@ -27,6 +27,7 @@ import {
   saveBKashSettings,
   savePipraPaySettings,
   saveSmtpSettings,
+  saveSmsSettings,
   verifyNextcloudConnection,
   verifyBKashConnection,
   verifyPipraPayConnection,
@@ -78,6 +79,11 @@ const smtpSchema = z.object({
     smtpPass: z.string().min(1, "Password is required."),
 });
 
+const smsSchema = z.object({
+    smsApiKey: z.string().min(1, "API Key is required."),
+    smsSenderId: z.string().min(1, "Sender ID is required."),
+});
+
 const generalSchema = z.object({
     logoUrl: z.string().url("Please enter a valid image URL.").or(z.literal('')),
     primaryColor: z.string(),
@@ -90,6 +96,7 @@ type NextcloudFormValues = z.infer<typeof nextcloudSchema>;
 type BKashFormValues = z.infer<typeof bKashSchema>;
 type PipraPayFormValues = z.infer<typeof pipraPaySchema>;
 type SmtpFormValues = z.infer<typeof smtpSchema>;
+type SmsFormValues = z.infer<typeof smsSchema>;
 type GeneralFormValues = z.infer<typeof generalSchema>;
 
 export default function SettingsPage() {
@@ -137,6 +144,14 @@ export default function SettingsPage() {
     },
   });
 
+  const smsForm = useForm<SmsFormValues>({
+    resolver: zodResolver(smsSchema),
+    defaultValues: {
+        smsApiKey: "",
+        smsSenderId: "",
+    }
+  });
+
   const generalForm = useForm<GeneralFormValues>({
       resolver: zodResolver(generalSchema),
       defaultValues: {
@@ -177,6 +192,10 @@ export default function SettingsPage() {
                 smtpUser: settings.smtpUser || "",
                 smtpPass: settings.smtpPass || "",
             });
+            smsForm.reset({
+                smsApiKey: settings.smsApiKey || "",
+                smsSenderId: settings.smsSenderId || "",
+            });
             generalForm.reset({
                 ...generalForm.getValues(),
                 whatsappLink: settings.whatsappLink || '',
@@ -185,7 +204,7 @@ export default function SettingsPage() {
         }
     }
     loadSettings();
-  }, [nextcloudForm, bKashForm, pipraPayForm, smtpForm, generalForm]);
+  }, [nextcloudForm, bKashForm, pipraPayForm, smtpForm, smsForm, generalForm]);
 
   useEffect(() => {
     generalForm.reset({
@@ -226,6 +245,15 @@ export default function SettingsPage() {
   
   const onSmtpSubmit: SubmitHandler<SmtpFormValues> = async (data) => {
     const result = await saveSmtpSettings(data);
+    toast({
+        title: result.success ? "Settings Saved" : "Error",
+        description: result.message,
+        variant: result.success ? "default" : "destructive",
+    });
+  };
+  
+  const onSmsSubmit: SubmitHandler<SmsFormValues> = async (data) => {
+    const result = await saveSmsSettings(data);
     toast({
         title: result.success ? "Settings Saved" : "Error",
         description: result.message,
@@ -339,11 +367,12 @@ export default function SettingsPage() {
         </p>
       </div>
       <Tabs defaultValue="nextcloud">
-        <TabsList>
+        <TabsList className="flex-wrap h-auto justify-start">
           <TabsTrigger value="nextcloud">Nextcloud</TabsTrigger>
           <TabsTrigger value="bkash">bKash</TabsTrigger>
           <TabsTrigger value="piprapay">PipraPay</TabsTrigger>
           <TabsTrigger value="smtp">SMTP</TabsTrigger>
+          <TabsTrigger value="sms">SMS Gateway</TabsTrigger>
           <TabsTrigger value="general">General</TabsTrigger>
         </TabsList>
 
@@ -704,6 +733,50 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="sms">
+          <Card>
+            <Form {...smsForm}>
+              <form onSubmit={smsForm.handleSubmit(onSmsSubmit)}>
+                <CardHeader>
+                  <CardTitle>SMS Gateway Settings</CardTitle>
+                  <CardDescription>
+                    Configure your bdbulksms.net credentials to send SMS notifications.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <FormField
+                      control={smsForm.control}
+                      name="smsApiKey"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>API Key</FormLabel>
+                          <FormControl><Input placeholder="Your bdbulksms.net API Key" {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={smsForm.control}
+                      name="smsSenderId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Sender ID</FormLabel>
+                          <FormControl><Input placeholder="Your Sender ID (e.g., 880xxxxxxxxx)" {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                </CardContent>
+                 <CardFooter>
+                   <Button type="submit" disabled={smsForm.formState.isSubmitting}>
+                     {smsForm.formState.isSubmitting ? "Saving..." : "Save SMS Settings"}
+                   </Button>
+                </CardFooter>
+              </form>
+            </Form>
+          </Card>
+        </TabsContent>
+        
         <TabsContent value="general">
           <Card>
             <Form {...generalForm}>
