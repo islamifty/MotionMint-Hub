@@ -55,9 +55,6 @@ export type AppSettings = {
     nextcloudUrl?: string;
     nextcloudUser?: string;
     nextcloudPassword?: string;
-    piprapayApiKey?: string;
-    piprapayBaseUrl?: string;
-    pipraPayEnabled?: boolean;
     bKashEnabled?: boolean;
     whatsappLink?: string;
     logoUrl?: string;

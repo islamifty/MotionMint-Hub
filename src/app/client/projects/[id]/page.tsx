@@ -1,4 +1,3 @@
-
 "use client";
 
 import { notFound, useParams } from "next/navigation";
@@ -67,7 +66,7 @@ export default function ProjectDetailPage() {
     if (method === 'bkash') {
         result = await initiateBkashPayment(project.id);
     } else {
-        result = await initiatePipraPayPayment(project.id, user);
+        result = await initiatePipraPayPayment(project, user);
     }
     
     if (result.success && result.paymentURL) {
@@ -154,15 +153,13 @@ export default function ProjectDetailPage() {
                                         </Button>
                                      ) : (
                                         <>
-                                            {settings?.pipraPayEnabled && (
-                                                <Button 
-                                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white" 
-                                                    onClick={() => handlePayment('piprapay')}
-                                                    disabled={isPaying}
-                                                >
-                                                    {isPaying && paymentMethod === 'piprapay' ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Connecting...</> : 'Pay with PipraPay'}
-                                                </Button>
-                                            )}
+                                            <Button 
+                                                className="w-full bg-blue-600 hover:bg-blue-700 text-white" 
+                                                onClick={() => handlePayment('piprapay')}
+                                                disabled={isPaying}
+                                            >
+                                                {isPaying && paymentMethod === 'piprapay' ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Connecting...</> : 'Pay with PipraPay'}
+                                            </Button>
                                              {settings?.bKashEnabled && (
                                                 <Button 
                                                     className="w-full bg-pink-500 hover:bg-pink-600 text-white" 

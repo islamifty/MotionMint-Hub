@@ -4,7 +4,6 @@
 import { z } from 'zod';
 import { createClient, type WebDAVClient } from 'webdav';
 import { readDb, writeDb } from '@/lib/db';
-import { verifyPipraPayCredentials } from '@/lib/piprapay';
 
 const nextcloudSchema = z.object({
     nextcloudUrl: z.string().url(),
@@ -14,12 +13,6 @@ const nextcloudSchema = z.object({
 
 const bKashSchema = z.object({
     bKashEnabled: z.boolean(),
-});
-
-const pipraPaySchema = z.object({
-    apiKey: z.string().min(1),
-    piprapayBaseUrl: z.string().min(1, { message: "Please enter a Base URL." }),
-    pipraPayEnabled: z.boolean(),
 });
 
 const generalSettingsSchema = z.object({
@@ -83,14 +76,6 @@ export async function verifyBKashConnection() {
     }
 }
 
-export async function verifyPipraPayConnection(data: unknown) {
-    const result = pipraPaySchema.pick({ apiKey: true, piprapayBaseUrl: true }).safeParse(data);
-    if (!result.success) {
-        return { success: false, message: 'Invalid API Key or Base URL provided.' };
-    }
-    return await verifyPipraPayCredentials(result.data.apiKey, result.data.piprapayBaseUrl);
-}
-
 export async function saveNextcloudSettings(data: unknown) {
     const result = nextcloudSchema.safeParse(data);
     if (!result.success) {
@@ -125,26 +110,6 @@ export async function saveBKashSettings(data: unknown) {
         return { success: true, message: "bKash settings saved successfully." };
     } catch (error) {
         console.error("Failed to save bKash settings:", error);
-        return { success: false, message: "Failed to save settings." };
-    }
-}
-
-export async function savePipraPaySettings(data: unknown) {
-    const result = pipraPaySchema.safeParse(data);
-    if (!result.success) {
-        return { success: false, error: result.error.flatten() };
-    }
-    
-    try {
-        const { apiKey, piprapayBaseUrl, pipraPayEnabled } = result.data;
-        const db = await readDb();
-        db.settings.piprapayApiKey = apiKey;
-        db.settings.piprapayBaseUrl = piprapayBaseUrl;
-        db.settings.pipraPayEnabled = pipraPayEnabled;
-        await writeDb(db);
-        return { success: true, message: "PipraPay settings saved successfully." };
-    } catch (error) {
-        console.error("Failed to save PipraPay settings:", error);
         return { success: false, message: "Failed to save settings." };
     }
 }

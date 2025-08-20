@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useForm, type SubmitHandler } from "react-hook-form";
@@ -24,13 +23,11 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
   saveNextcloudSettings,
-  savePipraPaySettings,
   saveBKashSettings,
   verifyNextcloudConnection,
   verifyBKashConnection,
   getSettings,
   saveGeneralSettings,
-  verifyPipraPayConnection,
 } from "./actions";
 import {
   Form,
@@ -58,8 +55,6 @@ const bKashSchema = z.object({
 });
 
 const pipraPaySchema = z.object({
-  apiKey: z.string().min(1, { message: "API Key is required." }),
-  piprapayBaseUrl: z.string().url({ message: "Please enter a valid Base URL." }),
   pipraPayEnabled: z.boolean().default(false),
 });
 
@@ -80,7 +75,6 @@ export default function SettingsPage() {
   const { toast } = useToast();
   const [isTestingNextcloud, setIsTestingNextcloud] = useState(false);
   const [isTestingBKash, setIsTestingBKash] = useState(false);
-  const [isTestingPipraPay, setIsTestingPipraPay] = useState(false);
   const { branding, setBranding } = useBranding();
 
   const nextcloudForm = useForm<NextcloudFormValues>({
@@ -95,7 +89,7 @@ export default function SettingsPage() {
 
   const pipraPayForm = useForm<PipraPayFormValues>({
     resolver: zodResolver(pipraPaySchema),
-    defaultValues: { apiKey: "", piprapayBaseUrl: "", pipraPayEnabled: false },
+    defaultValues: { pipraPayEnabled: false },
   });
 
   const generalForm = useForm<GeneralFormValues>({
@@ -120,11 +114,6 @@ export default function SettingsPage() {
             });
              bKashForm.reset({
                 bKashEnabled: settings.bKashEnabled || false
-            });
-            pipraPayForm.reset({
-                apiKey: settings.piprapayApiKey || '',
-                piprapayBaseUrl: settings.piprapayBaseUrl || '',
-                pipraPayEnabled: settings.pipraPayEnabled || false
             });
             generalForm.reset({
                 ...generalForm.getValues(),
@@ -165,11 +154,9 @@ export default function SettingsPage() {
   };
 
   const onPipraPaySubmit: SubmitHandler<PipraPayFormValues> = async (data) => {
-    const result = await savePipraPaySettings(data);
-    toast({
-        title: result.success ? "Settings Saved" : "Error",
-        description: result.message,
-        variant: result.success ? "default" : "destructive",
+     toast({
+        title: "Info",
+        description: "PipraPay settings are now managed in the .env file for better security.",
     });
   };
 
@@ -241,18 +228,6 @@ export default function SettingsPage() {
         variant: result.success ? "default" : "destructive",
     });
     setIsTestingBKash(false);
-  };
-
-  const handleTestPipraPayConnection = async () => {
-      setIsTestingPipraPay(true);
-      const data = pipraPayForm.getValues();
-      const result = await verifyPipraPayConnection(data);
-      toast({
-          title: result.success ? "Success" : "Connection Failed",
-          description: result.message,
-          variant: result.success ? "default" : "destructive",
-      });
-      setIsTestingPipraPay(false);
   };
 
   return (
@@ -425,72 +400,27 @@ export default function SettingsPage() {
                 <CardHeader>
                   <CardTitle>PipraPay Payment Gateway</CardTitle>
                   <CardDescription>
-                    Enter your PipraPay API credentials to accept payments.
+                    Manage your PipraPay payment gateway settings. Credentials are in the .env file.
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                   <FormField
-                      control={pipraPayForm.control}
-                      name="pipraPayEnabled"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                          <div className="space-y-0.5">
-                            <FormLabel className="text-base">Enable PipraPay</FormLabel>
-                            <FormDescription>
-                              Allow clients to pay for projects using PipraPay.
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <Separator />
-                  <FormField
-                    control={pipraPayForm.control}
-                    name="piprapayBaseUrl"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Base URL</FormLabel>
-                        <FormControl>
-                          <Input placeholder="https://pay.motionmint.top/api" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={pipraPayForm.control}
-                    name="apiKey"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>API Key</FormLabel>
-                        <FormControl>
-                          <Input type="password" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                <CardContent>
+                   <Alert>
+                        <Info className="h-4 w-4" />
+                        <AlertTitle>Environment Configuration</AlertTitle>
+                        <AlertDescription>
+                            To configure PipraPay, please add the following variables to your <strong>.env</strong> file:
+                            <ul className="list-disc pl-5 mt-2 text-xs">
+                                <li>PIPRAPAY_API_KEY</li>
+                                <li>PIPRAPAY_BASE_URL (e.g., https://sandbox.piprapay.com)</li>
+                                <li>PIPRAPAY_RETURN_URL</li>
+                                <li>PIPRAPAY_WEBHOOK_VERIFY_KEY</li>
+                                <li>NEXT_PUBLIC_BASE_URL (your app's public URL)</li>
+                            </ul>
+                        </AlertDescription>
+                    </Alert>
                 </CardContent>
-                 <CardFooter className="flex-col items-start gap-4">
-                   <div className="flex gap-2">
-                        <Button type="submit" disabled={pipraPayForm.formState.isSubmitting}>
-                            {pipraPayForm.formState.isSubmitting ? "Saving..." : "Save PipraPay Settings"}
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleTestPipraPayConnection}
-                            disabled={isTestingPipraPay}
-                        >
-                            {isTestingPipraPay ? "Testing..." : "Test Connection"}
-                        </Button>
-                    </div>
+                 <CardFooter>
+                   <Button type="submit" disabled>Save PipraPay Settings</Button>
                 </CardFooter>
               </form>
             </Form>
