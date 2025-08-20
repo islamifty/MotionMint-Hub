@@ -92,6 +92,8 @@
     "smtpHost": "smtp.zoho.com",
     "smtpPort": 587,
     "smtpUser": "edit@motionmint.top",
-    "smtpPass": "W1JGy7gMWxLH"
+    "smtpPass": "W1JGy7gMWxLH",
+    "smsApiKey": "888703531217552083924f418cbef1f1b1407dc92d59930ce304",
+    "smsSenderId": "8809617615015"
   }
 }

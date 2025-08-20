@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { createClient, type WebDAVClient } from 'webdav';
 import { readDb, writeDb } from '@/lib/db';
 import { sendEmail } from '@/lib/email';
+import { sendSms } from '@/lib/sms';
 
 const nextcloudSchema = z.object({
     nextcloudUrl: z.string().url(),
@@ -43,6 +44,12 @@ const smtpSchema = z.object({
 const smsSchema = z.object({
     smsApiKey: z.string().min(1, "API Key is required."),
     smsSenderId: z.string().min(1, "Sender ID is required."),
+});
+
+const smsTestSchema = z.object({
+    smsApiKey: z.string().min(1, "API Key is required."),
+    smsSenderId: z.string().min(1, "Sender ID is required."),
+    testPhoneNumber: z.string().min(1, "A phone number is required to send a test SMS."),
 });
 
 export async function getSettings() {
@@ -176,6 +183,26 @@ export async function verifySmtpConnection(data: unknown) {
     }
 }
 
+export async function verifySmsConnection(data: unknown) {
+    const result = smsTestSchema.safeParse(data);
+    if (!result.success) {
+        return { success: false, message: 'Invalid data provided for SMS test.' };
+    }
+
+    try {
+        await sendSms({
+            to: result.data.testPhoneNumber,
+            message: 'Hello from MotionMint Hub! This is a test message.',
+        }, {
+            smsApiKey: result.data.smsApiKey,
+            smsSenderId: result.data.smsSenderId
+        });
+        return { success: true, message: 'Test SMS sent successfully!' };
+    } catch (error: any) {
+        console.error('SMS connection test error:', error);
+        return { success: false, message: `Failed to send test SMS: ${error.message}` };
+    }
+}
 
 export async function saveNextcloudSettings(data: unknown) {
     const result = nextcloudSchema.safeParse(data);

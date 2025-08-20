@@ -3,15 +3,28 @@ import 'server-only';
 import axios from 'axios';
 import { readDb } from '@/lib/db';
 import { logger } from './logger';
+import type { AppSettings } from '@/types';
 
 interface SmsOptions {
   to: string;
   message: string;
 }
 
-export async function sendSms(options: SmsOptions): Promise<void> {
+interface SmsConfig {
+    smsApiKey?: string;
+    smsSenderId?: string;
+}
+
+export async function sendSms(options: SmsOptions, smsConfig?: SmsConfig): Promise<void> {
     const db = await readDb();
-    const { smsApiKey, smsSenderId } = db.settings;
+    
+    // Merge saved settings with any provided config. Provided config takes precedence.
+    const settings: SmsConfig = {
+        ...db.settings,
+        ...smsConfig,
+    };
+
+    const { smsApiKey, smsSenderId } = settings;
 
     if (!smsApiKey || !smsSenderId) {
         logger.error('SMS settings (API Key or Sender ID) are not configured.');

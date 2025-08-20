@@ -34,6 +34,7 @@ import {
   verifySmtpConnection,
   getSettings,
   saveGeneralSettings,
+  verifySmsConnection,
 } from "./actions";
 import {
   Form,
@@ -105,6 +106,8 @@ export default function SettingsPage() {
   const [isTestingBKash, setIsTestingBKash] = useState(false);
   const [isTestingPipraPay, setIsTestingPipraPay] = useState(false);
   const [isTestingSmtp, setIsTestingSmtp] = useState(false);
+  const [isTestingSms, setIsTestingSms] = useState(false);
+  const [testPhoneNumber, setTestPhoneNumber] = useState("");
   const { branding, setBranding } = useBranding();
 
   const nextcloudForm = useForm<NextcloudFormValues>({
@@ -355,6 +358,18 @@ export default function SettingsPage() {
     });
     setIsTestingSmtp(false);
   };
+
+  const handleTestSmsConnection = async () => {
+    setIsTestingSms(true);
+    const smsData = smsForm.getValues();
+    const result = await verifySmsConnection({ ...smsData, testPhoneNumber });
+     toast({
+        title: result.success ? "Success" : "Failed",
+        description: result.message,
+        variant: result.success ? "default" : "destructive",
+    });
+    setIsTestingSms(false);
+  }
 
   return (
     <div className="space-y-6">
@@ -774,6 +789,34 @@ export default function SettingsPage() {
                 </CardFooter>
               </form>
             </Form>
+            <Separator className="my-6" />
+            <CardHeader className="pt-0">
+                <CardTitle>Test SMS Connection</CardTitle>
+                <CardDescription>
+                    Enter a phone number to send a test message to.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                 <div className="space-y-2">
+                    <Label htmlFor="test-phone-number">Phone Number</Label>
+                    <Input 
+                        id="test-phone-number"
+                        placeholder="e.g., 01712345678"
+                        value={testPhoneNumber}
+                        onChange={(e) => setTestPhoneNumber(e.target.value)}
+                    />
+                </div>
+            </CardContent>
+            <CardFooter>
+                 <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleTestSmsConnection}
+                    disabled={isTestingSms || !testPhoneNumber}
+                    >
+                    {isTestingSms ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...</> : "Send Test SMS"}
+                </Button>
+            </CardFooter>
           </Card>
         </TabsContent>
         
