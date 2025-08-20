@@ -188,3 +188,25 @@
 }
 ---END DATA---
 
+2025-08-20T16:51:02.625Z [WARN] - Login failed: Invalid password
+---DATA---
+{
+  "email": "mdiftekharulislamifty@gmail.com"
+}
+---END DATA---
+
+2025-08-20T17:13:04.086Z [WARN] - Login failed: Invalid password
+---DATA---
+{
+  "email": "mdiftekharulislamifty@gmail.com"
+}
+---END DATA---
+
+2025-08-20T17:14:20.522Z [INFO] - User logged in successfully
+---DATA---
+{
+  "userId": "user-1755710046749",
+  "email": "islamifty11@gmail.com"
+}
+---END DATA---
+

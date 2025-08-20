@@ -6,7 +6,8 @@
       "email": "test@test.com",
       "role": "client",
       "initials": "TE",
-      "password": "$2a$10$T8Z3s6E8Jv/y9C.8g3F.d.2H3jK9n4oG7Y.vR6Y2w8z4X2x2e.W.a"
+      "password": "$2a$10$T8Z3s6E8Jv/y9C.8g3F.d.2H3jK9n4oG7Y.vR6Y2w8z4X2x2e.W.a",
+      "phone": "01234567892"
     },
     {
       "id": "user-1755623097607",
@@ -14,7 +15,8 @@
       "email": "edit@motionmint.top",
       "role": "client",
       "initials": "IF",
-      "password": "$2a$10$T8Z3s6E8Jv/y9C.8g3F.d.2H3jK9n4oG7Y.vR6Y2w8z4X2x2e.W.a"
+      "password": "$2a$10$T8Z3s6E8Jv/y9C.8g3F.d.2H3jK9n4oG7Y.vR6Y2w8z4X2x2e.W.a",
+      "phone": "01234567891"
     },
     {
       "id": "admin-main",
@@ -22,7 +24,8 @@
       "email": "mdiftekharulislamifty@gmail.com",
       "role": "admin",
       "initials": "II",
-      "password": "$2a$10$Y1/1.B6E2Y.z3E.F1g.I.O.p9a.Q1k.L5v.U7f.W3f.Z5g.a6b.c4"
+      "password": "$2a$10$Y1/1.B6E2Y.z3E.F1g.I.O.p9a.Q1k.L5v.U7f.W3f.Z5g.a6b.c4",
+      "phone": "01234567890"
     }
   ],
   "clients": [
@@ -30,6 +33,7 @@
       "id": "user-1755630322300",
       "name": "test",
       "email": "test@test.com",
+      "phone": "01234567892",
       "company": "",
       "projectIds": [],
       "createdAt": "2025-08-19T19:05:22.300Z"
@@ -38,6 +42,7 @@
       "id": "user-1755623097607",
       "name": "Ifty",
       "email": "edit@motionmint.top",
+      "phone": "01234567891",
       "company": "",
       "projectIds": [],
       "createdAt": "2025-08-19T17:04:57.607Z"
