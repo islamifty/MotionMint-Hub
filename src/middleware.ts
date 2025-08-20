@@ -3,8 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { decrypt } from '@/lib/session';
 import { cookies } from 'next/headers';
 
-const protectedAdminRoutes = ['/admin/dashboard', '/admin/projects', '/admin/clients', '/admin/users', '/admin/files', '/admin/reports', '/admin/logs'];
-const protectedClientRoutes = ['/client/dashboard'];
+const protectedAdminRoutes = ['/admin'];
+const protectedClientRoutes = ['/client'];
 const protectedSharedRoutes = ['/profile', '/settings'];
 const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
 const apiRoutes = ['/api'];
