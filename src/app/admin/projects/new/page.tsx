@@ -282,9 +282,6 @@ export default function NewProjectPage() {
                         />
                     </div>
                 </CardContent>
-            </Card>
-            
-            <Card>
                 <CardFooter>
                     <Button type="submit" disabled={form.formState.isSubmitting}>
                         {form.formState.isSubmitting ? "Creating..." : "Create Project"}
