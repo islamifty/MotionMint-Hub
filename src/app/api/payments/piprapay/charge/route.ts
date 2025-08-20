@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { readDb } from "@/lib/db";
+import { headers } from 'next/headers';
 
 export async function POST(req: Request) {
   const db = await readDb();
@@ -22,6 +23,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, message: "amount required" }, { status: 400 });
   }
 
+  const headersList = headers();
+  const host = headersList.get('host');
+  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+  const appUrl = `${protocol}://${host}`;
+
   const res = await fetch(`${piprapayBaseUrl}/api/create-charge`, {
     method: "POST",
     headers: {
@@ -33,8 +39,8 @@ export async function POST(req: Request) {
       currency,
       customer_name,
       customer_email_mobile,
-      pp_url: process.env.PIPRAPAY_RETURN_URL,
-      webhook_url: `${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/api/webhooks/piprapay`,
+      pp_url: `${appUrl}/payments/piprapay/return`,
+      webhook_url: `${appUrl}/api/webhooks/piprapay`,
       metadata,
     }),
     cache: "no-store",

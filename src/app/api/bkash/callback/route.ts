@@ -2,12 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { executePayment } from '@/lib/bkash';
 import { readDb, writeDb } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
+import { headers } from 'next/headers';
 
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const paymentID = searchParams.get('paymentID');
     const status = searchParams.get('status');
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9000';
+
+    const headersList = headers();
+    const host = headersList.get('host');
+    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+    const appUrl = `${protocol}://${host}`;
 
     if (!paymentID || !status) {
         const failureUrl = new URL('/payment/failure', appUrl);
