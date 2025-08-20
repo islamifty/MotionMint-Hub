@@ -66,7 +66,7 @@ export default function AdminLayout({
                 </Link>
                 <Link
                   href="/admin/projects"
-                  className="flex items-center gap-4 px-2.5 text-foreground"
+                  className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
                 >
                   Projects
                 </Link>
@@ -81,6 +81,12 @@ export default function AdminLayout({
                   className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
                 >
                   Users
+                </Link>
+                 <Link
+                  href="/admin/files"
+                  className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                >
+                  File Manager
                 </Link>
                 <Link
                   href="/admin/reports"

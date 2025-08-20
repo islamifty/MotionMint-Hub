@@ -65,8 +65,8 @@
     "nextcloudPassword": "WJNSK-7pG5s-WXNie-3w6DZ-Qx2QG",
     "piprapayApiKey": "123504360668a3583081ed41601947378127387162768a3583081ed8648939280",
     "piprapayBaseUrl": "https://pay.motionmint.top/api",
-    "bKashEnabled": true,
-    "pipraPayEnabled": true,
+    "bKashEnabled": false,
+    "pipraPayEnabled": false,
     "whatsappLink": "https://wa.link/ge8fgx"
   }
 }
