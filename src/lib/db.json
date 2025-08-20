@@ -1,15 +1,5 @@
 {
-  "users": [
-    {
-      "id": "admin-main",
-      "name": "Admin User",
-      "email": "mdiftekharulislamifty@gmail.com",
-      "phone": "01234567890",
-      "role": "admin",
-      "initials": "AU",
-      "password": "$2a$10$vKl43g2423g3g4g23g2g3ue8.J.B1qZ9Y0nZ5m.X4kO.a.d.E.f.g"
-    }
-  ],
+  "users": [],
   "clients": [],
   "projects": [],
   "settings": {
