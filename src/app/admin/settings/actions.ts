@@ -4,6 +4,7 @@
 import { z } from 'zod';
 import { createClient, type WebDAVClient } from 'webdav';
 import { readDb, writeDb } from '@/lib/db';
+import { verifyPipraPayCredentials } from '@/lib/piprapay';
 
 const nextcloudSchema = z.object({
     nextcloudUrl: z.string().url(),
@@ -80,6 +81,14 @@ export async function verifyBKashConnection() {
         console.error('bKash connection test error:', error);
         return { success: false, message: 'An error occurred while testing the connection.' };
     }
+}
+
+export async function verifyPipraPayConnection(data: unknown) {
+    const result = pipraPaySchema.pick({ apiKey: true, piprapayBaseUrl: true }).safeParse(data);
+    if (!result.success) {
+        return { success: false, message: 'Invalid API Key or Base URL provided.' };
+    }
+    return await verifyPipraPayCredentials(result.data.apiKey, result.data.piprapayBaseUrl);
 }
 
 export async function saveNextcloudSettings(data: unknown) {

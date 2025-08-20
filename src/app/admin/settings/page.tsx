@@ -30,6 +30,7 @@ import {
   verifyBKashConnection,
   getSettings,
   saveGeneralSettings,
+  verifyPipraPayConnection,
 } from "./actions";
 import {
   Form,
@@ -79,6 +80,7 @@ export default function SettingsPage() {
   const { toast } = useToast();
   const [isTestingNextcloud, setIsTestingNextcloud] = useState(false);
   const [isTestingBKash, setIsTestingBKash] = useState(false);
+  const [isTestingPipraPay, setIsTestingPipraPay] = useState(false);
   const { branding, setBranding } = useBranding();
 
   const nextcloudForm = useForm<NextcloudFormValues>({
@@ -239,6 +241,18 @@ export default function SettingsPage() {
         variant: result.success ? "default" : "destructive",
     });
     setIsTestingBKash(false);
+  };
+
+  const handleTestPipraPayConnection = async () => {
+      setIsTestingPipraPay(true);
+      const data = pipraPayForm.getValues();
+      const result = await verifyPipraPayConnection(data);
+      toast({
+          title: result.success ? "Success" : "Connection Failed",
+          description: result.message,
+          variant: result.success ? "default" : "destructive",
+      });
+      setIsTestingPipraPay(false);
   };
 
   return (
@@ -463,10 +477,20 @@ export default function SettingsPage() {
                     )}
                   />
                 </CardContent>
-                 <CardFooter>
-                    <Button type="submit" disabled={pipraPayForm.formState.isSubmitting}>
-                        {pipraPayForm.formState.isSubmitting ? "Saving..." : "Save PipraPay Settings"}
-                    </Button>
+                 <CardFooter className="flex-col items-start gap-4">
+                   <div className="flex gap-2">
+                        <Button type="submit" disabled={pipraPayForm.formState.isSubmitting}>
+                            {pipraPayForm.formState.isSubmitting ? "Saving..." : "Save PipraPay Settings"}
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleTestPipraPayConnection}
+                            disabled={isTestingPipraPay}
+                        >
+                            {isTestingPipraPay ? "Testing..." : "Test Connection"}
+                        </Button>
+                    </div>
                 </CardFooter>
               </form>
             </Form>

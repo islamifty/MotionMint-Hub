@@ -92,3 +92,29 @@ export async function verifyPipraPayPayment(invoiceId: string) {
         return { success: false, error: error.message || 'An unexpected error occurred during verification.' };
     }
 }
+
+export async function verifyPipraPayCredentials(apiKey: string, baseUrl: string) {
+    const testUrl = `${baseUrl}/verify-payment`;
+    try {
+        const response = await fetch(testUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ apiKey, invoiceId: 'test-connection' }),
+        });
+        const data = await response.json();
+        if (data.message === "Invalid API key") {
+            return { success: false, message: 'Connection failed: Invalid API Key.' };
+        }
+        // A validation error for invoiceId means the API key was accepted.
+        if (data.message === "Invalid invoice id") {
+            return { success: true, message: 'Connection successful!' };
+        }
+        return { success: false, message: data.message || 'An unknown error occurred.' };
+    } catch (error: any) {
+        console.error('PipraPay connection test error:', error);
+        if (error.cause?.code === 'ENOTFOUND') {
+            return { success: false, message: 'Connection failed: Could not resolve the Base URL. Please check the URL and your network connection.' };
+        }
+        return { success: false, message: 'Connection failed. Please check the Base URL and your network.' };
+    }
+}
