@@ -1,4 +1,6 @@
 
+'use server';
+
 import 'server-only';
 import { readDb } from '@/lib/db';
 import { logger } from './logger';
@@ -43,7 +45,7 @@ export async function sendSms(options: SmsOptions, smsConfig?: SmsConfig): Promi
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
-            body: params.toString(),
+            body: params,
             cache: 'no-store',
         });
 
