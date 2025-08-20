@@ -20,6 +20,7 @@ export default async function middleware(req: NextRequest) {
   const isPublicRoute = publicRoutes.includes(path);
 
   const cookie = cookies().get('session')?.value;
+  // Safely decrypt the session only if the cookie exists
   const session = cookie ? await decrypt(cookie) : null;
   const user = session?.user;
 
