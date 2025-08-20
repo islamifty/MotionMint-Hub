@@ -6,6 +6,7 @@ import { readDb } from '@/lib/db';
 import { sendEmail } from '@/lib/email';
 import { encrypt } from '@/lib/session'; 
 import { logger } from '@/lib/logger';
+import { getBaseUrl } from '@/lib/url';
 
 const emailSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
@@ -38,7 +39,7 @@ export async function sendPasswordResetLink(data: unknown) {
         }
 
         const token = await generatePasswordResetToken(user.id);
-        const appUrl = process.env.APP_URL || 'http://localhost:9000';
+        const appUrl = getBaseUrl();
         const resetLink = `${appUrl}/reset-password?token=${token}`;
         
         await sendEmail({

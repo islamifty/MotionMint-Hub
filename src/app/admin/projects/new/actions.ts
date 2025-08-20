@@ -7,6 +7,7 @@ import { readDb, writeDb } from '@/lib/db';
 import type { Project } from '@/types';
 import { sendEmail } from '@/lib/email';
 import { sendSms } from '@/lib/sms';
+import { getBaseUrl } from '@/lib/url';
 
 const projectSchema = z.object({
   title: z.string().min(1, "Project title is required."),
@@ -64,7 +65,7 @@ export async function addProject(data: unknown) {
         revalidatePath('/admin/dashboard');
         revalidatePath('/client/dashboard');
         
-        const appUrl = process.env.APP_URL || 'http://localhost:9000';
+        const appUrl = getBaseUrl();
         // Send email notification
         try {
             await sendEmail({

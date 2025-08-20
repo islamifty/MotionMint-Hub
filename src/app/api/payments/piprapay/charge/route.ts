@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { readDb } from "@/lib/db";
+import { getBaseUrl } from "@/lib/url";
 
 export async function POST(req: Request) {
   const db = await readDb();
@@ -22,11 +23,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, message: "amount required" }, { status: 400 });
   }
 
-  const appUrl = process.env.APP_URL;
-   if (!appUrl) {
-    console.error("APP_URL is not configured in environment variables.");
-    return NextResponse.json({ ok: false, message: "Application URL is not configured." }, { status: 500 });
-  }
+  const appUrl = getBaseUrl();
 
   try {
       const res = await fetch(`${piprapayBaseUrl}/create-charge`, {

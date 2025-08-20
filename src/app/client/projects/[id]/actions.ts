@@ -6,6 +6,7 @@ import { readDb } from '@/lib/db';
 import type { Project, User, AppSettings } from '@/types';
 import { getSession } from '@/lib/session';
 import { logger } from '@/lib/logger';
+import { getBaseUrl } from '@/lib/url';
 
 export async function getProjectDetails(projectId: string): Promise<{ project: Project | null, user: User | null, settings: AppSettings | null }> {
     const session = await getSession();
@@ -30,11 +31,7 @@ export async function initiateBkashPayment(projectId: string) {
             throw new Error('Project not found');
         }
         
-        const appUrl = process.env.APP_URL;
-        if (!appUrl) {
-            logger.error("APP_URL is not configured in environment variables.");
-            throw new Error("APP_URL is not configured in environment variables.");
-        }
+        const appUrl = getBaseUrl();
         const callbackUrl = `${appUrl}/api/bkash/callback`;
 
         const paymentData = {
@@ -65,11 +62,7 @@ export async function initiateBkashPayment(projectId: string) {
 
 export async function initiatePipraPayPayment(project: Project, user: User) {
      try {
-        const appUrl = process.env.APP_URL;
-        if (!appUrl) {
-            logger.error("APP_URL is not configured in environment variables.");
-            throw new Error("APP_URL is not configured in environment variables.");
-        }
+        const appUrl = getBaseUrl();
         
         const chargePayload = {
             amount: project.amount,

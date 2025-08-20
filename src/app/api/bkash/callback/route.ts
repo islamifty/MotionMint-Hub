@@ -3,18 +3,13 @@ import { executePayment } from '@/lib/bkash';
 import { readDb, writeDb } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 import { sendSms } from '@/lib/sms';
+import { getBaseUrl } from '@/lib/url';
 
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const paymentID = searchParams.get('paymentID');
     const status = searchParams.get('status');
-
-    const appUrl = process.env.APP_URL;
-    if (!appUrl) {
-        console.error("APP_URL is not configured in environment variables.");
-        // Redirect to a generic failure page if APP_URL is not set
-        return NextResponse.redirect(new URL('/payment/failure?message=Configuration+error', request.url));
-    }
+    const appUrl = getBaseUrl();
 
 
     if (!paymentID || !status) {
