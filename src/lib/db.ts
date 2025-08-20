@@ -30,7 +30,7 @@ const initialData: DbData = {
 };
 
 // Function to read the database file
-export function readDb(): DbData {
+export async function readDb(): Promise<DbData> {
     try {
         if (!fs.existsSync(dbPath)) {
             // If the file doesn't exist, create it with initial data

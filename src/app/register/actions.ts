@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 
 export async function addNewUser(userData: { name: string, email: string, password: string }) {
     
-    const db = readDb();
+    const db = await readDb();
 
     if (db.users.some(u => u.email === userData.email)) {
         return { success: false, error: "An account with this email already exists." };
@@ -36,7 +36,7 @@ export async function addNewUser(userData: { name: string, email: string, passwo
         db.users.unshift(newUser);
         db.clients.unshift(newClient);
         
-        writeDb(db);
+        await writeDb(db);
         
         revalidatePath('/admin/users');
         revalidatePath('/admin/clients');

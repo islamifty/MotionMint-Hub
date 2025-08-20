@@ -7,13 +7,13 @@ import { readDb, writeDb } from "@/lib/db";
 import { adminEmails } from "@/lib/data";
 
 export async function getUsers(currentUserEmail?: string | null): Promise<User[]> {
-    const db = readDb();
+    const db = await readDb();
     return db.users;
 }
 
 export async function updateUserRole(userId: string, newRole: 'admin' | 'client' | 'user') {
     try {
-        const db = readDb();
+        const db = await readDb();
         const userToUpdate = db.users.find(u => u.id === userId);
 
         if (!userToUpdate) {
@@ -32,7 +32,7 @@ export async function updateUserRole(userId: string, newRole: 'admin' | 'client'
             promoteUserToClient(userId, db); // Pass db to avoid re-reading
         }
 
-        writeDb(db);
+        await writeDb(db);
         revalidatePath('/admin/users');
         return { success: true, message: `User role updated to ${newRole}.` };
     } catch (error) {
@@ -44,7 +44,7 @@ export async function updateUserRole(userId: string, newRole: 'admin' | 'client'
 
 export async function deleteUser(userId: string) {
     try {
-        const db = readDb();
+        const db = await readDb();
         const userToDelete = db.users.find(u => u.id === userId);
 
         if (!userToDelete) {
@@ -60,7 +60,7 @@ export async function deleteUser(userId: string) {
         db.users = db.users.filter(u => u.id !== userId);
         db.clients = db.clients.filter(c => c.id !== userId);
         
-        writeDb(db);
+        await writeDb(db);
         revalidatePath('/admin/users');
         revalidatePath('/admin/clients');
         return { success: true, message: "User and associated client profile have been deleted." };

@@ -5,13 +5,13 @@ import { readDb, writeDb } from '@/lib/db';
 import type { Client } from '@/types';
 
 export async function getClients(): Promise<Client[]> {
-    const db = readDb();
+    const db = await readDb();
     return db.clients;
 }
 
 export async function deleteClients(clientIds: string[]) {
     try {
-        const db = readDb();
+        const db = await readDb();
 
         const initialUserCount = db.users.length;
         const initialClientCount = db.clients.length;
@@ -22,7 +22,7 @@ export async function deleteClients(clientIds: string[]) {
 
         // Check if any change was made
         if (updatedUsers.length < initialUserCount || updatedClients.length < initialClientCount) {
-             writeDb({ ...db, users: updatedUsers, clients: updatedClients });
+             await writeDb({ ...db, users: updatedUsers, clients: updatedClients });
         } else {
             // No clients found to delete, which could be an issue.
             return { success: false, error: "No matching clients found to delete." };

@@ -7,7 +7,7 @@ import { createClient, type WebDAVClient } from 'webdav';
 import type { Project } from '@/types';
 
 export async function getProjects(): Promise<Project[]> {
-    const db = readDb();
+    const db = await readDb();
     return db.projects;
 }
 
@@ -19,7 +19,7 @@ export async function deleteProjects(projectIds: string[]) {
         NEXTCLOUD_PASSWORD: nextcloudPassword 
     } = process.env;
 
-    const db = readDb();
+    const db = await readDb();
     const projectsToDelete = db.projects.filter(p => projectIds.includes(p.id));
 
     if (nextcloudUrl && nextcloudUser && nextcloudPassword) {
@@ -55,7 +55,7 @@ export async function deleteProjects(projectIds: string[]) {
         const updatedProjects = db.projects.filter(p => !projectIds.includes(p.id));
         
         if (db.projects.length - updatedProjects.length === projectIds.length) {
-            writeDb({ ...db, projects: updatedProjects });
+            await writeDb({ ...db, projects: updatedProjects });
             revalidatePath('/admin/projects');
             return { success: true };
         } else {

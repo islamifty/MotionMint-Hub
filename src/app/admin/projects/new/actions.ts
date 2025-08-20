@@ -30,7 +30,7 @@ export async function addProject(data: unknown) {
         return { success: false, error: result.error.flatten() };
     }
     
-    const db = readDb();
+    const db = await readDb();
     
     try {
         const clientInfo = db.clients.find(c => c.id === result.data.clientId);
@@ -51,7 +51,7 @@ export async function addProject(data: unknown) {
             finalVideoUrl: result.data.finalVideoUrl, 
         };
         db.projects.unshift(newProject);
-        writeDb(db);
+        await writeDb(db);
 
         revalidatePath('/admin/projects');
         revalidatePath('/admin/dashboard');

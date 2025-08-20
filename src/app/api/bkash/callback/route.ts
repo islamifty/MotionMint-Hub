@@ -18,12 +18,12 @@ export async function GET(request: NextRequest) {
         const executeResult = await executePayment(paymentID);
 
         if (executeResult && executeResult.statusCode === '0000' && executeResult.transactionStatus === 'Completed') {
-            const db = readDb();
+            const db = await readDb();
             const projectIndex = db.projects.findIndex(p => p.orderId === executeResult.merchantInvoiceNumber);
 
             if (projectIndex !== -1) {
                 db.projects[projectIndex].paymentStatus = 'paid';
-                writeDb(db);
+                await writeDb(db);
                 
                 const projectId = db.projects[projectIndex].id;
 

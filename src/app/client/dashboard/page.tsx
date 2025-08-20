@@ -17,7 +17,7 @@ export default async function ClientDashboard() {
     redirect('/login');
   }
   
-  const db = readDb();
+  const db = await readDb();
   const clientProjects = db.projects.filter(p => p.clientId === session.user.id);
 
   return (

@@ -20,8 +20,8 @@ import { StatCard } from "@/components/shared/StatCard";
 import { readDb } from "@/lib/db";
 import type { StatCard as StatCardType } from "@/types";
 
-export default function DashboardPage() {
-  const db = readDb();
+export default async function DashboardPage() {
+  const db = await readDb();
   const recentProjects = db.projects.slice(0, 5);
 
   // Calculate dynamic stats

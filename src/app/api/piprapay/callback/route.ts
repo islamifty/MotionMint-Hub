@@ -25,12 +25,12 @@ export async function GET(request: NextRequest) {
         const verificationResult = await verifyPipraPayPayment(invoiceId);
 
         if (verificationResult.success && verificationResult.status === 'completed') {
-            const db = readDb();
+            const db = await readDb();
             const projectIndex = db.projects.findIndex(p => p.orderId === invoiceId);
 
             if (projectIndex !== -1) {
                 db.projects[projectIndex].paymentStatus = 'paid';
-                writeDb(db);
+                await writeDb(db);
                 
                 const projectId = db.projects[projectIndex].id;
 

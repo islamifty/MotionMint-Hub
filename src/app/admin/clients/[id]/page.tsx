@@ -21,9 +21,9 @@ import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
-export default function ClientDetailPage({ params }: { params: { id: string } }) {
+export default async function ClientDetailPage({ params }: { params: { id: string } }) {
   const { id } = params;
-  const db = readDb();
+  const db = await readDb();
   const client = db.clients.find((c) => c.id === id);
   
   if (!client) {

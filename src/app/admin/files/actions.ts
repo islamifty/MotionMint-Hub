@@ -3,8 +3,8 @@
 import { createClient, type FileStat, type WebDAVClient } from 'webdav';
 import { readDb } from '@/lib/db';
 
-function getClient(): WebDAVClient {
-    const db = readDb();
+async function getClient(): Promise<WebDAVClient> {
+    const db = await readDb();
     const { nextcloudUrl, nextcloudUser, nextcloudPassword } = db.settings;
 
     if (!nextcloudUrl || !nextcloudUser || !nextcloudPassword) {
@@ -19,7 +19,7 @@ function getClient(): WebDAVClient {
 
 export async function getDirectoryContents(directory: string): Promise<FileStat[]> {
     try {
-        const client = getClient();
+        const client = await getClient();
         const contents = (await client.getDirectoryContents(directory)) as FileStat[];
         // Sort contents: folders first, then files, all alphabetically
         return contents.sort((a, b) => {
@@ -42,7 +42,7 @@ export async function getDirectoryContents(directory: string): Promise<FileStat[
 
 export async function createDirectory(path: string) {
     try {
-        const client = getClient();
+        const client = await getClient();
         if (await client.exists(path)) {
              return { success: false, message: 'A folder with this name already exists.' };
         }
@@ -56,7 +56,7 @@ export async function createDirectory(path: string) {
 
 export async function deleteFileOrFolder(path: string) {
     try {
-        const client = getClient();
+        const client = await getClient();
         await client.deleteFile(path);
         return { success: true, message: 'Item deleted successfully.' };
     } catch (error) {
@@ -66,7 +66,7 @@ export async function deleteFileOrFolder(path: string) {
 }
 
 export async function getDownloadLink(path: string): Promise<string> {
-    const client = getClient();
+    const client = await getClient();
     // This creates a direct download link. For Nextcloud, this usually works without special signing.
     // The link is constructed from the base URL and the file path.
     const baseUrl = client.getEndpoint().toString().replace('/remote.php/dav/files' + client.getUsername(), '');
@@ -75,7 +75,7 @@ export async function getDownloadLink(path: string): Promise<string> {
 }
 
 export async function getThumbnailBaseUrl(): Promise<string> {
-    const db = readDb();
+    const db = await readDb();
     const { nextcloudUrl, nextcloudUser } = db.settings;
     if (!nextcloudUrl || !nextcloudUser) {
         return '';

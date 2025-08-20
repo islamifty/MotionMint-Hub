@@ -9,7 +9,7 @@ export async function getNotificationSettings() {
     if (!session?.user) {
         return null;
     }
-    const db = readDb();
+    const db = await readDb();
     const user = db.users.find(u => u.id === session.user.id);
     return user?.notificationSettings || { newProject: true, paymentSuccess: true };
 }
@@ -22,7 +22,7 @@ export async function updateNotificationSettings(settings: { newProject: boolean
     }
     
     try {
-        const db = readDb();
+        const db = await readDb();
         const userIndex = db.users.findIndex(u => u.id === session.user.id);
         
         if (userIndex === -1) {
@@ -30,7 +30,7 @@ export async function updateNotificationSettings(settings: { newProject: boolean
         }
 
         db.users[userIndex].notificationSettings = settings;
-        writeDb(db);
+        await writeDb(db);
         
         return { success: true };
     } catch(e) {

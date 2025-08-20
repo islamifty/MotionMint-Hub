@@ -21,7 +21,7 @@ export async function addClient(data: unknown) {
 
     try {
         const { name, email, password, company } = result.data;
-        const db = readDb();
+        const db = await readDb();
 
         // Check if user already exists
         if (db.users.some(u => u.email === email)) {
@@ -53,7 +53,7 @@ export async function addClient(data: unknown) {
         db.clients.unshift(newClient);
 
         // Write the updated data back to the file
-        writeDb(db);
+        await writeDb(db);
 
         revalidatePath('/admin/clients');
         revalidatePath('/admin/users');

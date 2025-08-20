@@ -3,8 +3,8 @@ import type { User, Client, DbData } from '@/types';
 
 // This file will serve as a simple API for our file-based database.
 
-export function promoteUserToClient(userId: string, db?: DbData): boolean {
-    const database = db || readDb();
+export async function promoteUserToClient(userId: string, db?: DbData): Promise<boolean> {
+    const database = db || await readDb();
     const user = database.users.find(u => u.id === userId);
 
     if (user && user.role !== 'client') {
@@ -28,7 +28,7 @@ export function promoteUserToClient(userId: string, db?: DbData): boolean {
         }
         
         if (!db) { // Only write if we're not being called from another function that will write
-             writeDb(database);
+             await writeDb(database);
         }
        
         return true;

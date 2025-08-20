@@ -18,7 +18,7 @@ const projectSchema = z.object({
 });
 
 export async function getProjectById(id: string): Promise<Project | null> {
-    const db = readDb();
+    const db = await readDb();
     const project = db.projects.find(p => p.id === id);
     return project || null;
 }
@@ -36,7 +36,7 @@ export async function updateProject(id: string, data: unknown) {
         return { success: false, error: result.error.flatten() };
     }
     
-    const db = readDb();
+    const db = await readDb();
     const projectIndex = db.projects.findIndex(p => p.id === id);
 
     if (projectIndex === -1) {
@@ -60,7 +60,7 @@ export async function updateProject(id: string, data: unknown) {
         };
         
         db.projects[projectIndex] = updatedProject;
-        writeDb(db);
+        await writeDb(db);
 
         // Revalidate all relevant paths
         revalidatePath('/admin/projects');

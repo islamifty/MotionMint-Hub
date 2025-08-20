@@ -5,7 +5,7 @@ import { readDb } from '@/lib/db';
 
 export async function login(credentials: {email: string, password: string}) {
     const { email, password } = credentials;
-    const db = readDb();
+    const db = await readDb();
     const user = db.users.find((u) => u.email === email);
 
     if (!user) {

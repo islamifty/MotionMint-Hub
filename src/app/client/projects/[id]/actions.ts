@@ -13,7 +13,7 @@ export async function getProjectDetails(projectId: string): Promise<{ project: P
         return { project: null, user: null, settings: null };
     }
 
-    const db = readDb();
+    const db = await readDb();
     const project = db.projects.find((p) => p.id === projectId && p.clientId === session.user.id);
     const settings = db.settings;
     
@@ -22,7 +22,7 @@ export async function getProjectDetails(projectId: string): Promise<{ project: P
 
 export async function initiateBkashPayment(projectId: string) {
     try {
-        const db = readDb();
+        const db = await readDb();
         const project = db.projects.find((p) => p.id === projectId);
 
         if (!project) {
@@ -57,7 +57,7 @@ export async function initiateBkashPayment(projectId: string) {
 
 export async function initiatePipraPayPayment(projectId: string, user: User) {
      try {
-        const db = readDb();
+        const db = await readDb();
         const project = db.projects.find((p) => p.id === projectId);
 
         if (!project) {

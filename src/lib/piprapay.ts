@@ -4,7 +4,7 @@ import { readDb } from '@/lib/db';
 import type { Project } from '@/types';
 
 export async function createPipraPayPayment(project: Project, customerInfo: { name: string, email: string, phone: string }) {
-    const db = readDb();
+    const db = await readDb();
     const { piprapayApiKey, piprapayBaseUrl } = db.settings;
 
     if (!piprapayApiKey || !piprapayBaseUrl) {
@@ -53,7 +53,7 @@ export async function createPipraPayPayment(project: Project, customerInfo: { na
 }
 
 export async function verifyPipraPayPayment(invoiceId: string) {
-    const db = readDb();
+    const db = await readDb();
     const { piprapayApiKey, piprapayBaseUrl } = db.settings;
 
     if (!piprapayApiKey || !piprapayBaseUrl) {

@@ -4,8 +4,8 @@ import { readDb } from '@/lib/db';
 import { basename } from 'path';
 
 // Helper to get Nextcloud client
-function getClient(): WebDAVClient {
-    const db = readDb();
+async function getClient(): Promise<WebDAVClient> {
+    const db = await readDb();
     const { nextcloudUrl, nextcloudUser, nextcloudPassword } = db.settings;
 
     if (!nextcloudUrl || !nextcloudUser || !nextcloudPassword) {
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Missing file path' }, { status: 400 });
         }
 
-        const client = getClient();
+        const client = await getClient();
         if (!(await client.exists(path))) {
             return NextResponse.json({ error: 'File not found' }, { status: 404 });
         }

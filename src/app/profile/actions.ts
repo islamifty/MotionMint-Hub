@@ -29,7 +29,7 @@ export async function updateProfile(data: unknown) {
     }
 
     try {
-        const db = readDb();
+        const db = await readDb();
         const userIndex = db.users.findIndex(u => u.id === session.user.id);
         
         if (userIndex === -1) {
@@ -45,7 +45,7 @@ export async function updateProfile(data: unknown) {
             db.clients[clientIndex].name = result.data.name;
         }
         
-        writeDb(db);
+        await writeDb(db);
         
         // Update session
         await createSession(updatedUser);
@@ -75,7 +75,7 @@ export async function changePassword(data: unknown) {
     const { currentPassword, newPassword } = result.data;
 
     try {
-        const db = readDb();
+        const db = await readDb();
         const user = db.users.find(u => u.id === session.user.id);
 
         if (!user) {
@@ -88,7 +88,7 @@ export async function changePassword(data: unknown) {
         }
 
         user.password = newPassword;
-        writeDb(db);
+        await writeDb(db);
 
         return { success: true };
     } catch (e) {

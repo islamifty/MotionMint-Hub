@@ -4,8 +4,8 @@ import { readDb } from '@/lib/db';
 import { Writable } from 'stream';
 
 // Helper to get Nextcloud client
-function getClient(): WebDAVClient {
-    const db = readDb();
+async function getClient(): Promise<WebDAVClient> {
+    const db = await readDb();
     const { nextcloudUrl, nextcloudUser, nextcloudPassword } = db.settings;
 
     if (!nextcloudUrl || !nextcloudUser || !nextcloudPassword) {
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Missing file or path' }, { status: 400 });
         }
         
-        const client = getClient();
+        const client = await getClient();
         
         // Use streaming upload
         const fileStream = file.stream();

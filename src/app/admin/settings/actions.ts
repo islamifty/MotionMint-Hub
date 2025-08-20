@@ -26,7 +26,7 @@ const generalSettingsSchema = z.object({
 });
 
 export async function getSettings() {
-    const db = readDb();
+    const db = await readDb();
     return db.settings || {};
 }
 
@@ -89,11 +89,11 @@ export async function saveNextcloudSettings(data: unknown) {
     
     try {
         const { nextcloudUrl, username, appPassword } = result.data;
-        const db = readDb();
+        const db = await readDb();
         db.settings.nextcloudUrl = nextcloudUrl;
         db.settings.nextcloudUser = username;
         db.settings.nextcloudPassword = appPassword;
-        writeDb(db);
+        await writeDb(db);
         return { success: true, message: "Nextcloud settings saved successfully." };
     } catch (error) {
         console.error("Failed to save Nextcloud settings:", error);
@@ -109,9 +109,9 @@ export async function saveBKashSettings(data: unknown) {
     
     try {
         const { bKashEnabled } = result.data;
-        const db = readDb();
+        const db = await readDb();
         db.settings.bKashEnabled = bKashEnabled;
-        writeDb(db);
+        await writeDb(db);
         return { success: true, message: "bKash settings saved successfully." };
     } catch (error) {
         console.error("Failed to save bKash settings:", error);
@@ -127,11 +127,11 @@ export async function savePipraPaySettings(data: unknown) {
     
     try {
         const { apiKey, piprapayBaseUrl, pipraPayEnabled } = result.data;
-        const db = readDb();
+        const db = await readDb();
         db.settings.piprapayApiKey = apiKey;
         db.settings.piprapayBaseUrl = piprapayBaseUrl;
         db.settings.pipraPayEnabled = pipraPayEnabled;
-        writeDb(db);
+        await writeDb(db);
         return { success: true, message: "PipraPay settings saved successfully." };
     } catch (error) {
         console.error("Failed to save PipraPay settings:", error);
@@ -142,14 +142,14 @@ export async function savePipraPaySettings(data: unknown) {
 export async function saveGeneralSettings(data: unknown) {
     const result = generalSettingsSchema.safeParse(data);
     if (!result.success) {
-        return { success: false, error: result.error.flatten() };
+        return { success: false, error: result.error.flatten(), message: "Validation failed." };
     }
     
     try {
         const { whatsappLink } = result.data;
-        const db = readDb();
+        const db = await readDb();
         db.settings.whatsappLink = whatsappLink;
-        writeDb(db);
+        await writeDb(db);
         return { success: true, message: "General settings saved successfully." };
     } catch (error) {
         console.error("Failed to save General settings:", error);
