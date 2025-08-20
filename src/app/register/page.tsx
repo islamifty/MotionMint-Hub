@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -25,6 +24,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -35,6 +35,7 @@ export default function RegisterPage() {
         name: fullName,
         email: email,
         password: password,
+        phone: phone,
       });
 
       if (!result.success) {
@@ -87,6 +88,16 @@ export default function RegisterPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+           <div className="space-y-2">
+            <Label htmlFor="phone">Phone Number (Optional)</Label>
+            <Input
+              id="phone"
+              type="tel"
+              placeholder="01712345678"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
             />
           </div>
           <div className="space-y-2">

@@ -4,7 +4,7 @@ import { readDb, writeDb } from "@/lib/db";
 import type { User, Client } from '@/types';
 import { revalidatePath } from "next/cache";
 
-export async function addNewUser(userData: { name: string, email: string, password: string }) {
+export async function addNewUser(userData: { name: string, email: string, password: string, phone?: string }) {
     
     const db = await readDb();
 
@@ -18,6 +18,7 @@ export async function addNewUser(userData: { name: string, email: string, passwo
         id: newUserId,
         name: userData.name,
         email: userData.email,
+        phone: userData.phone,
         role: "client", // Automatically set role to client
         initials: (userData.name || userData.email).substring(0,2).toUpperCase(),
         password: userData.password, // In a real app, you would hash this
@@ -27,6 +28,7 @@ export async function addNewUser(userData: { name: string, email: string, passwo
         id: newUserId,
         name: userData.name,
         email: userData.email,
+        phone: userData.phone,
         company: "",
         projectIds: [],
         createdAt: new Date().toISOString(),

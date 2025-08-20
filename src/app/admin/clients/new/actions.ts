@@ -9,6 +9,7 @@ const clientSchema = z.object({
   name: z.string().min(1, "Client name is required."),
   email: z.string().email("Please enter a valid email address."),
   password: z.string().min(6, "Password must be at least 6 characters long."),
+  phone: z.string().optional(),
   company: z.string().optional(),
 });
 
@@ -20,7 +21,7 @@ export async function addClient(data: unknown) {
     }
 
     try {
-        const { name, email, password, company } = result.data;
+        const { name, email, password, phone, company } = result.data;
         const db = await readDb();
 
         // Check if user already exists
@@ -35,6 +36,7 @@ export async function addClient(data: unknown) {
             id: newUserId,
             name: name,
             email: email,
+            phone: phone,
             role: 'client',
             initials: (name || email).substring(0, 2).toUpperCase(),
             password: password, // In a real app, hash this password
@@ -46,6 +48,7 @@ export async function addClient(data: unknown) {
             id: newUserId,
             name: name,
             email: email,
+            phone: phone,
             company: company,
             projectIds: [],
             createdAt: new Date().toISOString(),

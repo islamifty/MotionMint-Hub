@@ -20,6 +20,7 @@ export async function promoteUserToClient(userId: string, db?: DbData): Promise<
                 id: user.id,
                 name: user.name,
                 email: user.email,
+                phone: user.phone,
                 projectIds: [],
                 createdAt: new Date().toISOString(),
                 company: '', 

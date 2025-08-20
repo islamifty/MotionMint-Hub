@@ -1,5 +1,3 @@
-
-
 import type { LucideIcon } from "lucide-react";
 import type { FileStat as WebDAVFile } from "webdav";
 
@@ -9,6 +7,7 @@ export type User = {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   role: "admin" | "client" | "user";
   avatarUrl?: string;
   initials: string;
@@ -38,6 +37,7 @@ export type Client = {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   company?: string;
   projectIds: string[];
   createdAt: string;

@@ -33,6 +33,7 @@ const clientSchema = z.object({
   name: z.string().min(1, "Client name is required."),
   email: z.string().email("Please enter a valid email address."),
   password: z.string().min(6, "Password must be at least 6 characters."),
+  phone: z.string().optional(),
   company: z.string().optional(),
 });
 
@@ -47,6 +48,7 @@ export default function NewClientPage() {
       name: "",
       email: "",
       password: "",
+      phone: "",
       company: "",
     },
   });
@@ -113,6 +115,19 @@ export default function NewClientPage() {
                     <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input type="email" placeholder="e.g., client@example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone Number (Optional)</FormLabel>
+                    <FormControl>
+                      <Input type="tel" placeholder="e.g., 01712345678" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
