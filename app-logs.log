@@ -46,3 +46,10 @@
 }
 ---END DATA---
 
+2025-08-20T09:03:57.078Z [ERROR] - Error sending SMS via bdbulksms.net
+---DATA---
+{
+  "errorMessage": "getaddrinfo ENOTFOUND bulksms.bdbulksms.net"
+}
+---END DATA---
+
