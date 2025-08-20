@@ -6,7 +6,7 @@
       "email": "test@test.com",
       "role": "client",
       "initials": "TE",
-      "password": "$2a$10$f9y/g.b.eJ8E0.g1a.H9..DY.L0j.ZfS.C.mB6.gX3.a5.o6i.p8e"
+      "password": "$2a$10$T8Z3s6E8Jv/y9C.8g3F.d.2H3jK9n4oG7Y.vR6Y2w8z4X2x2e.W.a"
     },
     {
       "id": "user-1755623097607",
@@ -14,7 +14,7 @@
       "email": "edit@motionmint.top",
       "role": "client",
       "initials": "IF",
-      "password": "$2a$10$D2E9.n8u.K5b3.zH8..fT.n/A.V.oY.F.b.I.E.S.D.g.h.J.k.l.m"
+      "password": "$2a$10$T8Z3s6E8Jv/y9C.8g3F.d.2H3jK9n4oG7Y.vR6Y2w8z4X2x2e.W.a"
     },
     {
       "id": "admin-main",
@@ -22,7 +22,7 @@
       "email": "mdiftekharulislamifty@gmail.com",
       "role": "admin",
       "initials": "II",
-      "password": "$2a$10$w.i.S.t.E.a.M.h.A.s.h.P.a.s.s.w.o.r.d.0.1.@.#.M.d.i.f.t.y"
+      "password": "$2a$10$Y1/1.B6E2Y.z3E.F1g.I.O.p9a.Q1k.L5v.U7f.W3f.Z5g.a6b.c4"
     }
   ],
   "clients": [
@@ -93,6 +93,6 @@
     "smtpPort": 587,
     "smtpUser": "edit@motionmint.top",
     "smtpPass": "W1JGy7gMWxLH",
-    "greenwebSmsToken": "8887150534175568073482ebcc3c79f20372a10bf0536e8ac8f6"
+    "greenwebSmsToken": "1061917534417556812848c1a2e790a5a67c1e549d443425032"
   }
 }
