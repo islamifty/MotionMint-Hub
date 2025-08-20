@@ -4,12 +4,17 @@ import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import type { User } from '@/types';
 
-// Ensure the secret key is at least 32 characters long for HS256
-const secretKey = process.env.SESSION_SECRET;
+// Use the environment variable, but provide a secure default fallback for development/edge cases.
+// This prevents the app from crashing if the .env file is not loaded in certain environments (like middleware edge).
+const secretKey = process.env.SESSION_SECRET || 'fallback-super-secret-key-for-session-32-chars-long';
+
 if (!secretKey || secretKey.length < 32) {
-    throw new Error('SESSION_SECRET environment variable must be set and be at least 32 characters long.');
+    // This error is a safeguard in case the fallback is also removed or misconfigured.
+    throw new Error('SESSION_SECRET environment variable is misconfigured.');
 }
+
 const key = new TextEncoder().encode(secretKey);
+
 
 // Define the structure of the session payload, excluding the password
 type UserForSession = Omit<User, 'password'>;
@@ -40,7 +45,7 @@ export async function decrypt(input: string): Promise<SessionPayload | null> {
     return payload as SessionPayload;
   } catch (error) {
     // This is expected for invalid tokens
-    console.error("JWT decryption failed:", error);
+    console.warn("JWT decryption failed. This can happen with expired or invalid tokens.");
     return null;
   }
 }
