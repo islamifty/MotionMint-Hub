@@ -447,3 +447,19 @@
 
 2025-08-20T18:16:09.476Z [INFO] - OTP sent to 01791241152
 
+2025-08-20T18:17:48.362Z [INFO] - User logged in successfully
+---DATA---
+{
+  "userId": "admin-main",
+  "email": "mdiftekharulislamifty@gmail.com"
+}
+---END DATA---
+
+2025-08-20T18:19:41.963Z [INFO] - User logged in successfully
+---DATA---
+{
+  "userId": "admin-main",
+  "email": "mdiftekharulislamifty@gmail.com"
+}
+---END DATA---
+
