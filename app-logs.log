@@ -414,3 +414,36 @@
 }
 ---END DATA---
 
+2025-08-20T18:13:44.255Z [INFO] - User logged in successfully
+---DATA---
+{
+  "userId": "admin-main",
+  "email": "mdiftekharulislamifty@gmail.com"
+}
+---END DATA---
+
+2025-08-20T18:14:50.915Z [INFO] - User logged in successfully
+---DATA---
+{
+  "userId": "admin-main",
+  "email": "mdiftekharulislamifty@gmail.com"
+}
+---END DATA---
+
+2025-08-20T18:15:32.468Z [INFO] - User logged in successfully
+---DATA---
+{
+  "userId": "admin-main",
+  "email": "mdiftekharulislamifty@gmail.com"
+}
+---END DATA---
+
+2025-08-20T18:16:09.476Z [INFO] - SMS sent successfully to 01791241152
+---DATA---
+{
+  "response": "Ok: SMS Sent Successfully To +8801791241152</br>"
+}
+---END DATA---
+
+2025-08-20T18:16:09.476Z [INFO] - OTP sent to 01791241152
+
