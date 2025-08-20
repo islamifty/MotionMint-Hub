@@ -88,6 +88,10 @@
     "bKashUsername": "01580720711",
     "bKashPassword": "w2mj!V$]p^G",
     "bKashMode": "production",
-    "logoUrl": "https://motionmint.top/wp-content/uploads/2025/08/motionmint.top-3-1.png"
+    "logoUrl": "https://motionmint.top/wp-content/uploads/2025/08/motionmint.top-3-1.png",
+    "smtpHost": "smtp.zoho.com",
+    "smtpPort": 587,
+    "smtpUser": "edit@motionmint.top",
+    "smtpPass": "W1JGy7gMWxLH"
   }
 }

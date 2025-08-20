@@ -16,8 +16,13 @@ export async function sendEmail(mailOptions: MailOptions, smtpConfig?: Partial<A
 
 // Main implementation
 export async function sendEmail(mailOptions: MailOptions, smtpConfig?: Partial<AppSettings>): Promise<void> {
-    const db = await readDb();
-    const settings = smtpConfig || db.settings;
+    let settings = smtpConfig;
+
+    // If no specific config is provided, read from the database
+    if (!settings) {
+        const db = await readDb();
+        settings = db.settings;
+    }
 
     const { smtpHost, smtpPort, smtpUser, smtpPass } = settings;
 
@@ -37,7 +42,7 @@ export async function sendEmail(mailOptions: MailOptions, smtpConfig?: Partial<A
     });
     
     const options = {
-        from: `"${smtpUser}" <${smtpUser}>`,
+        from: `"MotionMint Hub" <${smtpUser}>`, // Using a friendly name
         ...mailOptions,
     };
     
