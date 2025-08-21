@@ -4,6 +4,7 @@
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { use, Suspense } from 'react';
 
 import {
   Avatar,
@@ -24,10 +25,19 @@ import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '../ui/skeleton';
 import { User, Settings, LogOut } from "lucide-react";
 
-export function UserNav() {
-  const { currentUser, loading } = useAuth();
+async function fetchUser(refetch: () => Promise<void>) {
+    await refetch();
+    return true; // Return something to satisfy `use`
+}
+
+
+function UserNavContent() {
+  const { currentUser, loading, refetchUser } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  
+  // This hook will suspend until the user is fetched on the client.
+  use(fetchUser(refetchUser));
 
   const handleLogout = async () => {
     try {
@@ -41,9 +51,8 @@ export function UserNav() {
         title: "Logged Out",
         description: "You have been successfully logged out.",
       });
-
+      
       // Use window.location.href for a full page reload to ensure session is cleared
-      // and user context is properly updated across the app.
       window.location.href = '/login';
     } catch (error) {
       toast({
@@ -53,10 +62,6 @@ export function UserNav() {
       });
     }
   };
-  
-  if (loading) {
-    return <Skeleton className="h-9 w-9 rounded-full" />;
-  }
   
   if (!currentUser) {
     return (
@@ -108,4 +113,13 @@ export function UserNav() {
       </DropdownMenuContent>
     </DropdownMenu>
   );
+}
+
+
+export function UserNav() {
+    return (
+        <Suspense fallback={<Skeleton className="h-9 w-9 rounded-full" />}>
+            <UserNavContent />
+        </Suspense>
+    )
 }
