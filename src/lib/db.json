@@ -1,6 +1,15 @@
 {
   "users": [
     {
+      "id": "user-1755758696882",
+      "name": "MotionMint Hub",
+      "email": "edit@motionmint.top",
+      "phone": "01791241152",
+      "role": "client",
+      "initials": "MO",
+      "password": "$2a$10$9c0ugJIBY7ZxnysfPCyRrOP98yEg4iPSjzY7VQ9RdmelioGKjyIwS"
+    },
+    {
       "id": "admin-main",
       "name": "Md Iftekharul Islam",
       "email": "mdiftekharulislamifty@gmail.com",
@@ -10,7 +19,17 @@
       "password": "$2a$10$XXvfPoqHrltQKb41uIpVSOkRsZTncX3vEwNp9GmS4szk0zRTQTI4W"
     }
   ],
-  "clients": [],
+  "clients": [
+    {
+      "id": "user-1755758696882",
+      "name": "MotionMint Hub",
+      "email": "edit@motionmint.top",
+      "phone": "01791241152",
+      "company": "",
+      "projectIds": [],
+      "createdAt": "2025-08-21T06:44:57.340Z"
+    }
+  ],
   "projects": [],
   "settings": {
     "nextcloudUrl": "",

@@ -855,3 +855,20 @@
 }
 ---END DATA---
 
+2025-08-21T06:32:16.607Z [INFO] - User logged in successfully
+---DATA---
+{
+  "userId": "admin-main",
+  "email": "mdiftekharulislamifty@gmail.com"
+}
+---END DATA---
+
+2025-08-21T06:44:20.888Z [INFO] - SMS sent successfully to 01791241152
+---DATA---
+{
+  "response": "Ok: SMS Sent Successfully To +8801791241152</br>"
+}
+---END DATA---
+
+2025-08-21T06:44:20.888Z [INFO] - OTP sent to 01791241152
+
