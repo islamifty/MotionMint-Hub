@@ -1,10 +1,9 @@
-
 "use client";
 
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { use, Suspense } from 'react';
+import { Suspense } from 'react';
 
 import {
   Avatar,
@@ -25,19 +24,11 @@ import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '../ui/skeleton';
 import { User, Settings, LogOut } from "lucide-react";
 
-async function fetchUser(refetch: () => Promise<void>) {
-    await refetch();
-    return true; // Return something to satisfy `use`
-}
-
 
 function UserNavContent() {
-  const { currentUser, loading, refetchUser } = useAuth();
+  const { currentUser, loading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-  
-  // This hook will suspend until the user is fetched on the client.
-  use(fetchUser(refetchUser));
 
   const handleLogout = async () => {
     try {
@@ -62,6 +53,10 @@ function UserNavContent() {
       });
     }
   };
+  
+  if (loading) {
+    return <Skeleton className="h-9 w-9 rounded-full" />;
+  }
   
   if (!currentUser) {
     return (
