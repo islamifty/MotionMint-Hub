@@ -911,3 +911,28 @@
 }
 ---END DATA---
 
+2025-08-21T07:04:27.540Z [INFO] - SMS sent successfully to 01791241152
+---DATA---
+{
+  "response": "Ok: SMS Sent Successfully To +8801791241152</br>"
+}
+---END DATA---
+
+2025-08-21T07:04:27.540Z [INFO] - Password reset link sent to 01791241152
+
+2025-08-21T07:07:15.179Z [INFO] - User logged in successfully
+---DATA---
+{
+  "userId": "admin-main",
+  "email": "mdiftekharulislamifty@gmail.com"
+}
+---END DATA---
+
+2025-08-21T07:07:56.506Z [INFO] - User logged in successfully
+---DATA---
+{
+  "userId": "admin-main",
+  "email": "mdiftekharulislamifty@gmail.com"
+}
+---END DATA---
+
