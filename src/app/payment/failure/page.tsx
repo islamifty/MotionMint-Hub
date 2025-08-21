@@ -5,9 +5,10 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { XCircle } from "lucide-react";
+import { XCircle, Loader2 } from "lucide-react";
+import { Suspense } from "react";
 
-export default function PaymentFailurePage() {
+function PaymentFailureContent() {
   const searchParams = useSearchParams();
   const message = searchParams.get("message") || "An unknown error occurred.";
 
@@ -37,3 +38,13 @@ export default function PaymentFailurePage() {
     </div>
   );
 }
+
+export default function PaymentFailurePage() {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
+            <PaymentFailureContent />
+        </Suspense>
+    )
+}
+
+    

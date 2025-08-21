@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useTransition } from "react";
+import React, { useState, useEffect, useTransition, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
@@ -65,7 +65,7 @@ type UploadingFile = {
   size: number;
 };
 
-export default function FileManagerPage() {
+function FileManagerContent() {
   const [files, setFiles] = useState<WebDAVFile[]>([]);
   const [currentPath, setCurrentPath] = useState("/");
   const [isLoading, setIsLoading] = useState(true);
@@ -357,3 +357,13 @@ export default function FileManagerPage() {
     </div>
   );
 }
+
+export default function FileManagerPage() {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
+            <FileManagerContent />
+        </Suspense>
+    )
+}
+
+    

@@ -5,9 +5,10 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
+import { Suspense } from "react";
 
-export default function PaymentSuccessPage() {
+function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const projectId = searchParams.get("projectId");
   const amount = searchParams.get("amount");
@@ -53,3 +54,13 @@ export default function PaymentSuccessPage() {
     </div>
   );
 }
+
+export default function PaymentSuccessPage() {
+    return (
+         <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
+            <PaymentSuccessContent />
+        </Suspense>
+    )
+}
+
+    
