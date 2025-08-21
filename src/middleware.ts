@@ -9,7 +9,7 @@ const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-passwor
 export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
 
-  // ✅ middleware এ cookies() নয়, req.cookies.get()
+  // ✅ middleware এ cookies() নয়, req.cookies.get() ব্যবহার করতে হবে
   const cookie = req.cookies.get('session')?.value;
   const session = cookie ? await decrypt(cookie) : null;
   const user = session?.user;
@@ -21,12 +21,12 @@ export default async function middleware(req: NextRequest) {
 
   const isPublicRoute = publicRoutes.includes(path);
 
-  // Rule 1: Not logged in → trying to access protected route → redirect to login
+  // Rule 1: If not logged in → protected route → redirect to login
   if (!user && isProtectedRoute) {
     return NextResponse.redirect(new URL('/login', req.url));
   }
 
-  // Rule 2: If logged in → redirect away from public pages and root
+  // Rule 2: If logged in → redirect away from public pages + role checks
   if (user) {
     const dashboardUrl = user.role === 'admin' ? '/admin/dashboard' : '/client/dashboard';
 
@@ -34,7 +34,6 @@ export default async function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL(dashboardUrl, req.url));
     }
 
-    // Role-based access
     if (path.startsWith('/admin') && user.role !== 'admin') {
       return NextResponse.redirect(new URL('/client/dashboard', req.url));
     }
