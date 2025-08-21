@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { Suspense } from 'react';
 
 import {
   Avatar,
@@ -24,8 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '../ui/skeleton';
 import { User, Settings, LogOut } from "lucide-react";
 
-
-function UserNavContent() {
+export function UserNav() {
   const { currentUser, loading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
@@ -108,13 +106,4 @@ function UserNavContent() {
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
-
-
-export function UserNav() {
-    return (
-        <Suspense fallback={<Skeleton className="h-9 w-9 rounded-full" />}>
-            <UserNavContent />
-        </Suspense>
-    )
 }
