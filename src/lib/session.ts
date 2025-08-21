@@ -26,10 +26,11 @@ export type SessionPayload = {
 
 
 export async function encrypt(payload: SessionPayload) {
+  const expirationTime = payload.user ? '1d' : '10m'; // 1 day for user, 10 mins for OTP
   return await new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime('1d') // 1 day expiration
+    .setExpirationTime(expirationTime) 
     .sign(key);
 }
 
@@ -50,7 +51,7 @@ export async function decrypt(input: string | undefined): Promise<SessionPayload
 }
 
 export async function createSession(payload: SessionPayload) {
-  const expires = payload.user ? new Date(Date.now() + 24 * 60 * 60 * 1000) : new Date(Date.now() + 10 * 60 * 1000); // User session 1 day, OTP session 10 mins
+  const expires = new Date(Date.now() + (payload.user ? 24 * 60 * 60 * 1000 : 10 * 60 * 1000)); // User session 1 day, OTP session 10 mins
   const sessionData = { ...payload, expires };
   const session = await encrypt(sessionData);
 
@@ -70,8 +71,8 @@ export async function getSession(): Promise<SessionPayload | null> {
   const decrypted = await decrypt(sessionCookie);
   if (!decrypted) return null;
 
-  // Validate expiration
-  if (decrypted.expires && new Date(decrypted.expires) < new Date()) {
+  // Validate expiration from the token itself
+  if (decrypted.exp && decrypted.exp * 1000 < Date.now()) {
     return null;
   }
 
