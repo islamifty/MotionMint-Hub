@@ -1,7 +1,5 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { decrypt } from '@/lib/session';
-import { cookies } from 'next/headers';
 
 const protectedAdminRoutes = ['/admin'];
 const protectedClientRoutes = ['/client'];
@@ -10,7 +8,9 @@ const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-passwor
 
 export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
-  const cookie = cookies().get('session')?.value;
+
+  // ✅ middleware এ cookies() নয়, req.cookies.get()
+  const cookie = req.cookies.get('session')?.value;
   const session = cookie ? await decrypt(cookie) : null;
   const user = session?.user;
 
@@ -21,33 +21,29 @@ export default async function middleware(req: NextRequest) {
 
   const isPublicRoute = publicRoutes.includes(path);
 
-  // Rule 1: If the user is not logged in and is trying to access a protected route,
-  // redirect them to the login page. This is the primary security check.
+  // Rule 1: Not logged in → trying to access protected route → redirect to login
   if (!user && isProtectedRoute) {
-    return NextResponse.redirect(new URL('/login', req.nextUrl));
+    return NextResponse.redirect(new URL('/login', req.url));
   }
 
-  // Rule 2: If the user is logged in, handle redirects away from public pages
-  // and enforce role-based access.
+  // Rule 2: If logged in → redirect away from public pages and root
   if (user) {
     const dashboardUrl = user.role === 'admin' ? '/admin/dashboard' : '/client/dashboard';
 
-    // If a logged-in user tries to access a public route (like /login) or the root,
-    // redirect them to their appropriate dashboard.
     if (isPublicRoute || path === '/') {
-      return NextResponse.redirect(new URL(dashboardUrl, req.nextUrl));
+      return NextResponse.redirect(new URL(dashboardUrl, req.url));
     }
 
-    // Role-based access control for protected routes.
+    // Role-based access
     if (path.startsWith('/admin') && user.role !== 'admin') {
-      return NextResponse.redirect(new URL('/client/dashboard', req.nextUrl));
+      return NextResponse.redirect(new URL('/client/dashboard', req.url));
     }
     if (path.startsWith('/client') && user.role !== 'client') {
-      return NextResponse.redirect(new URL('/admin/dashboard', req.nextUrl));
+      return NextResponse.redirect(new URL('/admin/dashboard', req.url));
     }
   }
 
-  // Rule 3: If none of the above rules match, allow the request to proceed.
+  // Rule 3: Allow request
   return NextResponse.next();
 }
 
