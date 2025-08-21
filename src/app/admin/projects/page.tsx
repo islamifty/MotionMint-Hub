@@ -42,17 +42,6 @@ import type { Project } from "@/types";
 import { deleteProjects, getProjects } from "./actions";
 import { useToast } from "@/hooks/use-toast";
 
-const ProjectDate = ({ dateString }: { dateString: string }) => {
-  const [formattedDate, setFormattedDate] = useState<string | null>(null);
-
-  useEffect(() => {
-    // This ensures the date is formatted only on the client, avoiding hydration mismatch.
-    setFormattedDate(format(new Date(dateString), "PP"));
-  }, [dateString]);
-
-  return <>{formattedDate}</>;
-};
-
 const ProjectTable = ({ 
   projects,
   selectedProjects,
@@ -98,7 +87,7 @@ const ProjectTable = ({
             <Badge variant="outline">{project.paymentStatus}</Badge>
           </TableCell>
           <TableCell>
-            <ProjectDate dateString={project.expiryDate} />
+            {format(new Date(project.expiryDate), "PP")}
           </TableCell>
           <TableCell className="text-right">{project.amount.toLocaleString()} BDT</TableCell>
           <TableCell className="text-right">

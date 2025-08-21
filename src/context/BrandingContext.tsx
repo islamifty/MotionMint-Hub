@@ -75,7 +75,6 @@ export const useBranding = () => useContext(BrandingContext);
 
 export const BrandingProvider = ({ children }: { children: ReactNode }) => {
   const [branding, setBrandingState] = useState<Branding>(defaultBranding);
-  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     // This effect runs only on the client
@@ -87,8 +86,6 @@ export const BrandingProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error("Failed to parse branding from localStorage", error);
     }
-    // Signal that we have loaded from localStorage and are on the client
-    setIsLoaded(true);
   }, []);
 
   const setBranding = (newBranding: Branding) => {
@@ -103,26 +100,23 @@ export const BrandingProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-      // Only apply styles on the client after loading from localStorage to prevent hydration mismatch
-      if(isLoaded) { 
-        const root = document.documentElement;
-        
-        const primaryHsl = parseHsl(branding.primaryColor);
-        if(primaryHsl) {
-            root.style.setProperty('--primary', `${primaryHsl[0]} ${primaryHsl[1]}% ${primaryHsl[2]}%`);
-        }
-        
-        const backgroundHsl = parseHsl(branding.backgroundColor);
-        if(backgroundHsl) {
-            root.style.setProperty('--background', `${backgroundHsl[0]} ${backgroundHsl[1]}% ${backgroundHsl[2]}%`);
-        }
+    const root = document.documentElement;
+    
+    const primaryHsl = parseHsl(branding.primaryColor);
+    if(primaryHsl) {
+        root.style.setProperty('--primary', `${primaryHsl[0]} ${primaryHsl[1]}% ${primaryHsl[2]}%`);
+    }
+    
+    const backgroundHsl = parseHsl(branding.backgroundColor);
+    if(backgroundHsl) {
+        root.style.setProperty('--background', `${backgroundHsl[0]} ${backgroundHsl[1]}% ${backgroundHsl[2]}%`);
+    }
 
-        const accentHsl = parseHsl(branding.accentColor);
-        if(accentHsl) {
-            root.style.setProperty('--accent', `${accentHsl[0]} ${accentHsl[1]}% ${accentHsl[2]}%`);
-        }
-      }
-  }, [branding, isLoaded]);
+    const accentHsl = parseHsl(branding.accentColor);
+    if(accentHsl) {
+        root.style.setProperty('--accent', `${accentHsl[0]} ${accentHsl[1]}% ${accentHsl[2]}%`);
+    }
+  }, [branding]);
 
   return (
     <BrandingContext.Provider value={{ branding, setBranding }}>

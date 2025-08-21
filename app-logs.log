@@ -936,3 +936,41 @@
 }
 ---END DATA---
 
+2025-08-21T07:51:10.997Z [WARN] - Login failed: User not found
+---DATA---
+{
+  "loginIdentifier": "mdiftekharulislamifty@gmai.com"
+}
+---END DATA---
+
+2025-08-21T07:51:19.021Z [WARN] - Login failed: User not found
+---DATA---
+{
+  "loginIdentifier": "mdiftekharulislamifty@gmai.com"
+}
+---END DATA---
+
+2025-08-21T07:52:24.967Z [INFO] - User logged in successfully
+---DATA---
+{
+  "userId": "admin-main",
+  "email": "mdiftekharulislamifty@gmail.com"
+}
+---END DATA---
+
+2025-08-21T07:54:34.440Z [INFO] - User logged in successfully
+---DATA---
+{
+  "userId": "admin-main",
+  "email": "mdiftekharulislamifty@gmail.com"
+}
+---END DATA---
+
+2025-08-21T08:01:28.629Z [INFO] - User logged in successfully
+---DATA---
+{
+  "userId": "admin-main",
+  "email": "mdiftekharulislamifty@gmail.com"
+}
+---END DATA---
+
