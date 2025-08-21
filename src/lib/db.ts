@@ -22,8 +22,8 @@ const initialData: DbData = {
     }
 };
 
-async function createDefaultAdmin(): Promise<DbData> {
-    console.log("No users found. Creating default admin account...");
+async function initializeDbWithAdmin(): Promise<DbData> {
+    console.log("Initializing database with default admin account...");
     const adminEmail = adminEmails[0];
     const hashedPassword = await hashPassword('password123');
     const newAdmin = {
@@ -52,30 +52,34 @@ export async function readDb(): Promise<DbData> {
     try {
         if (!fs.existsSync(dbPath)) {
             // If the file doesn't exist, create it with initial data and a default admin
-            return await createDefaultAdmin();
+            return await initializeDbWithAdmin();
         }
+        
         const fileContents = fs.readFileSync(dbPath, 'utf8');
-        // If file is empty, initialize it
+        
         if (!fileContents) {
-            return await createDefaultAdmin();
+            // If file is empty, initialize it
+            return await initializeDbWithAdmin();
         }
         
         const jsonData: DbData = JSON.parse(fileContents);
         
-        // If file exists but is empty of users, create admin
+        // If file exists but is empty of users, initialize it
         if (!jsonData.users || jsonData.users.length === 0) {
-            return await createDefaultAdmin();
+            return await initializeDbWithAdmin();
         }
 
-        // Ensure settings object exists
+        // Ensure settings object exists if it's missing for some reason
         if (!jsonData.settings) {
             jsonData.settings = initialData.settings;
         }
+        
         return jsonData;
+
     } catch (error) {
-        console.error("Critical error reading or parsing db.json:", error);
+        console.error("Critical error reading or parsing db.json. Re-initializing.", error);
         // Fallback to creating a new DB with admin if parsing fails
-        return await createDefaultAdmin();
+        return await initializeDbWithAdmin();
     }
 }
 
