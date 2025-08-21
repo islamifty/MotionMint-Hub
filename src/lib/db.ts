@@ -25,7 +25,9 @@ const initialData: DbData = {
 async function initializeDbWithAdmin(): Promise<DbData> {
     console.log("Initializing database with default admin account...");
     const adminEmail = adminEmails[0];
-    const hashedPassword = await hashPassword('password123');
+    // This specific hash corresponds to the password 'password123'
+    const hashedPassword = "$2a$10$v87XHLoiNoxgRHr0vt66WO0CI2Kv2gkJQgSRzKV2uAFNU/yvEZuEq";
+    
     const newAdmin = {
       id: "admin-main",
       name: "Admin",
