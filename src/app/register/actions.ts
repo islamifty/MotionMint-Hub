@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
 import { createSession, getSession } from "@/lib/session";
 import { sendSms } from '@/lib/sms';
 import { logger } from '@/lib/logger';
-
+import { hashPassword } from '@/lib/password';
 
 const registerSchema = z.object({
   name: z.string().min(1, "Full name is required."),
@@ -77,6 +77,7 @@ export async function addNewUser(userData: unknown) {
     }
 
     const newUserId = `user-${Date.now()}`;
+    const hashedPassword = await hashPassword(password);
 
     const newUser: User = {
         id: newUserId,
@@ -85,7 +86,7 @@ export async function addNewUser(userData: unknown) {
         phone,
         role: "client",
         initials: (name || email).substring(0,2).toUpperCase(),
-        password: password, // Storing password in plain text
+        password: hashedPassword,
     };
     
     const newClient: Client = {

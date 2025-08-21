@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { readDb, writeDb } from '@/lib/db';
 import type { Client, User } from '@/types';
+import { hashPassword } from '@/lib/password';
 
 const clientSchema = z.object({
   name: z.string().min(1, "Client name is required."),
@@ -31,6 +32,7 @@ export async function addClient(data: unknown) {
         }
 
         const newUserId = `user-${Date.now()}`;
+        const hashedPassword = await hashPassword(password);
 
         // 1. Create user
         const newUser: User = {
@@ -40,7 +42,7 @@ export async function addClient(data: unknown) {
             phone: phone,
             role: 'client',
             initials: (name || email).substring(0, 2).toUpperCase(),
-            password: password, // Storing password in plain text
+            password: hashedPassword,
         };
         db.users.unshift(newUser);
         

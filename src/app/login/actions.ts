@@ -1,14 +1,20 @@
+
 'use server';
 import { createSession } from '@/lib/session';
-import { readDb } from '@/lib/db';
+import { readDb, writeDb } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { hashPassword, verifyPassword } from '@/lib/password';
+
+// Bcrypt hashes can be identified by their prefix
+const isBcryptHash = (str: string) => /^\$2[aby]?\$\d{2}\$/.test(str);
 
 export async function login(credentials: {email: string, password: string}) {
     const { email, password } = credentials;
 
     try {
         const db = await readDb();
-        const user = db.users.find((u) => u.email === email);
+        const userIndex = db.users.findIndex((u) => u.email === email);
+        const user = userIndex !== -1 ? db.users[userIndex] : null;
 
         if (!user) {
             logger.warn('Login failed: User not found', { email });
@@ -20,8 +26,25 @@ export async function login(credentials: {email: string, password: string}) {
             return { success: false, error: "Account is not properly configured. Please contact support." };
         }
         
-        // Direct password comparison (INSECURE - FOR DEBUGGING ONLY)
-        const isPasswordValid = user.password === password;
+        let isPasswordValid = false;
+        
+        // Check if the stored password is a hash or plaintext
+        if (isBcryptHash(user.password)) {
+            // It's a hash, use bcrypt to compare
+            isPasswordValid = await verifyPassword(password, user.password);
+        } else {
+            // It's plaintext, compare directly
+            isPasswordValid = user.password === password;
+            
+            // If plaintext password is valid, hash and update it in the database
+            if (isPasswordValid) {
+                logger.info('Plaintext password matched. Upgrading to hash.', { email });
+                const newHashedPassword = await hashPassword(password);
+                db.users[userIndex].password = newHashedPassword;
+                await writeDb(db); // Asynchronously write the update
+                logger.info('Password successfully upgraded to hash.', { email });
+            }
+        }
 
         if (!isPasswordValid) {
             logger.warn('Login failed: Invalid password', { email });

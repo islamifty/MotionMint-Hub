@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { readDb, writeDb } from '@/lib/db';
 import { getSession, createSession } from '@/lib/session';
+import { verifyPassword, hashPassword } from '@/lib/password';
 import type { User } from '@/types';
 
 const profileSchema = z.object({
@@ -84,13 +85,21 @@ export async function changePassword(data: unknown) {
             return { success: false, error: "User not found or has no password set." };
         }
         
-        // Direct password comparison (INSECURE - FOR DEBUGGING ONLY)
-        const isPasswordValid = user.password === currentPassword;
+        // Since the DB might have plaintext passwords, we handle both cases.
+        const isBcryptHash = (str: string) => /^\$2[aby]?\$\d{2}\$/.test(str);
+        
+        let isPasswordValid = false;
+        if (isBcryptHash(user.password)) {
+            isPasswordValid = await verifyPassword(currentPassword, user.password);
+        } else {
+            isPasswordValid = user.password === currentPassword;
+        }
+
         if (!isPasswordValid) {
             return { success: false, error: { currentPassword: ["Incorrect current password."] }};
         }
 
-        user.password = newPassword; // Store new password in plain text
+        user.password = await hashPassword(newPassword);
         await writeDb(db);
 
         return { success: true };
