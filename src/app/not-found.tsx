@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Suspense } from "react";
@@ -7,7 +6,8 @@ import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, Loader2 } from "lucide-react";
-import { Logo } from "@/components/shared/Logo";
+
+export const dynamic = 'force-dynamic';
 
 function NotFoundContent() {
   const searchParams = useSearchParams();
