@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from 'next/navigation';
 import { login } from './actions';
 
 import { Button } from "@/components/ui/button";
@@ -17,8 +18,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/shared/Logo";
 import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 export default function LoginPage() {
+  const router = useRouter();
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -31,20 +34,15 @@ export default function LoginPage() {
     try {
       const result = await login({ email, password });
 
-      if (result.success === false) {
-        throw new Error(result.error || 'Login failed.');
-      }
-
-      toast({
-        title: "Login Successful",
-        description: "Redirecting to your dashboard.",
-      });
-
-      // Use window.location.href for a full page reload to ensure session is picked up
-      if (result.isAdmin) {
-        window.location.href = "/admin/dashboard";
+      if (result.success) {
+        toast({
+          title: "Login Successful",
+          description: "Redirecting to your dashboard.",
+        });
+        // Use router.push for client-side navigation without a full page reload
+        router.push(result.redirectPath);
       } else {
-        window.location.href = "/client/dashboard";
+        throw new Error(result.error || 'An unknown error occurred.');
       }
     } catch (error: any) {
       toast({
@@ -74,6 +72,7 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              disabled={isLoading}
             />
           </div>
           <div className="space-y-2">
@@ -92,10 +91,11 @@ export default function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              disabled={isLoading}
             />
           </div>
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Logging in..." : "Login"}
+            {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Logging in...</> : "Login"}
           </Button>
         </CardContent>
       </form>
