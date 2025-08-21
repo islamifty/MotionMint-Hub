@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useEffect, useState } from "react";
 
 import {
   Avatar,
@@ -22,11 +23,19 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '../ui/skeleton';
 import { User, Settings, LogOut } from "lucide-react";
+import type { User as UserType } from "@/types";
+
 
 export function UserNav() {
-  const { currentUser, loading } = useAuth();
+  const { currentUser: initialUser, isInitialLoad } = useAuth();
+  const [currentUser, setCurrentUser] = useState<UserType | null>(initialUser);
   const router = useRouter();
   const { toast } = useToast();
+  
+  useEffect(() => {
+    setCurrentUser(initialUser);
+  }, [initialUser]);
+
 
   const handleLogout = async () => {
     try {
@@ -52,7 +61,7 @@ export function UserNav() {
     }
   };
   
-  if (loading) {
+  if (isInitialLoad) {
     return <Skeleton className="h-9 w-9 rounded-full" />;
   }
   

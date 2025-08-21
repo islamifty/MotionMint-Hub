@@ -6,6 +6,7 @@ import type { User } from '@/types';
 interface AuthContextType {
   currentUser: User | null;
   loading: boolean;
+  isInitialLoad: boolean;
   refetchUser: () => Promise<void>;
 }
 
@@ -33,7 +34,8 @@ async function fetchCurrentUser(): Promise<User | null> {
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   
   const refetchUser = useCallback(async () => {
     setLoading(true);
@@ -43,11 +45,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    refetchUser();
-  }, [refetchUser]);
+    async function loadUser() {
+        const user = await fetchCurrentUser();
+        setCurrentUser(user);
+        setIsInitialLoad(false);
+    }
+    loadUser();
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ currentUser, loading, refetchUser }}>
+    <AuthContext.Provider value={{ currentUser, loading, isInitialLoad, refetchUser }}>
       {children}
     </AuthContext.Provider>
   );
