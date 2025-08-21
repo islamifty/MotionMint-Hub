@@ -5,7 +5,6 @@ import { z } from 'zod';
 import { readDb, writeDb } from "@/lib/db";
 import type { User, Client } from '@/types';
 import { revalidatePath } from "next/cache";
-import { hashPassword } from "@/lib/password";
 import { createSession, getSession } from "@/lib/session";
 import { sendSms } from '@/lib/sms';
 import { logger } from '@/lib/logger';
@@ -78,7 +77,6 @@ export async function addNewUser(userData: unknown) {
     }
 
     const newUserId = `user-${Date.now()}`;
-    const hashedPassword = await hashPassword(password);
 
     const newUser: User = {
         id: newUserId,
@@ -87,7 +85,7 @@ export async function addNewUser(userData: unknown) {
         phone,
         role: "client",
         initials: (name || email).substring(0,2).toUpperCase(),
-        password: hashedPassword,
+        password: password, // Storing password in plain text
     };
     
     const newClient: Client = {

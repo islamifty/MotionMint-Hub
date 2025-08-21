@@ -6,7 +6,6 @@ import { revalidatePath } from 'next/cache';
 import { readDb, writeDb } from '@/lib/db';
 import { getSession, createSession } from '@/lib/session';
 import type { User } from '@/types';
-import { hashPassword, verifyPassword } from '@/lib/password';
 
 const profileSchema = z.object({
   name: z.string().min(1, "Name cannot be empty."),
@@ -51,7 +50,7 @@ export async function updateProfile(data: unknown) {
         
         // Update session, ensuring password is not included
         const { password, ...userForSession } = updatedUser;
-        await createSession(userForSession);
+        await createSession({ user: userForSession });
 
         revalidatePath('/profile');
         revalidatePath('/admin/users');
@@ -85,12 +84,13 @@ export async function changePassword(data: unknown) {
             return { success: false, error: "User not found or has no password set." };
         }
         
-        const isPasswordValid = await verifyPassword(currentPassword, user.password);
+        // Direct password comparison (INSECURE - FOR DEBUGGING ONLY)
+        const isPasswordValid = user.password === currentPassword;
         if (!isPasswordValid) {
             return { success: false, error: { currentPassword: ["Incorrect current password."] }};
         }
 
-        user.password = await hashPassword(newPassword);
+        user.password = newPassword; // Store new password in plain text
         await writeDb(db);
 
         return { success: true };

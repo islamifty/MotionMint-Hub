@@ -1,9 +1,7 @@
-
 'use server';
 import { createSession } from '@/lib/session';
 import { readDb } from '@/lib/db';
 import { logger } from '@/lib/logger';
-import { verifyPassword } from '@/lib/password';
 
 export async function login(credentials: {email: string, password: string}) {
     const { email, password } = credentials;
@@ -21,15 +19,16 @@ export async function login(credentials: {email: string, password: string}) {
             logger.error('Login failed: User has no password set', { email });
             return { success: false, error: "Account is not properly configured. Please contact support." };
         }
-
-        const isPasswordValid = await verifyPassword(password, user.password);
+        
+        // Direct password comparison (INSECURE - FOR DEBUGGING ONLY)
+        const isPasswordValid = user.password === password;
 
         if (!isPasswordValid) {
             logger.warn('Login failed: Invalid password', { email });
             return { success: false, error: "Invalid email or password." };
         }
         
-        // Create session with a user object that doesn't include the password hash
+        // Create session with a user object that doesn't include the password
         const { password: _, ...userToSession } = user;
         await createSession({ user: userToSession });
 
