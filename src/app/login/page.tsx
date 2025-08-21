@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -34,13 +33,13 @@ export default function LoginPage() {
     try {
       const result = await login({ email, password });
 
-      if (result.success) {
+      if (result.success && result.redirectPath) {
         toast({
           title: "Login Successful",
           description: "Redirecting to your dashboard.",
         });
-        // Use router.push for client-side navigation without a full page reload
-        router.push(result.redirectPath);
+        // Use window.location.href for a full page reload to ensure session is cleared
+        window.location.href = result.redirectPath;
       } else {
         throw new Error(result.error || 'An unknown error occurred.');
       }
