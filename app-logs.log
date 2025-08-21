@@ -872,3 +872,42 @@
 
 2025-08-21T06:44:20.888Z [INFO] - OTP sent to 01791241152
 
+2025-08-21T06:48:38.282Z [INFO] - SMS sent successfully to 01791241152
+---DATA---
+{
+  "response": "Ok: SMS Sent Successfully To +8801791241152</br>"
+}
+---END DATA---
+
+2025-08-21T06:49:19.868Z [INFO] - User logged in successfully
+---DATA---
+{
+  "userId": "user-1755758696882",
+  "email": "edit@motionmint.top"
+}
+---END DATA---
+
+2025-08-21T06:50:23.751Z [INFO] - Initiating bKash payment
+---DATA---
+{
+  "projectId": "proj-1755758915447",
+  "orderId": "ORD-1755758915447"
+}
+---END DATA---
+
+2025-08-21T06:50:24.289Z [INFO] - bKash token granted successfully.
+
+2025-08-21T06:50:24.493Z [INFO] - bKash payment creation successful.
+---DATA---
+{
+  "paymentID": "TR0011UZe1XRE1755759024453"
+}
+---END DATA---
+
+2025-08-21T06:50:24.493Z [INFO] - bKash payment initiated successfully
+---DATA---
+{
+  "projectId": "proj-1755758915447"
+}
+---END DATA---
+

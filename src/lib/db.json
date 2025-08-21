@@ -30,7 +30,22 @@
       "createdAt": "2025-08-21T06:44:57.340Z"
     }
   ],
-  "projects": [],
+  "projects": [
+    {
+      "id": "proj-1755758915447",
+      "title": "ICDDRB DOC",
+      "description": "ICDDRB DOC",
+      "clientId": "user-1755758696882",
+      "amount": 1,
+      "expiryDate": "2026-03-30T18:00:00.000Z",
+      "clientName": "MotionMint Hub",
+      "paymentStatus": "pending",
+      "orderId": "ORD-1755758915447",
+      "createdAt": "2025-08-21T06:48:35.447Z",
+      "previewVideoUrl": "https://mydrive.motionmint.top/index.php/s/ayiDDWK6ztpdqE3",
+      "finalVideoUrl": "https://mydrive.motionmint.top/index.php/s/ayiDDWK6ztpdqE3"
+    }
+  ],
   "settings": {
     "nextcloudUrl": "",
     "nextcloudUser": "",
