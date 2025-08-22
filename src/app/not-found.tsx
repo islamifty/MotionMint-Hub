@@ -5,22 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
 import { Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
-
-function ClientParams() {
-  const params = useSearchParams();
-  const message = params?.get("message");
-
-  return (
-    <>
-      {message && (
-        <p className="mt-2 text-sm text-muted-foreground">
-          {message}
-        </p>
-      )}
-    </>
-  );
-}
+import ClientParams from "@/components/shared/ClientParams";
 
 export default function NotFoundPage() {
   return (
@@ -34,11 +19,13 @@ export default function NotFoundPage() {
           <CardDescription>
             Oops! The page you are looking for does not exist or has been moved.
           </CardDescription>
-          {/* Only runs client-side */}
+
+          {/* Safe client-side only */}
           <Suspense fallback={null}>
             <ClientParams />
           </Suspense>
         </CardHeader>
+
         <CardContent>
           <Button asChild>
             <Link href="/">Go back to Homepage</Link>
