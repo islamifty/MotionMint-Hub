@@ -1,3 +1,4 @@
+
 'use server';
 
 import fs from 'fs/promises';
@@ -45,7 +46,7 @@ export async function readDb(): Promise<DbData> {
         const fileContents = await fs.readFile(dbPath, 'utf8');
         
         // If the file is empty, initialize it
-        if (!fileContents) {
+        if (!fileContents.trim()) {
             console.log("Database file is empty. Initializing...");
             return await initializeDbWithAdmin();
         }
