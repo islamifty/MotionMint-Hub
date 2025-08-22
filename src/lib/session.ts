@@ -1,4 +1,5 @@
 
+'use server';
 import 'server-only';
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
@@ -82,3 +83,4 @@ export async function getSession(): Promise<SessionPayload | null> {
 export async function deleteSession() {
   cookies().set('session', '', { expires: new Date(0), path: '/' });
 }
+
