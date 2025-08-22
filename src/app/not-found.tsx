@@ -1,10 +1,18 @@
 
+"use client";
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
+import { Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 
-export default function NotFoundPage() {
+function NotFoundContent() {
+  const params = useSearchParams();
+  // You can use the params here if needed in the future, for example:
+  // const message = params.get('message');
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-md text-center">
@@ -24,5 +32,13 @@ export default function NotFoundPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function NotFoundPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <NotFoundContent />
+    </Suspense>
   );
 }
