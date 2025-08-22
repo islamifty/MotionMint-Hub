@@ -1,10 +1,8 @@
-
 "use client";
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Logo } from '@/components/shared/Logo';
 import { AlertTriangle } from 'lucide-react';
 
 export default function NotFoundPage() {
