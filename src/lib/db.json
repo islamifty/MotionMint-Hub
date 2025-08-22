@@ -55,7 +55,7 @@
     "pipraPayEnabled": false,
     "piprapayApiKey": "123504360668a3583081ed41601947378127387162768a3583081ed8648939280",
     "piprapayBaseUrl": "https://pay.motionmint.top",
-    "piprapayWebhookVerifyKey": "123504360668a3583081ed41601947378127387162768a3583081ed8648939280",
+    "piprapayWebhookVerifyKey": "",
     "bKashEnabled": true,
     "bKashAppKey": "aDgqtKHfBF2wLYYXYRGfwaTQtc",
     "bKashAppSecret": "gFd5EivEGDmENxUOK9Ne7o64WWskRc6HtP8i94Fb3YsVxnbOYwFJ",
