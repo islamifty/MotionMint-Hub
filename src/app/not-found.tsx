@@ -2,8 +2,6 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
-import { Suspense } from 'react';
-import ClientParams from "@/components/shared/ClientParams";
 
 export default function NotFoundPage() {
   return (
@@ -17,16 +15,10 @@ export default function NotFoundPage() {
           <CardDescription>
             Oops! The page you are looking for does not exist or has been moved.
           </CardDescription>
-
-          {/* Safe client-side only */}
-          <Suspense fallback={null}>
-            <ClientParams />
-          </Suspense>
         </CardHeader>
-
         <CardContent>
           <Button asChild>
-            <Link href="/">Go back to Homepage</Link>
+            <Link href="/">Go to Homepage</Link>
           </Button>
         </CardContent>
       </Card>

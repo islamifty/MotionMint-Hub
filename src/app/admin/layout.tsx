@@ -3,6 +3,7 @@
 
 import React from "react";
 import Link from "next/link";
+import dynamic from 'next/dynamic';
 import {
   PanelLeft,
   Search
@@ -27,8 +28,13 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
-import { UserNav } from "@/components/shared/UserNav";
 import { Logo } from "@/components/shared/Logo";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const UserNav = dynamic(() => import('@/components/shared/UserNav').then(mod => mod.UserNav), {
+  ssr: false,
+  loading: () => <Skeleton className="h-9 w-9 rounded-full" />,
+});
 
 
 export default function AdminLayout({

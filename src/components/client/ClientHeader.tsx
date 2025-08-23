@@ -1,7 +1,13 @@
 
 "use client";
-import { UserNav } from "@/components/shared/UserNav";
+import dynamic from 'next/dynamic';
 import { Logo } from "@/components/shared/Logo";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const UserNav = dynamic(() => import('@/components/shared/UserNav').then(mod => mod.UserNav), {
+  ssr: false,
+  loading: () => <Skeleton className="h-9 w-9 rounded-full" />,
+});
 
 export function ClientHeader() {  
   return (
