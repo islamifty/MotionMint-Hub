@@ -14,19 +14,16 @@ const nextcloudSchema = z.object({
 });
 
 const bKashSchema = z.object({
-  bKashEnabled: z.boolean().default(false),
-  bKashAppKey: z.string().optional(),
-  bKashAppSecret: z.string().optional(),
-  bKashUsername: z.string().optional(),
-  bKashPassword: z.string().optional(),
-  bKashMode: z.enum(["sandbox", "production"]).default("sandbox"),
+  bKashAppKey: z.string(),
+  bKashAppSecret: z.string(),
+  bKashUsername: z.string(),
+  bKashPassword: z.string(),
+  bKashMode: z.enum(["sandbox", "production"]),
 });
 
 const pipraPaySchema = z.object({
-  pipraPayEnabled: z.boolean().default(false),
-  piprapayApiKey: z.string().optional(),
-  piprapayBaseUrl: z.string().min(1, "Base URL is required.").optional().or(z.literal('')),
-  piprapayWebhookVerifyKey: z.string().optional(),
+  piprapayApiKey: z.string(),
+  piprapayBaseUrl: z.string().url(),
 });
 
 const generalSettingsSchema = z.object({
@@ -41,10 +38,6 @@ const smtpSchema = z.object({
     smtpPass: z.string().min(1, "Password is required."),
 });
 
-const smsSchema = z.object({
-    greenwebSmsToken: z.string().min(1, "Token is required."),
-});
-
 const smsTestSchema = z.object({
     greenwebSmsToken: z.string().min(1, "Token is required."),
     testPhoneNumber: z.string().min(1, "A phone number is required to send a test SMS."),
@@ -52,8 +45,24 @@ const smsTestSchema = z.object({
 
 export async function getSettings() {
     const db = await readDb();
-    return db.settings || {};
+    // Return only non-sensitive settings
+    return {
+        whatsappLink: db.settings.whatsappLink,
+        logoUrl: db.settings.logoUrl,
+    };
 }
+
+// Functions to check if credentials are set in environment variables
+export async function checkEnvCredentials() {
+    return {
+        nextcloud: !!(process.env.NEXTCLOUD_URL && process.env.NEXTCLOUD_USER && process.env.NEXTCLOUD_PASSWORD),
+        bkash: !!(process.env.BKASH_APP_KEY && process.env.BKASH_APP_SECRET && process.env.BKASH_USERNAME && process.env.BKASH_PASSWORD),
+        piprapay: !!(process.env.PIPRAPAY_API_KEY && process.env.PIPRAPAY_BASE_URL && process.env.PIPRAPAY_WEBHOOK_VERIFY_KEY),
+        smtp: !!(process.env.SMTP_HOST && process.env.SMTP_PORT && process.env.SMTP_USER && process.env.SMTP_PASS),
+        sms: !!process.env.GREENWEB_SMS_TOKEN,
+    };
+}
+
 
 export async function verifyNextcloudConnection(data: unknown) {
     const result = nextcloudSchema.safeParse(data);
@@ -82,10 +91,6 @@ export async function verifyBKashConnection(data: unknown) {
     }
 
     const { bKashAppKey, bKashAppSecret, bKashUsername, bKashPassword, bKashMode } = result.data;
-
-    if (!bKashAppKey || !bKashAppSecret || !bKashUsername || !bKashPassword) {
-        return { success: false, message: 'Please provide all bKash credentials to test the connection.' };
-    }
 
     try {
         const baseUrl = bKashMode === 'sandbox' ? 'https://tokenized.sandbox.bka.sh/v1.2.0-beta' : 'https://tokenized.pay.bka.sh/v1.2.0-beta';
@@ -120,10 +125,6 @@ export async function verifyPipraPayConnection(data: unknown) {
         return { success: false, message: "Invalid PipraPay data provided." };
     }
     const { piprapayApiKey, piprapayBaseUrl } = result.data;
-
-    if (!piprapayApiKey || !piprapayBaseUrl) {
-        return { success: false, message: "Please provide both API Key and Base URL." };
-    }
 
     try {
         const res = await fetch(`${piprapayBaseUrl}/verify-payments`, {
@@ -162,7 +163,6 @@ export async function verifySmtpConnection(data: unknown) {
     }
 
     try {
-        // We'll use the provided data directly, not from the DB
         await sendEmail({
             to: result.data.smtpUser,
             subject: 'SMTP Connection Test',
@@ -201,60 +201,6 @@ export async function verifySmsConnection(data: unknown) {
     }
 }
 
-export async function saveNextcloudSettings(data: unknown) {
-    const result = nextcloudSchema.safeParse(data);
-    if (!result.success) {
-        return { success: false, message: "Invalid data", error: result.error.flatten() };
-    }
-    
-    try {
-        const { nextcloudUrl, username, appPassword } = result.data;
-        const db = await readDb();
-        db.settings.nextcloudUrl = nextcloudUrl;
-        db.settings.nextcloudUser = username;
-        db.settings.nextcloudPassword = appPassword;
-        await writeDb(db);
-        return { success: true, message: "Nextcloud settings saved successfully." };
-    } catch (error) {
-        console.error("Failed to save Nextcloud settings:", error);
-        return { success: false, message: "Failed to save settings." };
-    }
-}
-
-export async function saveBKashSettings(data: unknown) {
-    const result = bKashSchema.safeParse(data);
-    if (!result.success) {
-        return { success: false, message: "Invalid data", error: result.error.flatten() };
-    }
-    
-    try {
-        const db = await readDb();
-        db.settings = { ...db.settings, ...result.data };
-        await writeDb(db);
-        return { success: true, message: "bKash settings saved successfully." };
-    } catch (error) {
-        console.error("Failed to save bKash settings:", error);
-        return { success: false, message: "Failed to save settings." };
-    }
-}
-
-export async function savePipraPaySettings(data: unknown) {
-    const result = pipraPaySchema.safeParse(data);
-    if (!result.success) {
-        return { success: false, message: "Invalid data", error: result.error.flatten() };
-    }
-    
-    try {
-        const db = await readDb();
-        db.settings = { ...db.settings, ...result.data };
-        await writeDb(db);
-        return { success: true, message: "PipraPay settings saved successfully." };
-    } catch (error) {
-        console.error("Failed to save PipraPay settings:", error);
-        return { success: false, message: "Failed to save settings." };
-    }
-}
-
 export async function saveGeneralSettings(data: unknown) {
     const result = generalSettingsSchema.safeParse(data);
     if (!result.success) {
@@ -270,40 +216,6 @@ export async function saveGeneralSettings(data: unknown) {
         return { success: true, message: "General settings saved successfully." };
     } catch (error) {
         console.error("Failed to save General settings:", error);
-        return { success: false, message: "Failed to save settings." };
-    }
-}
-
-export async function saveSmtpSettings(data: unknown) {
-    const result = smtpSchema.safeParse(data);
-    if (!result.success) {
-        return { success: false, message: "Invalid data", error: result.error.flatten() };
-    }
-    
-    try {
-        const db = await readDb();
-        db.settings = { ...db.settings, ...result.data };
-        await writeDb(db);
-        return { success: true, message: "SMTP settings saved successfully." };
-    } catch (error) {
-        console.error("Failed to save SMTP settings:", error);
-        return { success: false, message: "Failed to save settings." };
-    }
-}
-
-export async function saveSmsSettings(data: unknown) {
-    const result = smsSchema.safeParse(data);
-    if (!result.success) {
-        return { success: false, message: "Invalid data", error: result.error.flatten() };
-    }
-    
-    try {
-        const db = await readDb();
-        db.settings = { ...db.settings, ...result.data };
-        await writeDb(db);
-        return { success: true, message: "SMS settings saved successfully." };
-    } catch (error) {
-        console.error("Failed to save SMS settings:", error);
         return { success: false, message: "Failed to save settings." };
     }
 }

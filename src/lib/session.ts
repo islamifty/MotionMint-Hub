@@ -5,10 +5,10 @@ import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import type { User } from '@/types';
 
-// Use a deterministic key derived from a passphrase.
-// This ensures the secret is the same across restarts and environments
-// without needing a .env file, while still being secure.
-const passphrase = process.env.SESSION_SECRET || 'fallback-super-secret-key-for-session-32-chars-long';
+const passphrase = process.env.SESSION_SECRET;
+if (!passphrase) {
+    throw new Error('SESSION_SECRET environment variable is not set.');
+}
 
 const key = new TextEncoder().encode(passphrase);
 
@@ -83,4 +83,3 @@ export async function getSession(): Promise<SessionPayload | null> {
 export async function deleteSession() {
   cookies().set('session', '', { expires: new Date(0), path: '/' });
 }
-

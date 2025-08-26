@@ -3,22 +3,21 @@
 
 import { createPayment as createBkashPayment } from '@/lib/bkash';
 import { readDb } from '@/lib/db';
-import type { Project, User, AppSettings } from '@/types';
+import type { Project, User } from '@/types';
 import { getSession } from '@/lib/session';
 import { logger } from '@/lib/logger';
 import { getBaseUrl } from '@/lib/url';
 
-export async function getProjectDetails(projectId: string): Promise<{ project: Project | null, user: User | null, settings: AppSettings | null }> {
+export async function getProjectDetails(projectId: string): Promise<{ project: Project | null, user: User | null }> {
     const session = await getSession();
     if (!session?.user) {
-        return { project: null, user: null, settings: null };
+        return { project: null, user: null };
     }
 
     const db = await readDb();
     const project = db.projects.find((p) => p.id === projectId && p.clientId === session.user.id);
-    const settings = db.settings;
     
-    return { project: project || null, user: session.user, settings: settings || null };
+    return { project: project || null, user: session.user };
 }
 
 

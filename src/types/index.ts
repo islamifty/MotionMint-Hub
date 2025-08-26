@@ -53,35 +53,11 @@ export type StatCard = {
 };
 
 export type AppSettings = {
-    // Nextcloud
-    nextcloudUrl?: string;
-    nextcloudUser?: string;
-    nextcloudPassword?: string;
+    // These settings are now read from environment variables on the server.
+    // The client-side should not have direct access to these.
+    // This type can be used for passing specific, safe settings to the client if needed.
     
-    // bKash
-    bKashEnabled?: boolean;
-    bKashAppKey?: string;
-    bKashAppSecret?: string;
-    bKashUsername?: string;
-    bKashPassword?: string;
-    bKashMode?: "sandbox" | "production";
-    
-    // PipraPay
-    pipraPayEnabled?: boolean;
-    piprapayApiKey?: string;
-    piprapayBaseUrl?: string;
-    piprapayWebhookVerifyKey?: string;
-    
-    // SMTP
-    smtpHost?: string;
-    smtpPort?: number;
-    smtpUser?: string;
-    smtpPass?: string;
-
-    // SMS - Greenweb
-    greenwebSmsToken?: string;
-    
-    // General
+    // General settings that are safe to expose and are stored in db.json
     whatsappLink?: string;
     logoUrl?: string;
 };
@@ -91,5 +67,9 @@ export interface DbData {
     users: User[];
     clients: Client[];
     projects: Project[];
-    settings: AppSettings;
+    settings: {
+        // Only non-sensitive settings are stored here now.
+        whatsappLink?: string;
+        logoUrl?: string;
+    };
 }

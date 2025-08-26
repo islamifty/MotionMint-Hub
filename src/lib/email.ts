@@ -1,7 +1,6 @@
 
 import 'server-only';
 import nodemailer from 'nodemailer';
-import { readDb } from './db';
 import type { AppSettings } from '@/types';
 
 interface MailOptions {
@@ -16,18 +15,19 @@ export async function sendEmail(mailOptions: MailOptions, smtpConfig?: Partial<A
 
 // Main implementation
 export async function sendEmail(mailOptions: MailOptions, smtpConfig?: Partial<AppSettings>): Promise<void> {
-    const db = await readDb();
-    
-    // Merge saved settings with any provided config. Provided config takes precedence.
+    // Prioritize passed config, then environment variables
     const settings = {
-        ...db.settings,
+        smtpHost: process.env.SMTP_HOST,
+        smtpPort: process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : undefined,
+        smtpUser: process.env.SMTP_USER,
+        smtpPass: process.env.SMTP_PASS,
         ...smtpConfig,
     };
 
     const { smtpHost, smtpPort, smtpUser, smtpPass } = settings;
 
     if (!smtpHost || !smtpPort || !smtpUser || !smtpPass) {
-        console.error('SMTP settings are not configured.');
+        console.error('SMTP settings are not fully configured in environment variables.');
         throw new Error('SMTP settings are not configured.');
     }
 

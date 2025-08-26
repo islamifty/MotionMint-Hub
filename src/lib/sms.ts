@@ -2,7 +2,6 @@
 'use server';
 
 import 'server-only';
-import { readDb } from '@/lib/db';
 import { logger } from './logger';
 
 interface SmsOptions {
@@ -15,17 +14,15 @@ interface SmsConfig {
 }
 
 export async function sendSms(options: SmsOptions, smsConfig?: SmsConfig): Promise<void> {
-    const db = await readDb();
-    
     const settings: SmsConfig = {
-        greenwebSmsToken: db.settings.greenwebSmsToken,
+        greenwebSmsToken: process.env.GREENWEB_SMS_TOKEN,
         ...smsConfig,
     };
 
     const { greenwebSmsToken } = settings;
 
     if (!greenwebSmsToken) {
-        logger.error('SMS settings (Token) are not configured.');
+        logger.error('SMS settings (Token) are not configured in environment variables.');
         throw new Error('SMS settings are not configured.');
     }
 

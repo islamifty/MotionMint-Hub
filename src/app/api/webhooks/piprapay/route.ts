@@ -1,3 +1,4 @@
+
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { readDb, writeDb } from "@/lib/db";
@@ -5,10 +6,9 @@ import { logger } from "@/lib/logger";
 import { sendSms } from "@/lib/sms";
 
 export async function POST(req: Request) {
-  const db = await readDb();
-  const { piprapayWebhookVerifyKey } = db.settings;
+  const { PIPRAPAY_WEBHOOK_VERIFY_KEY } = process.env;
 
-  if (!piprapayWebhookVerifyKey) {
+  if (!PIPRAPAY_WEBHOOK_VERIFY_KEY) {
       logger.warn("PipraPay Webhook Verification Key is not set. Cannot process webhook.");
       return NextResponse.json({ status: false, message: "Webhook service not configured." }, { status: 500 });
   }
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     headers["Mh-Piprapay-Api-Key"] ||
     headers["http_mh_piprapay_api_key"];
 
-  if (incomingKey !== piprapayWebhookVerifyKey) {
+  if (incomingKey !== PIPRAPAY_WEBHOOK_VERIFY_KEY) {
     logger.warn("Unauthorized webhook attempt from PipraPay", {
       ip: req.headers.get('x-forwarded-for')
     });

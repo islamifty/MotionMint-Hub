@@ -1,11 +1,10 @@
+
 import { NextResponse } from "next/server";
-import { readDb } from "@/lib/db";
 
 export async function POST(req: Request) {
-  const db = await readDb();
-  const { piprapayApiKey, piprapayBaseUrl } = db.settings;
+  const { PIPRAPAY_API_KEY, PIPRAPAY_BASE_URL } = process.env;
 
-  if (!piprapayApiKey || !piprapayBaseUrl) {
+  if (!PIPRAPAY_API_KEY || !PIPRAPAY_BASE_URL) {
     return NextResponse.json({ ok: false, message: "PipraPay is not configured." }, { status: 500 });
   }
 
@@ -14,11 +13,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, message: "invoice_id required" }, { status: 400 });
   }
 
-  const res = await fetch(`${piprapayBaseUrl}/verify-payments`, {
+  const res = await fetch(`${PIPRAPAY_BASE_URL}/verify-payments`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "mh-piprapay-api-key": piprapayApiKey,
+      "mh-piprapay-api-key": PIPRAPAY_API_KEY,
     },
     body: JSON.stringify({ invoice_id }),
     cache: "no-store",

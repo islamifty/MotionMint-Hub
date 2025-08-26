@@ -15,10 +15,16 @@ import { Button } from "@/components/ui/button";
 import { Download, AlertTriangle, Loader2, MessageSquare } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { VideoPlayer } from "@/components/client/VideoPlayer";
-import type { Project, User, AppSettings } from "@/types";
+import type { Project, User } from "@/types";
 import { useEffect, useState } from "react";
 import { getProjectDetails, initiateBkashPayment, initiatePipraPayPayment } from "./actions";
 import { useToast } from "@/hooks/use-toast";
+
+type PageSettings = {
+    bkashEnabled?: boolean;
+    pipraPayEnabled?: boolean;
+    whatsappLink?: string;
+};
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -26,7 +32,7 @@ export default function ProjectDetailPage() {
 
   const [project, setProject] = useState<Project | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [settings, setSettings] = useState<AppSettings | null>(null);
+  const [settings, setSettings] = useState<PageSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [isPaying, setIsPaying] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'bkash' | 'piprapay' | null>(null);
@@ -35,11 +41,22 @@ export default function ProjectDetailPage() {
   useEffect(() => {
     if (!id) return;
     async function fetchProject() {
-        const { project: foundProject, user: foundUser, settings: foundSettings } = await getProjectDetails(id);
-        if (foundProject && foundUser && foundSettings) {
+        // Fetch project and user details
+        const { project: foundProject, user: foundUser } = await getProjectDetails(id);
+        
+        // Fetch public settings from a separate endpoint or pass them differently
+        // For this example, we'll fetch them on the client. In a real app, this could be part of the initial page load.
+        // This is a placeholder for fetching public-facing settings.
+        const pageSettings: PageSettings = {
+            bkashEnabled: process.env.NEXT_PUBLIC_BKASH_ENABLED === 'true',
+            pipraPayEnabled: process.env.NEXT_PUBLIC_PIPRAPAY_ENABLED === 'true',
+            whatsappLink: process.env.NEXT_PUBLIC_WHATSAPP_LINK,
+        }
+
+        if (foundProject && foundUser) {
             setProject(foundProject);
             setUser(foundUser);
-            setSettings(foundSettings);
+            setSettings(pageSettings);
         }
         setLoading(false);
     }
@@ -163,7 +180,7 @@ export default function ProjectDetailPage() {
                                                     {isPaying && paymentMethod === 'piprapay' ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Connecting...</> : 'Pay with PipraPay'}
                                                 </Button>
                                             )}
-                                             {settings?.bKashEnabled && (
+                                             {settings?.bkashEnabled && (
                                                 <Button 
                                                     className="w-full bg-pink-500 hover:bg-pink-600 text-white" 
                                                     onClick={() => handlePayment('bkash')}

@@ -1,12 +1,11 @@
+
 import { NextResponse } from "next/server";
-import { readDb } from "@/lib/db";
 import { getBaseUrl } from "@/lib/url";
 
 export async function POST(req: Request) {
-  const db = await readDb();
-  const { piprapayApiKey, piprapayBaseUrl } = db.settings;
+  const { PIPRAPAY_API_KEY, PIPRAPAY_BASE_URL } = process.env;
 
-  if (!piprapayApiKey || !piprapayBaseUrl) {
+  if (!PIPRAPAY_API_KEY || !PIPRAPAY_BASE_URL) {
     return NextResponse.json({ ok: false, message: "PipraPay is not configured." }, { status: 500 });
   }
 
@@ -26,11 +25,11 @@ export async function POST(req: Request) {
   const appUrl = getBaseUrl();
 
   try {
-      const res = await fetch(`${piprapayBaseUrl}/create-charge`, {
+      const res = await fetch(`${PIPRAPAY_BASE_URL}/create-charge`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "mh-piprapay-api-key": piprapayApiKey,
+          "mh-piprapay-api-key": PIPRAPAY_API_KEY,
         },
         body: JSON.stringify({
           amount,
