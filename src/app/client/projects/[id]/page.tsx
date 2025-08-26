@@ -15,16 +15,11 @@ import { Button } from "@/components/ui/button";
 import { Download, AlertTriangle, Loader2, MessageSquare } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { VideoPlayer } from "@/components/client/VideoPlayer";
-import type { Project, User } from "@/types";
+import type { Project, User, AppSettings } from "@/types";
 import { useEffect, useState } from "react";
 import { getProjectDetails, initiateBkashPayment, initiatePipraPayPayment } from "./actions";
 import { useToast } from "@/hooks/use-toast";
-
-type PageSettings = {
-    bkashEnabled?: boolean;
-    pipraPayEnabled?: boolean;
-    whatsappLink?: string;
-};
+import { getSettings } from "@/app/admin/settings/actions";
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -32,7 +27,7 @@ export default function ProjectDetailPage() {
 
   const [project, setProject] = useState<Project | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [settings, setSettings] = useState<PageSettings | null>(null);
+  const [settings, setSettings] = useState<AppSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [isPaying, setIsPaying] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'bkash' | 'piprapay' | null>(null);
@@ -41,21 +36,14 @@ export default function ProjectDetailPage() {
   useEffect(() => {
     if (!id) return;
     async function fetchProject() {
-        // Fetch project and user details
-        const { project: foundProject, user: foundUser } = await getProjectDetails(id);
-        
-        // Fetch public settings from a separate endpoint or pass them differently
-        // For this example, we'll fetch them on the client. In a real app, this could be part of the initial page load.
-        // This is a placeholder for fetching public-facing settings.
-        const pageSettings: PageSettings = {
-            bkashEnabled: process.env.NEXT_PUBLIC_BKASH_ENABLED === 'true',
-            pipraPayEnabled: process.env.NEXT_PUBLIC_PIPRAPAY_ENABLED === 'true',
-            whatsappLink: process.env.NEXT_PUBLIC_WHATSAPP_LINK,
-        }
+        const [projectData, pageSettings] = await Promise.all([
+             getProjectDetails(id),
+             getSettings() // Fetch settings from the server action
+        ]);
 
-        if (foundProject && foundUser) {
-            setProject(foundProject);
-            setUser(foundUser);
+        if (projectData.project && projectData.user) {
+            setProject(projectData.project);
+            setUser(projectData.user);
             setSettings(pageSettings);
         }
         setLoading(false);
@@ -66,7 +54,7 @@ export default function ProjectDetailPage() {
 
   if (loading) {
     return (
-        <div className="container py-8 flex justify-center items-center">
+        <div className="container py-8 flex justify-center items-center min-h-[50vh]">
             <Loader2 className="h-8 w-8 animate-spin" />
         </div>
     )
@@ -171,7 +159,7 @@ export default function ProjectDetailPage() {
                                         </Button>
                                      ) : (
                                         <>
-                                            {settings?.pipraPayEnabled && (
+                                            {settings?.piprapayApiKey && (
                                                 <Button 
                                                     className="w-full bg-blue-600 hover:bg-blue-700 text-white" 
                                                     onClick={() => handlePayment('piprapay')}
@@ -180,7 +168,7 @@ export default function ProjectDetailPage() {
                                                     {isPaying && paymentMethod === 'piprapay' ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Connecting...</> : 'Pay with PipraPay'}
                                                 </Button>
                                             )}
-                                             {settings?.bkashEnabled && (
+                                             {settings?.bKashAppKey && (
                                                 <Button 
                                                     className="w-full bg-pink-500 hover:bg-pink-600 text-white" 
                                                     onClick={() => handlePayment('bkash')}

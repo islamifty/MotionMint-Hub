@@ -6,24 +6,27 @@ import { createClient, type WebDAVClient } from 'webdav';
 import { readDb, writeDb } from '@/lib/db';
 import { sendEmail } from '@/lib/email';
 import { sendSms } from '@/lib/sms';
+import type { AppSettings } from '@/types';
 
+// Schemas for saving settings
 const nextcloudSchema = z.object({
-    nextcloudUrl: z.string().url(),
-    username: z.string().min(1),
-    appPassword: z.string().min(1),
+    nextcloudUrl: z.string().url().or(z.literal('')),
+    nextcloudUser: z.string().optional(),
+    nextcloudPassword: z.string().optional(),
 });
 
 const bKashSchema = z.object({
-  bKashAppKey: z.string(),
-  bKashAppSecret: z.string(),
-  bKashUsername: z.string(),
-  bKashPassword: z.string(),
-  bKashMode: z.enum(["sandbox", "production"]),
+  bKashAppKey: z.string().optional(),
+  bKashAppSecret: z.string().optional(),
+  bKashUsername: z.string().optional(),
+  bKashPassword: z.string().optional(),
+  bKashMode: z.enum(["sandbox", "production"]).default("sandbox"),
 });
 
 const pipraPaySchema = z.object({
-  piprapayApiKey: z.string(),
-  piprapayBaseUrl: z.string().url(),
+  piprapayApiKey: z.string().optional(),
+  piprapayBaseUrl: z.string().url().or(z.literal('')),
+  piprapayWebhookVerifyKey: z.string().optional(),
 });
 
 const generalSettingsSchema = z.object({
@@ -32,48 +35,70 @@ const generalSettingsSchema = z.object({
 });
 
 const smtpSchema = z.object({
+    smtpHost: z.string().optional(),
+    smtpPort: z.coerce.number().optional(),
+    smtpUser: z.string().optional(),
+    smtpPass: z.string().optional(),
+});
+
+const smsSchema = z.object({
+    greenwebSmsToken: z.string().optional(),
+});
+
+// Schemas for testing connections (fields are required)
+const nextcloudTestSchema = nextcloudSchema.extend({
+    nextcloudUrl: z.string().url({ message: "URL is required for testing." }),
+    nextcloudUser: z.string().min(1, { message: "Username is required for testing." }),
+    nextcloudPassword: z.string().min(1, { message: "Password is required for testing." }),
+});
+const bKashTestSchema = bKashSchema.extend({
+    bKashAppKey: z.string().min(1, "App Key is required"),
+    bKashAppSecret: z.string().min(1, "App Secret is required"),
+    bKashUsername: z.string().min(1, "Username is required"),
+    bKashPassword: z.string().min(1, "Password is required"),
+});
+const pipraPayTestSchema = pipraPaySchema.extend({
+    piprapayApiKey: z.string().min(1, "API Key is required"),
+    piprapayBaseUrl: z.string().url("A valid URL is required"),
+});
+const smtpTestSchema = smtpSchema.extend({
     smtpHost: z.string().min(1, "Host is required."),
     smtpPort: z.coerce.number().min(1, "Port is required."),
     smtpUser: z.string().min(1, "User is required."),
     smtpPass: z.string().min(1, "Password is required."),
 });
-
-const smsTestSchema = z.object({
+const smsTestSchema = smsSchema.extend({
     greenwebSmsToken: z.string().min(1, "Token is required."),
-    testPhoneNumber: z.string().min(1, "A phone number is required to send a test SMS."),
 });
 
-export async function getSettings() {
+export async function getSettings(): Promise<AppSettings> {
     const db = await readDb();
-    // Return only non-sensitive settings
-    return {
-        whatsappLink: db.settings.whatsappLink,
-        logoUrl: db.settings.logoUrl,
-    };
+    return db.settings || {};
 }
 
-// Functions to check if credentials are set in environment variables
-export async function checkEnvCredentials() {
+export async function checkDbCredentials() {
+    const db = await readDb();
+    const settings = db.settings || {};
     return {
-        nextcloud: !!(process.env.NEXTCLOUD_URL && process.env.NEXTCLOUD_USER && process.env.NEXTCLOUD_PASSWORD),
-        bkash: !!(process.env.BKASH_APP_KEY && process.env.BKASH_APP_SECRET && process.env.BKASH_USERNAME && process.env.BKASH_PASSWORD),
-        piprapay: !!(process.env.PIPRAPAY_API_KEY && process.env.PIPRAPAY_BASE_URL && process.env.PIPRAPAY_WEBHOOK_VERIFY_KEY),
-        smtp: !!(process.env.SMTP_HOST && process.env.SMTP_PORT && process.env.SMTP_USER && process.env.SMTP_PASS),
-        sms: !!process.env.GREENWEB_SMS_TOKEN,
+        nextcloud: !!(settings.nextcloudUrl && settings.nextcloudUser && settings.nextcloudPassword),
+        bkash: !!(settings.bKashAppKey && settings.bKashAppSecret && settings.bKashUsername && settings.bKashPassword),
+        piprapay: !!(settings.piprapayApiKey && settings.piprapayBaseUrl && settings.piprapayWebhookVerifyKey),
+        smtp: !!(settings.smtpHost && settings.smtpPort && settings.smtpUser && settings.smtpPass),
+        sms: !!settings.greenwebSmsToken,
     };
 }
 
 
 export async function verifyNextcloudConnection(data: unknown) {
-    const result = nextcloudSchema.safeParse(data);
+    const result = nextcloudTestSchema.safeParse(data);
     if (!result.success) {
-        return { success: false, message: 'Invalid credentials provided.' };
+        return { success: false, message: 'Invalid credentials provided for testing.' };
     }
 
     try {
         const client: WebDAVClient = createClient(result.data.nextcloudUrl, {
-            username: result.data.username,
-            password: result.data.appPassword,
+            username: result.data.nextcloudUser,
+            password: result.data.nextcloudPassword,
         });
 
         await client.getDirectoryContents('/');
@@ -85,7 +110,7 @@ export async function verifyNextcloudConnection(data: unknown) {
 }
 
 export async function verifyBKashConnection(data: unknown) {
-    const result = bKashSchema.safeParse(data);
+    const result = bKashTestSchema.safeParse(data);
     if (!result.success) {
         return { success: false, message: 'Invalid data provided for bKash verification.' };
     }
@@ -120,7 +145,7 @@ export async function verifyBKashConnection(data: unknown) {
 }
 
 export async function verifyPipraPayConnection(data: unknown) {
-    const result = pipraPaySchema.safeParse(data);
+    const result = pipraPayTestSchema.safeParse(data);
     if (!result.success) {
         return { success: false, message: "Invalid PipraPay data provided." };
     }
@@ -133,7 +158,7 @@ export async function verifyPipraPayConnection(data: unknown) {
                 "Content-Type": "application/json",
                 "mh-piprapay-api-key": piprapayApiKey,
             },
-            body: JSON.stringify({ invoice_id: "test_connection" }), // Send a dummy invoice ID
+            body: JSON.stringify({ invoice_id: "test_connection" }),
             cache: "no-store",
         });
 
@@ -157,9 +182,9 @@ export async function verifyPipraPayConnection(data: unknown) {
 }
 
 export async function verifySmtpConnection(data: unknown) {
-    const result = smtpSchema.safeParse(data);
+    const result = smtpTestSchema.safeParse(data);
     if (!result.success) {
-        return { success: false, message: 'Invalid SMTP data provided.' };
+        return { success: false, message: 'Invalid SMTP data provided for testing.' };
     }
 
     try {
@@ -169,10 +194,10 @@ export async function verifySmtpConnection(data: unknown) {
             text: 'If you received this email, your SMTP settings are correct!',
             html: '<p>If you received this email, your SMTP settings are correct!</p>'
         }, {
-             host: result.data.smtpHost,
-             port: result.data.smtpPort,
-             user: result.data.smtpUser,
-             pass: result.data.smtpPass
+             smtpHost: result.data.smtpHost,
+             smtpPort: result.data.smtpPort,
+             smtpUser: result.data.smtpUser,
+             smtpPass: result.data.smtpPass
         });
         return { success: true, message: 'Test email sent successfully!' };
     } catch (error: any) {
@@ -181,15 +206,18 @@ export async function verifySmtpConnection(data: unknown) {
     }
 }
 
-export async function verifySmsConnection(data: unknown) {
+export async function verifySmsConnection(data: unknown, testPhoneNumber: string) {
     const result = smsTestSchema.safeParse(data);
-    if (!result.success) {
+     if (!result.success) {
         return { success: false, message: 'Invalid data provided for SMS test.' };
+    }
+    if (!testPhoneNumber) {
+        return { success: false, message: 'Test phone number is required.' };
     }
 
     try {
         await sendSms({
-            to: result.data.testPhoneNumber,
+            to: testPhoneNumber,
             message: 'Hello from MotionMint Hub! This is a test message.',
         }, {
             greenwebSmsToken: result.data.greenwebSmsToken,
@@ -201,21 +229,46 @@ export async function verifySmsConnection(data: unknown) {
     }
 }
 
-export async function saveGeneralSettings(data: unknown) {
-    const result = generalSettingsSchema.safeParse(data);
-    if (!result.success) {
-        return { success: false, error: result.error.flatten(), message: "Validation failed." };
-    }
-    
+// Unified save function
+async function saveSettings(update: Partial<AppSettings>) {
     try {
-        const { whatsappLink, logoUrl } = result.data;
         const db = await readDb();
-        db.settings.whatsappLink = whatsappLink;
-        db.settings.logoUrl = logoUrl;
+        db.settings = { ...db.settings, ...update };
         await writeDb(db);
-        return { success: true, message: "General settings saved successfully." };
+        return { success: true, message: "Settings saved successfully." };
     } catch (error) {
-        console.error("Failed to save General settings:", error);
+        console.error("Failed to save settings:", error);
         return { success: false, message: "Failed to save settings." };
     }
+}
+
+export async function saveNextcloudSettings(data: unknown) {
+    const result = nextcloudSchema.safeParse(data);
+    if (!result.success) return { success: false, message: "Invalid Nextcloud data." };
+    return saveSettings(result.data);
+}
+export async function saveBKashSettings(data: unknown) {
+    const result = bKashSchema.safeParse(data);
+    if (!result.success) return { success: false, message: "Invalid bKash data." };
+    return saveSettings(result.data);
+}
+export async function savePipraPaySettings(data: unknown) {
+    const result = pipraPaySchema.safeParse(data);
+    if (!result.success) return { success: false, message: "Invalid PipraPay data." };
+    return saveSettings(result.data);
+}
+export async function saveSmtpSettings(data: unknown) {
+    const result = smtpSchema.safeParse(data);
+    if (!result.success) return { success: false, message: "Invalid SMTP data." };
+    return saveSettings(result.data);
+}
+export async function saveSmsSettings(data: unknown) {
+    const result = smsSchema.safeParse(data);
+    if (!result.success) return { success: false, message: "Invalid SMS data." };
+    return saveSettings(result.data);
+}
+export async function saveGeneralSettings(data: unknown) {
+    const result = generalSettingsSchema.safeParse(data);
+    if (!result.success) return { success: false, message: "Invalid General settings data." };
+    return saveSettings(result.data);
 }

@@ -6,9 +6,10 @@ import { logger } from "@/lib/logger";
 import { sendSms } from "@/lib/sms";
 
 export async function POST(req: Request) {
-  const { PIPRAPAY_WEBHOOK_VERIFY_KEY } = process.env;
+  const db = await readDb();
+  const { piprapayWebhookVerifyKey } = db.settings;
 
-  if (!PIPRAPAY_WEBHOOK_VERIFY_KEY) {
+  if (!piprapayWebhookVerifyKey) {
       logger.warn("PipraPay Webhook Verification Key is not set. Cannot process webhook.");
       return NextResponse.json({ status: false, message: "Webhook service not configured." }, { status: 500 });
   }
@@ -19,7 +20,7 @@ export async function POST(req: Request) {
     headers["Mh-Piprapay-Api-Key"] ||
     headers["http_mh_piprapay_api_key"];
 
-  if (incomingKey !== PIPRAPAY_WEBHOOK_VERIFY_KEY) {
+  if (incomingKey !== piprapayWebhookVerifyKey) {
     logger.warn("Unauthorized webhook attempt from PipraPay", {
       ip: req.headers.get('x-forwarded-for')
     });
@@ -33,22 +34,14 @@ export async function POST(req: Request) {
     const projectId = metadata?.projectId;
 
     if (status === "completed" && projectId) {
-        const db = await readDb();
-        const projectIndex = db.projects.findIndex(p => p.id === projectId);
+        const freshDb = await readDb(); // Read fresh data to avoid race conditions
+        const projectIndex = freshDb.projects.findIndex(p => p.id === projectId);
 
-        if (projectIndex !== -1 && db.projects[projectIndex].paymentStatus !== 'paid') {
-            const project = db.projects[projectIndex];
+        if (projectIndex !== -1 && freshDb.projects[projectIndex].paymentStatus !== 'paid') {
+            const project = freshDb.projects[projectIndex];
             project.paymentStatus = 'paid';
-            await writeDb(db);
             
-            revalidatePath(`/client/projects/${projectId}`);
-            revalidatePath('/client/dashboard');
-            revalidatePath('/admin/projects');
-            revalidatePath('/admin/dashboard');
-
-            logger.info(`Payment status updated to 'paid' for project ${projectId} via webhook.`);
-            
-            const client = db.clients.find(c => c.id === project.clientId);
+            const client = freshDb.clients.find(c => c.id === project.clientId);
             if (client?.phone) {
                  try {
                     await sendSms({
@@ -59,6 +52,14 @@ export async function POST(req: Request) {
                     logger.error("Failed to send payment confirmation SMS via webhook:", smsError);
                 }
             }
+            await writeDb(freshDb);
+            
+            revalidatePath(`/client/projects/${projectId}`);
+            revalidatePath('/client/dashboard');
+            revalidatePath('/admin/projects');
+            revalidatePath('/admin/dashboard');
+
+            logger.info(`Payment status updated to 'paid' for project ${projectId} via webhook.`);
         }
     }
 

@@ -44,7 +44,7 @@ export async function initiateBkashPayment(projectId: string) {
         };
         
         logger.info('Initiating bKash payment', { projectId: project.id, orderId: project.orderId });
-        const result = await createBkashPayment(paymentData);
+        const result = await createBkashPayment(paymentData, db.settings);
 
         if (result && result.bkashURL) {
             logger.info('bKash payment initiated successfully', { projectId: project.id });

@@ -32,10 +32,10 @@ export async function GET(request: NextRequest) {
 
 
     try {
-        const executeResult = await executePayment(paymentID);
+        const db = await readDb();
+        const executeResult = await executePayment(paymentID, db.settings);
 
         if (executeResult && executeResult.statusCode === '0000' && executeResult.transactionStatus === 'Completed') {
-            const db = await readDb();
             const projectIndex = db.projects.findIndex(p => p.orderId === executeResult.merchantInvoiceNumber);
 
             if (projectIndex !== -1) {
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
                 
                 if (project.paymentStatus !== 'paid') {
                     project.paymentStatus = 'paid';
-                    await writeDb(db);
+                    
                     
                     const client = db.clients.find(c => c.id === project.clientId);
                     if (client?.phone) {
@@ -56,6 +56,7 @@ export async function GET(request: NextRequest) {
                             console.error("Failed to send payment confirmation SMS:", smsError);
                         }
                     }
+                    await writeDb(db); // Write after all updates
                 }
 
                 // Revalidate paths to reflect updated status

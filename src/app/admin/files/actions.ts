@@ -2,17 +2,19 @@
 'use server';
 
 import { createClient, type FileStat, type WebDAVClient } from 'webdav';
+import { readDb } from '@/lib/db';
 
 async function getClient(): Promise<WebDAVClient> {
-    const { NEXTCLOUD_URL, NEXTCLOUD_USER, NEXTCLOUD_PASSWORD } = process.env;
+    const db = await readDb();
+    const { nextcloudUrl, nextcloudUser, nextcloudPassword } = db.settings;
 
-    if (!NEXTCLOUD_URL || !NEXTCLOUD_USER || !NEXTCLOUD_PASSWORD) {
-        throw new Error('Nextcloud credentials are not configured in environment variables.');
+    if (!nextcloudUrl || !nextcloudUser || !nextcloudPassword) {
+        throw new Error('Nextcloud credentials are not configured in settings.');
     }
 
-    return createClient(NEXTCLOUD_URL, {
-        username: NEXTCLOUD_USER,
-        password: NEXTCLOUD_PASSWORD,
+    return createClient(nextcloudUrl, {
+        username: nextcloudUser,
+        password: nextcloudPassword,
     });
 }
 
@@ -74,9 +76,10 @@ export async function getDownloadLink(path: string): Promise<string> {
 }
 
 export async function getThumbnailBaseUrl(): Promise<string> {
-    const { NEXTCLOUD_URL, NEXTCLOUD_USER } = process.env;
-    if (!NEXTCLOUD_URL || !NEXTCLOUD_USER) {
+    const db = await readDb();
+    const { nextcloudUrl, nextcloudUser } = db.settings;
+    if (!nextcloudUrl || !nextcloudUser) {
         return '';
     }
-    return NEXTCLOUD_URL.replace('/remote.php/dav/files' + NEXTCLOUD_USER, '') || '';
+    return nextcloudUrl.replace('/remote.php/dav/files' + nextcloudUser, '') || '';
 }

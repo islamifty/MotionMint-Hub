@@ -3,26 +3,29 @@
 
 import 'server-only';
 import { logger } from './logger';
+import { readDb } from './db';
+import type { AppSettings } from '@/types';
 
 interface SmsOptions {
   to: string;
   message: string;
 }
 
-interface SmsConfig {
-    greenwebSmsToken?: string;
-}
+type SmsConfig = Pick<AppSettings, 'greenwebSmsToken'>;
 
-export async function sendSms(options: SmsOptions, smsConfig?: SmsConfig): Promise<void> {
-    const settings: SmsConfig = {
-        greenwebSmsToken: process.env.GREENWEB_SMS_TOKEN,
-        ...smsConfig,
-    };
+export async function sendSms(options: SmsOptions, testConfig?: SmsConfig): Promise<void> {
+    let settings: SmsConfig;
+    if (testConfig) {
+        settings = testConfig;
+    } else {
+        const db = await readDb();
+        settings = db.settings;
+    }
 
     const { greenwebSmsToken } = settings;
 
     if (!greenwebSmsToken) {
-        logger.error('SMS settings (Token) are not configured in environment variables.');
+        logger.error('SMS settings (Token) are not configured in the database.');
         throw new Error('SMS settings are not configured.');
     }
 
@@ -30,7 +33,6 @@ export async function sendSms(options: SmsOptions, smsConfig?: SmsConfig): Promi
     
     const params = new URLSearchParams();
     params.append('token', greenwebSmsToken);
-    // Ensure the 'to' number is in the correct format if it includes '+'
     const toNumber = options.to.startsWith('+') ? options.to.substring(1) : options.to;
     params.append('to', toNumber);
     params.append('message', options.message);
@@ -45,7 +47,6 @@ export async function sendSms(options: SmsOptions, smsConfig?: SmsConfig): Promi
             cache: 'no-store',
         });
         
-        // Greenweb API returns plain text, so we read it as text
         const responseText = await response.text();
         
         if (!response.ok) {

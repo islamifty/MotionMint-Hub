@@ -1,22 +1,23 @@
 
 import 'server-only';
 import { logger } from './logger';
+import type { AppSettings } from '@/types';
 
-async function getBkashToken(): Promise<string> {
+async function getBkashToken(settings: AppSettings): Promise<string> {
     const { 
-        BKASH_APP_KEY, 
-        BKASH_APP_SECRET, 
-        BKASH_USERNAME, 
-        BKASH_PASSWORD, 
-        BKASH_MODE 
-    } = process.env;
+        bKashAppKey, 
+        bKashAppSecret, 
+        bKashUsername, 
+        bKashPassword, 
+        bKashMode 
+    } = settings;
 
-    if (!BKASH_APP_KEY || !BKASH_APP_SECRET || !BKASH_USERNAME || !BKASH_PASSWORD) {
-        logger.error('bKash credentials are not configured in environment variables.');
+    if (!bKashAppKey || !bKashAppSecret || !bKashUsername || !bKashPassword) {
+        logger.error('bKash credentials are not configured.');
         throw new Error('bKash credentials are not configured.');
     }
 
-    const baseUrl = BKASH_MODE === 'sandbox' 
+    const baseUrl = bKashMode === 'sandbox' 
         ? 'https://tokenized.sandbox.bka.sh/v1.2.0-beta' 
         : 'https://tokenized.pay.bka.sh/v1.2.0-beta';
 
@@ -25,12 +26,12 @@ async function getBkashToken(): Promise<string> {
         headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-            'username': BKASH_USERNAME,
-            'password': BKASH_PASSWORD,
+            'username': bKashUsername,
+            'password': bKashPassword,
         },
         body: JSON.stringify({
-             app_key: BKASH_APP_KEY, 
-             app_secret: BKASH_APP_SECRET 
+             app_key: bKashAppKey, 
+             app_secret: bKashAppSecret 
         }),
         cache: 'no-store'
     });
@@ -45,17 +46,17 @@ async function getBkashToken(): Promise<string> {
     return data.id_token;
 }
 
-export async function createPayment(paymentRequest: any) {
-    const { BKASH_APP_KEY, BKASH_MODE } = process.env;
+export async function createPayment(paymentRequest: any, settings: AppSettings) {
+    const { bKashAppKey, bKashMode } = settings;
     
-    if (!BKASH_APP_KEY) {
+    if (!bKashAppKey) {
         logger.error('bKash App Key is not configured.');
         throw new Error('bKash App Key is not configured.');
     }
 
-    const id_token = await getBkashToken();
+    const id_token = await getBkashToken(settings);
     
-    const baseUrl = BKASH_MODE === 'sandbox' 
+    const baseUrl = bKashMode === 'sandbox' 
         ? 'https://tokenized.sandbox.bka.sh/v1.2.0-beta' 
         : 'https://tokenized.pay.bka.sh/v1.2.0-beta';
 
@@ -65,7 +66,7 @@ export async function createPayment(paymentRequest: any) {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
             'Authorization': id_token,
-            'X-App-Key': BKASH_APP_KEY,
+            'X-App-Key': bKashAppKey,
         },
         body: JSON.stringify(paymentRequest),
         cache: 'no-store'
@@ -85,17 +86,17 @@ export async function createPayment(paymentRequest: any) {
     }
 }
 
-export async function executePayment(paymentID: string) {
-    const { BKASH_APP_KEY, BKASH_MODE } = process.env;
+export async function executePayment(paymentID: string, settings: AppSettings) {
+    const { bKashAppKey, bKashMode } = settings;
     
-    if (!BKASH_APP_KEY) {
+    if (!bKashAppKey) {
          logger.error('bKash App Key is not configured.');
         throw new Error('bKash App Key is not configured.');
     }
     
-    const id_token = await getBkashToken();
+    const id_token = await getBkashToken(settings);
 
-    const baseUrl = BKASH_MODE === 'sandbox' 
+    const baseUrl = bKashMode === 'sandbox' 
         ? 'https://tokenized.sandbox.bka.sh/v1.2.0-beta' 
         : 'https://tokenized.pay.bka.sh/v1.2.0-beta';
 
@@ -105,7 +106,7 @@ export async function executePayment(paymentID: string) {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
             'Authorization': id_token,
-            'X-App-Key': BKASH_APP_KEY,
+            'X-App-Key': bKashAppKey,
         },
         body: JSON.stringify({ paymentID }),
         cache: 'no-store'

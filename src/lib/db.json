@@ -1,14 +1,6 @@
+
 {
   "users": [
-    {
-      "id": "user-1755758696882",
-      "name": "MotionMint Hub",
-      "email": "edit@motionmint.top",
-      "phone": "01791241152",
-      "role": "client",
-      "initials": "MO",
-      "password": "$2a$10$9c0ugJIBY7ZxnysfPCyRrOP98yEg4iPSjzY7VQ9RdmelioGKjyIwS"
-    },
     {
       "id": "admin-main",
       "name": "Md Iftekharul Islam",
@@ -19,49 +11,26 @@
       "password": "$2a$10$FdIAUKzVdv6fpQ0kg.FTwOrFGqLfQdHTV/8A8FHC3W8CjhQ1epwFC"
     }
   ],
-  "clients": [
-    {
-      "id": "user-1755758696882",
-      "name": "MotionMint Hub",
-      "email": "edit@motionmint.top",
-      "phone": "01791241152",
-      "company": "",
-      "projectIds": [],
-      "createdAt": "2025-08-21T06:44:57.340Z"
-    }
-  ],
-  "projects": [
-    {
-      "id": "proj-1755758915447",
-      "title": "ICDDRB DOC",
-      "description": "ICDDRB DOC",
-      "clientId": "user-1755758696882",
-      "amount": 1,
-      "expiryDate": "2026-03-30T18:00:00.000Z",
-      "clientName": "MotionMint Hub",
-      "paymentStatus": "paid",
-      "orderId": "ORD-1755758915447",
-      "createdAt": "2025-08-21T06:48:35.447Z",
-      "previewVideoUrl": "https://mydrive.motionmint.top/index.php/s/ayiDDWK6ztpdqE3",
-      "finalVideoUrl": "https://mydrive.motionmint.top/index.php/s/ayiDDWK6ztpdqE3"
-    }
-  ],
+  "clients": [],
+  "projects": [],
   "settings": {
+    "whatsappLink": "https://wa.link/ge8fgx",
+    "logoUrl": "https://motionmint.top/wp-content/uploads/2025/08/motionmint.top-3-1.png",
     "nextcloudUrl": "",
     "nextcloudUser": "",
     "nextcloudPassword": "",
-    "whatsappLink": "https://wa.link/ge8fgx",
-    "logoUrl": "https://motionmint.top/wp-content/uploads/2025/08/motionmint.top-3-1.png",
-    "pipraPayEnabled": false,
-    "piprapayApiKey": "123504360668a3583081ed41601947378127387162768a3583081ed8648939280",
-    "piprapayBaseUrl": "https://pay.motionmint.top",
+    "bKashAppKey": "",
+    "bKashAppSecret": "",
+    "bKashUsername": "",
+    "bKashPassword": "",
+    "bKashMode": "sandbox",
+    "piprapayApiKey": "",
+    "piprapayBaseUrl": "",
     "piprapayWebhookVerifyKey": "",
-    "bKashEnabled": true,
-    "bKashAppKey": "aDgqtKHfBF2wLYYXYRGfwaTQtc",
-    "bKashAppSecret": "gFd5EivEGDmENxUOK9Ne7o64WWskRc6HtP8i94Fb3YsVxnbOYwFJ",
-    "bKashUsername": "01580720711",
-    "bKashPassword": "w2mj!V$]p^G",
-    "bKashMode": "production",
-    "greenwebSmsToken": "8887150534175568073482ebcc3c79f20372a10bf0536e8ac8f6"
+    "smtpHost": "",
+    "smtpPort": 587,
+    "smtpUser": "",
+    "smtpPass": "",
+    "greenwebSmsToken": ""
   }
 }

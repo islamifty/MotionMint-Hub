@@ -1,6 +1,7 @@
 
 import 'server-only';
 import nodemailer from 'nodemailer';
+import { readDb } from './db';
 import type { AppSettings } from '@/types';
 
 interface MailOptions {
@@ -10,24 +11,22 @@ interface MailOptions {
   html: string;
 }
 
-// Overload for testing connection with specific credentials
-export async function sendEmail(mailOptions: MailOptions, smtpConfig?: Partial<AppSettings>): Promise<void>;
+type SmtpConfig = Pick<AppSettings, 'smtpHost' | 'smtpPort' | 'smtpUser' | 'smtpPass'>;
 
-// Main implementation
-export async function sendEmail(mailOptions: MailOptions, smtpConfig?: Partial<AppSettings>): Promise<void> {
-    // Prioritize passed config, then environment variables
-    const settings = {
-        smtpHost: process.env.SMTP_HOST,
-        smtpPort: process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : undefined,
-        smtpUser: process.env.SMTP_USER,
-        smtpPass: process.env.SMTP_PASS,
-        ...smtpConfig,
-    };
+export async function sendEmail(mailOptions: MailOptions, testConfig?: SmtpConfig): Promise<void> {
+    let settings: SmtpConfig;
 
+    if (testConfig) {
+        settings = testConfig;
+    } else {
+        const db = await readDb();
+        settings = db.settings;
+    }
+    
     const { smtpHost, smtpPort, smtpUser, smtpPass } = settings;
 
     if (!smtpHost || !smtpPort || !smtpUser || !smtpPass) {
-        console.error('SMTP settings are not fully configured in environment variables.');
+        console.error('SMTP settings are not fully configured in the database.');
         throw new Error('SMTP settings are not configured.');
     }
 
@@ -42,7 +41,7 @@ export async function sendEmail(mailOptions: MailOptions, smtpConfig?: Partial<A
     });
     
     const options = {
-        from: `"MotionMint Hub" <${smtpUser}>`, // Using a friendly name
+        from: `"MotionMint Hub" <${smtpUser}>`,
         ...mailOptions,
     };
     

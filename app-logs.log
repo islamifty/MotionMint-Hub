@@ -6,3 +6,18 @@
 }
 ---END DATA---
 
+2025-08-26T17:09:45.054Z [WARN] - Login failed: Invalid password
+---DATA---
+{
+  "email": "mdiftekharulislamifty@gmail.com"
+}
+---END DATA---
+
+2025-08-26T17:09:49.103Z [INFO] - User logged in successfully
+---DATA---
+{
+  "userId": "admin-main",
+  "email": "mdiftekharulislamifty@gmail.com"
+}
+---END DATA---
+

@@ -13,13 +13,13 @@ export async function getProjects(): Promise<Project[]> {
 
 
 export async function deleteProjects(projectIds: string[]) {
-    const { 
-        NEXTCLOUD_URL: nextcloudUrl, 
-        NEXTCLOUD_USER: nextcloudUser, 
-        NEXTCLOUD_PASSWORD: nextcloudPassword 
-    } = process.env;
-
     const db = await readDb();
+    const { 
+        nextcloudUrl, 
+        nextcloudUser, 
+        nextcloudPassword 
+    } = db.settings;
+
     const projectsToDelete = db.projects.filter(p => projectIds.includes(p.id));
 
     if (nextcloudUrl && nextcloudUser && nextcloudPassword) {
