@@ -107,23 +107,25 @@ export const BrandingProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    const root = document.documentElement;
-    
-    const primaryHsl = parseHsl(branding.primaryColor);
-    if(primaryHsl) {
-        root.style.setProperty('--primary', `${primaryHsl[0]} ${primaryHsl[1]}% ${primaryHsl[2]}%`);
-    }
-    
-    const backgroundHsl = parseHsl(branding.backgroundColor);
-    if(backgroundHsl) {
-        root.style.setProperty('--background', `${backgroundHsl[0]} ${backgroundHsl[1]}% ${backgroundHsl[2]}%`);
-    }
+    if (isMounted) {
+        const root = document.documentElement;
+        
+        const primaryHsl = parseHsl(branding.primaryColor);
+        if(primaryHsl) {
+            root.style.setProperty('--primary', `${primaryHsl[0]} ${primaryHsl[1]}% ${primaryHsl[2]}%`);
+        }
+        
+        const backgroundHsl = parseHsl(branding.backgroundColor);
+        if(backgroundHsl) {
+            root.style.setProperty('--background', `${backgroundHsl[0]} ${backgroundHsl[1]}% ${backgroundHsl[2]}%`);
+        }
 
-    const accentHsl = parseHsl(branding.accentColor);
-    if(accentHsl) {
-        root.style.setProperty('--accent', `${accentHsl[0]} ${accentHsl[1]}% ${accentHsl[2]}%`);
+        const accentHsl = parseHsl(branding.accentColor);
+        if(accentHsl) {
+            root.style.setProperty('--accent', `${accentHsl[0]} ${accentHsl[1]}% ${accentHsl[2]}%`);
+        }
     }
-  }, [branding]);
+  }, [branding, isMounted]);
 
   return (
     <BrandingContext.Provider value={{ branding, setBranding }}>
