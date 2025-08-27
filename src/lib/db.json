@@ -1,62 +1,18 @@
 {
-  "users": [
-    {
-      "id": "user-1756320555652",
-      "name": "test",
-      "email": "test@test.com",
-      "phone": "01791241152",
-      "role": "client",
-      "initials": "TE",
-      "password": "$2a$10$VscJzzw6VYnj64DXzbjZhOy9Y6.otkhxaW89D4d8AdrkIyz/gLA52"
-    },
-    {
-      "id": "admin-main",
-      "name": "Md Iftekharul Islam",
-      "email": "mdiftekharulislamifty@gmail.com",
-      "phone": "01234567890",
-      "role": "admin",
-      "initials": "MI",
-      "password": "$2a$10$8.gCf2nC4g7zOy.1Vz7a5.5s7.3j/I2u0.f.d.g.h"
-    }
-  ],
-  "clients": [
-    {
-      "id": "user-1756320555652",
-      "name": "test",
-      "email": "test@test.com",
-      "phone": "01791241152",
-      "company": "Cloudersoft Global Technology Ltd.",
-      "projectIds": [],
-      "createdAt": "2025-08-27T18:49:15.758Z"
-    }
-  ],
-  "projects": [
-    {
-      "id": "proj-1756320595226",
-      "title": "Test",
-      "description": "Test",
-      "clientId": "user-1756320555652",
-      "amount": 1,
-      "expiryDate": "2025-08-30T18:00:00.000Z",
-      "clientName": "test",
-      "paymentStatus": "pending",
-      "orderId": "ORD-1756320595226",
-      "createdAt": "2025-08-27T18:49:55.226Z",
-      "previewVideoUrl": "https://mydrive.motionmint.top/index.php/s/H4dExyR255fgk9o",
-      "finalVideoUrl": "https://mydrive.motionmint.top/index.php/s/o6ZA4aE3APc3x8m"
-    }
-  ],
+  "users": [],
+  "clients": [],
+  "projects": [],
   "settings": {
-    "whatsappLink": "https://wa.link/ge8fgx",
-    "logoUrl": "https://motionmint.top/wp-content/uploads/2025/08/motionmint.top-3-1.png",
+    "whatsappLink": "",
+    "logoUrl": "",
     "nextcloudUrl": "",
     "nextcloudUser": "",
     "nextcloudPassword": "",
-    "bKashAppKey": "aDgqtKHfBF2wLYYXYRGfwaTQtc",
-    "bKashAppSecret": "gFd5EivEGDmENxUOK9Ne7o64WWskRc6HtP8i94Fb3YsVxnbOYwFJ",
-    "bKashUsername": "01580720711",
-    "bKashPassword": "w2mj!V$]p^G",
-    "bKashMode": "production",
+    "bKashAppKey": "",
+    "bKashAppSecret": "",
+    "bKashUsername": "",
+    "bKashPassword": "",
+    "bKashMode": "sandbox",
     "piprapayApiKey": "",
     "piprapayBaseUrl": "",
     "piprapayWebhookVerifyKey": "",

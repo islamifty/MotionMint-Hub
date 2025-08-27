@@ -1,15 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { decrypt } from '@/lib/session';
+import { readDb } from './lib/db';
 
 const protectedAdminRoutes = ['/admin'];
 const protectedClientRoutes = ['/client'];
 const protectedSharedRoutes = ['/profile', '/settings'];
 const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
+const setupRoute = '/setup';
 
 export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
 
-  // ✅ middleware এ cookies() নয়, req.cookies.get() ব্যবহার করতে হবে
+  // Check if setup has been completed
+  const db = await readDb();
+  const adminExists = db.users.some(user => user.role === 'admin');
+
+  if (!adminExists && path !== setupRoute) {
+    // If setup is not complete, redirect everything to the setup page
+    return NextResponse.redirect(new URL(setupRoute, req.url));
+  }
+  
+  if (adminExists && path === setupRoute) {
+    // If setup is complete, don't allow access to the setup page
+    return NextResponse.redirect(new URL('/login', req.url));
+  }
+
+
   const cookie = req.cookies.get('session')?.value;
   const session = cookie ? await decrypt(cookie) : null;
   const user = session?.user;
