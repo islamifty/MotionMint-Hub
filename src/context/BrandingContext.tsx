@@ -56,7 +56,7 @@ interface Branding {
 
 interface BrandingContextType {
   branding: Branding;
-  setBranding: (branding: Branding) => void;
+  setBranding: (branding: Partial<Branding>) => void;
 }
 
 const defaultBranding: Branding = {
@@ -75,28 +75,35 @@ export const useBranding = () => useContext(BrandingContext);
 
 export const BrandingProvider = ({ children }: { children: ReactNode }) => {
   const [branding, setBrandingState] = useState<Branding>(defaultBranding);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    // This effect runs only on the client
-    try {
-      const savedBranding = localStorage.getItem('branding');
-      if (savedBranding) {
-        setBrandingState(JSON.parse(savedBranding));
-      }
-    } catch (error) {
-      console.error("Failed to parse branding from localStorage", error);
-    }
+    setIsMounted(true);
   }, []);
 
-  const setBranding = (newBranding: Branding) => {
-    try {
-        const currentBranding = JSON.parse(localStorage.getItem('branding') || '{}');
-        const updatedBranding = { ...currentBranding, ...newBranding };
-        localStorage.setItem('branding', JSON.stringify(updatedBranding));
-        setBrandingState(updatedBranding);
-    } catch (error) {
-        console.error("Failed to save branding to localStorage", error);
+  useEffect(() => {
+    if (isMounted) {
+      try {
+        const savedBranding = localStorage.getItem('branding');
+        if (savedBranding) {
+          setBrandingState(JSON.parse(savedBranding));
+        }
+      } catch (error) {
+        console.error("Failed to parse branding from localStorage", error);
+      }
     }
+  }, [isMounted]);
+
+  const setBranding = (newBranding: Partial<Branding>) => {
+    setBrandingState(prevBranding => {
+      const updatedBranding = { ...prevBranding, ...newBranding };
+      try {
+        localStorage.setItem('branding', JSON.stringify(updatedBranding));
+      } catch (error) {
+          console.error("Failed to save branding to localStorage", error);
+      }
+      return updatedBranding;
+    });
   };
 
   useEffect(() => {
