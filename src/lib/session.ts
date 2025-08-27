@@ -5,12 +5,13 @@ import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import type { User } from '@/types';
 
-const passphrase = process.env.SESSION_SECRET;
-if (!passphrase) {
+const getSecretKey = () => {
+  const secret = process.env.SESSION_SECRET;
+  if (!secret) {
     throw new Error('SESSION_SECRET environment variable is not set.');
-}
-
-const key = new TextEncoder().encode(passphrase);
+  }
+  return new TextEncoder().encode(secret);
+};
 
 
 // Define the structure of the session payload, excluding the password
@@ -32,7 +33,7 @@ export async function encrypt(payload: SessionPayload) {
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime(expirationTime) 
-    .sign(key);
+    .sign(getSecretKey());
 }
 
 export async function decrypt(input: string | undefined): Promise<SessionPayload | null> {
@@ -40,7 +41,7 @@ export async function decrypt(input: string | undefined): Promise<SessionPayload
     return null;
   }
   try {
-    const { payload } = await jwtVerify(input, key, {
+    const { payload } = await jwtVerify(input, getSecretKey(), {
       algorithms: ['HS256'],
     });
     return payload as SessionPayload;
