@@ -1,11 +1,13 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import NProgress from 'nprogress';
 
-export function NextNProgress() {
+// This is the actual component that uses the hooks.
+// It will be rendered only on the client, inside the Suspense boundary.
+function ProgressBar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -49,4 +51,14 @@ export function NextNProgress() {
   }, []);
 
   return null;
+}
+
+// This is the exported component. It wraps the ProgressBar in a Suspense boundary.
+// This is safe to include in layouts because the part that uses the hook is suspended.
+export function NextNProgress() {
+  return (
+    <Suspense fallback={null}>
+      <ProgressBar />
+    </Suspense>
+  );
 }
