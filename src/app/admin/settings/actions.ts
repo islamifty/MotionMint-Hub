@@ -272,3 +272,5 @@ export async function saveGeneralSettings(data: unknown) {
     if (!result.success) return { success: false, message: "Invalid General settings data." };
     return saveSettings(result.data);
 }
+
+    

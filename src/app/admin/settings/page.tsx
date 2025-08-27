@@ -59,7 +59,7 @@ import {
 } from "@/components/ui/select";
 import type { AppSettings } from "@/types";
 
-// Unified schema for the entire form
+// Schema for the entire form, allowing empty strings for URLs
 const settingsSchema = z.object({
     // Nextcloud
     nextcloudUrl: z.string().url({ message: "Must be a valid URL." }).or(z.literal('')),
@@ -88,7 +88,7 @@ const settingsSchema = z.object({
 });
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
-type SectionType = 'nextcloud' | 'bKash' | 'pipraPay' | 'smtp' | 'sms' | 'general';
+type SectionType = 'general' | 'nextcloud' | 'bkash' | 'piprapay' | 'smtp' | 'sms';
 
 const StatusIndicator = ({ isConfigured }: { isConfigured: boolean }) => (
     <div className="flex items-center gap-2">
@@ -153,8 +153,8 @@ export default function SettingsPage() {
 
     switch (section) {
         case 'nextcloud': result = await saveNextcloudSettings(data); break;
-        case 'bKash': result = await saveBKashSettings(data); break;
-        case 'pipraPay': result = await savePipraPaySettings(data); break;
+        case 'bkash': result = await saveBKashSettings(data); break;
+        case 'piprapay': result = await savePipraPaySettings(data); break;
         case 'smtp': result = await saveSmtpSettings(data); break;
         case 'sms': result = await saveSmsSettings(data); break;
         case 'general': 
@@ -248,12 +248,12 @@ export default function SettingsPage() {
                             <FormField control={form.control} name="logoUrl" render={({ field }) => ( 
                                 <FormItem> 
                                     <FormLabel>Custom Logo URL</FormLabel> 
-                                    <div className="relative flex items-center">
-                                        <LinkIcon className="absolute left-3 h-4 w-4 text-muted-foreground" /> 
-                                        <FormControl> 
-                                            <Input placeholder="https://example.com/logo.png" className="pl-10" {...field} /> 
-                                        </FormControl> 
-                                    </div> 
+                                     <div className="relative flex items-center">
+                                        <LinkIcon className="absolute left-3 h-4 w-4 text-muted-foreground" />
+                                        <FormControl>
+                                            <Input placeholder="https://example.com/logo.png" className="pl-10" {...field} />
+                                        </FormControl>
+                                    </div>
                                     <FormDescription> Paste a direct link to your logo image. </FormDescription> 
                                     <FormMessage /> 
                                 </FormItem> 
@@ -263,11 +263,11 @@ export default function SettingsPage() {
                                 <FormItem> 
                                     <FormLabel>WhatsApp Link</FormLabel> 
                                     <div className="relative flex items-center">
-                                        <LinkIcon className="absolute left-3 h-4 w-4 text-muted-foreground" /> 
-                                        <FormControl> 
-                                            <Input placeholder="https://wa.me/1234567890" className="pl-10" {...field} /> 
-                                        </FormControl> 
-                                    </div> 
+                                        <LinkIcon className="absolute left-3 h-4 w-4 text-muted-foreground" />
+                                        <FormControl>
+                                            <Input placeholder="https://wa.me/1234567890" className="pl-10" {...field} />
+                                        </FormControl>
+                                    </div>
                                     <FormDescription> The contact link shown to clients on the project page. </FormDescription> 
                                     <FormMessage /> 
                                 </FormItem> 
@@ -342,3 +342,5 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+    
