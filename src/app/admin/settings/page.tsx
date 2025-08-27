@@ -84,9 +84,6 @@ const settingsSchema = z.object({
     greenwebSmsToken: z.string().optional(),
     // General
     logoUrl: z.string().url("Please enter a valid image URL.").or(z.literal('')),
-    primaryColor: z.string(),
-    backgroundColor: z.string(),
-    accentColor: z.string(),
     whatsappLink: z.string().url("Please enter a valid URL.").or(z.literal('')),
 });
 
@@ -111,7 +108,7 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isTesting, setIsTesting] = useState<string | null>(null);
   const [testPhoneNumber, setTestPhoneNumber] = useState("");
-  const { branding, setBranding } = useBranding();
+  const { setBranding } = useBranding();
   const [dbStatus, setDbStatus] = useState({
       nextcloud: false, bkash: false, piprapay: false, smtp: false, sms: false
   });
@@ -124,10 +121,7 @@ export default function SettingsPage() {
         piprapayApiKey: '', piprapayBaseUrl: '', piprapayWebhookVerifyKey: '',
         smtpHost: '', smtpPort: 587, smtpUser: '', smtpPass: '',
         greenwebSmsToken: '',
-        logoUrl: branding.logoUrl || '',
-        primaryColor: branding.primaryColor,
-        backgroundColor: branding.backgroundColor,
-        accentColor: branding.accentColor,
+        logoUrl: '',
         whatsappLink: '',
       }
   });
@@ -141,7 +135,7 @@ export default function SettingsPage() {
         
         if (settings) {
             form.reset({
-                ...form.getValues(), // Keep branding defaults
+                ...form.getValues(),
                 ...settings
             });
         }
@@ -150,15 +144,6 @@ export default function SettingsPage() {
     loadInitialData();
   }, [form]);
 
-  useEffect(() => {
-    form.reset({
-        ...form.getValues(),
-        logoUrl: branding.logoUrl || '',
-        primaryColor: branding.primaryColor,
-        backgroundColor: branding.backgroundColor,
-        accentColor: branding.accentColor,
-    });
-  }, [branding, form]);
 
   const handleSave = async (section: keyof AppSettings | 'general' | 'branding', data: Partial<SettingsFormValues>) => {
     let result;
@@ -170,7 +155,9 @@ export default function SettingsPage() {
         case 'sms': result = await saveSmsSettings(data); break;
         case 'general': 
             await saveGeneralSettings(data);
-            setBranding({ logoUrl: data.logoUrl!, primaryColor: data.primaryColor!, backgroundColor: data.backgroundColor!, accentColor: data.accentColor! });
+            if (data.logoUrl) {
+                setBranding({ logoUrl: data.logoUrl });
+            }
             result = { success: true, message: "General and branding settings saved." };
             break;
         default: return;
@@ -255,11 +242,6 @@ export default function SettingsPage() {
                 {renderCard("General & Branding", "Customize the look, feel, and contact information.", null, null, (
                     <>
                         <FormField control={form.control} name="logoUrl" render={({ field }) => ( <FormItem> <FormLabel>Custom Logo URL</FormLabel> <div className="relative w-full"> <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /> <FormControl> <Input placeholder="https://example.com/logo.png" className="pl-10" {...field} /> </FormControl> </div> <FormDescription> Paste a direct link to your logo image. </FormDescription> <FormMessage /> </FormItem> )} />
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <FormField control={form.control} name="primaryColor" render={({ field }) => ( <FormItem> <FormLabel>Primary Color</FormLabel> <FormControl> <Input type="color" {...field} /> </FormControl> <FormMessage /> </FormItem> )} />
-                            <FormField control={form.control} name="backgroundColor" render={({ field }) => ( <FormItem> <FormLabel>Background Color</FormLabel> <FormControl> <Input type="color" {...field} /> </FormControl> <FormMessage /> </FormItem> )} />
-                            <FormField control={form.control} name="accentColor" render={({ field }) => ( <FormItem> <FormLabel>Accent Color</FormLabel> <FormControl> <Input type="color" {...field} /> </FormControl> <FormMessage /> </FormItem> )} />
-                        </div>
                         <Separator />
                         <FormField control={form.control} name="whatsappLink" render={({ field }) => ( <FormItem> <FormLabel>WhatsApp Link</FormLabel> <div className="relative w-full"> <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /> <FormControl> <Input placeholder="https://wa.me/1234567890" className="pl-10" {...field} /> </FormControl> </div> <FormDescription> The contact link shown to clients on the project page. </FormDescription> <FormMessage /> </FormItem> )} />
                     </>
