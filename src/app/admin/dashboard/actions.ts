@@ -6,8 +6,11 @@ import { DollarSign, FolderKanban, Users, CreditCard, AlertTriangle } from "luci
 
 type PaymentStatus = "pending" | "paid" | "overdue";
 
+// The data type returned by the server action. Note: It doesn't include the icon component.
+type StatCardData = Omit<StatCardType, 'icon'>;
+
 interface DashboardStats {
-    statCards: StatCardType[];
+    statCards: StatCardData[];
     recentProjects: Project[];
     overdueProjects: Project[];
     statusCounts: Record<PaymentStatus, number>;
@@ -31,11 +34,11 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 
     const pendingProjectsCount = db.projects.filter(p => p.paymentStatus === 'pending' && new Date(p.expiryDate) >= new Date()).length;
 
-    const statCards: StatCardType[] = [
-        { title: "Total Revenue", value: `${totalRevenue.toLocaleString()} BDT`, icon: DollarSign },
-        { title: "Active Projects", value: activeProjects.toString(), icon: FolderKanban },
-        { title: "Total Clients", value: totalClients.toString(), icon: Users },
-        { title: "Pending Payments", value: `${pendingPayments.toLocaleString()} BDT`, icon: CreditCard, change: `${pendingProjectsCount} projects`, changeType: pendingProjectsCount > 0 ? "decrease" : "increase" },
+    const statCards: StatCardData[] = [
+        { title: "Total Revenue", value: `${totalRevenue.toLocaleString()} BDT` },
+        { title: "Active Projects", value: activeProjects.toString() },
+        { title: "Total Clients", value: totalClients.toString() },
+        { title: "Pending Payments", value: `${pendingPayments.toLocaleString()} BDT`, change: `${pendingProjectsCount} projects`, changeType: pendingProjectsCount > 0 ? "decrease" : "increase" },
     ];
     
     // Get recent projects

@@ -28,6 +28,9 @@ import { formatDistanceToNow } from "date-fns";
 
 type PaymentStatus = "pending" | "paid" | "overdue";
 
+// icon property removed from StatCardType as it's a component
+type StatCardData = Omit<StatCardType, 'icon'>;
+
 const iconMap: { [key: string]: React.ElementType } = {
   "Total Revenue": DollarSign,
   "Active Projects": FolderKanban,
@@ -36,7 +39,7 @@ const iconMap: { [key: string]: React.ElementType } = {
 };
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState<StatCardType[]>([]);
+  const [stats, setStats] = useState<StatCardData[]>([]);
   const [recentProjects, setRecentProjects] = useState<Project[]>([]);
   const [overdueProjects, setOverdueProjects] = useState<Project[]>([]);
   const [statusCounts, setStatusCounts] = useState<Record<PaymentStatus, number> | null>(null);
