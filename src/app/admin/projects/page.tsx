@@ -34,7 +34,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
@@ -179,7 +178,7 @@ export default function ProjectsPage() {
               <AlertDialogTrigger asChild>
                 <Button size="sm" variant="destructive" className="h-8 gap-1">
                   <Trash2 className="h-3.5 w-3.5" />
-                  <span className="sr-only sm:not-sr-only sm:whitespace-rap">
+                  <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                     Delete ({selectedProjects.length})
                   </span>
                 </Button>
