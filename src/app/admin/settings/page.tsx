@@ -204,24 +204,26 @@ export default function SettingsPage() {
     testKey: string | null,
     fields: React.ReactNode
   ) => (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-        {statusKey && <div className="pt-2"><StatusIndicator isConfigured={dbStatus[statusKey]} /></div>}
-      </CardHeader>
-      <CardContent className="space-y-6">{fields}</CardContent>
-      <CardFooter className="gap-2">
-         <Button type="submit" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : <><Save className="mr-2 h-4 w-4" /> Save {title.split(' ')[0]} Settings</>}
-        </Button>
-        {testKey && (
-          <Button type="button" onClick={() => handleTestConnection(testKey)} variant="outline" disabled={!!isTesting}>
-            {isTesting === testKey ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Testing...</> : `Test ${title.split(' ')[0]} Connection`}
-          </Button>
-        )}
-      </CardFooter>
-    </Card>
+     <form onSubmit={form.handleSubmit(handleSave)}>
+        <Card>
+            <CardHeader>
+                <CardTitle>{title}</CardTitle>
+                <CardDescription>{description}</CardDescription>
+                {statusKey && <div className="pt-2"><StatusIndicator isConfigured={dbStatus[statusKey]} /></div>}
+            </CardHeader>
+            <CardContent className="space-y-6">{fields}</CardContent>
+            <CardFooter className="gap-2">
+                <Button type="submit" disabled={form.formState.isSubmitting}>
+                    {form.formState.isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : <><Save className="mr-2 h-4 w-4" /> Save {title.split(' ')[0]} Settings</>}
+                </Button>
+                {testKey && (
+                <Button type="button" onClick={() => handleTestConnection(testKey)} variant="outline" disabled={!!isTesting}>
+                    {isTesting === testKey ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Testing...</> : `Test ${title.split(' ')[0]} Connection`}
+                </Button>
+                )}
+            </CardFooter>
+        </Card>
+     </form>
   );
 
   return (
@@ -231,7 +233,6 @@ export default function SettingsPage() {
         <p className="text-muted-foreground">Manage your integration settings and application appearance.</p>
       </div>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSave)}>
             <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as SectionType)}>
                 <TabsList className="flex-wrap h-auto justify-start">
                     <TabsTrigger value="general">General</TabsTrigger>
@@ -337,7 +338,6 @@ export default function SettingsPage() {
                     ))}
                 </TabsContent>
             </Tabs>
-        </form>
       </Form>
     </div>
   );
