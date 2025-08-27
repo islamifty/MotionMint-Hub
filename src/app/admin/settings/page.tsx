@@ -47,7 +47,18 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useBranding } from "@/context/BrandingContext";
-import { Link as LinkIcon, Loader2, CheckCircle, AlertCircle, Save, Eye, EyeOff } from "lucide-react";
+import { Link as LinkIcon, Loader2, CheckCircle, AlertCircle, Save, Eye, EyeOff, CheckCircle2, XCircle } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
 import {
@@ -89,6 +100,7 @@ const settingsSchema = z.object({
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
 type SectionType = 'general' | 'nextcloud' | 'bkash' | 'piprapay' | 'smtp' | 'sms';
+type TestStatus = "untested" | "success" | "failure";
 
 const StatusIndicator = ({ isConfigured }: { isConfigured: boolean }) => (
     <div className="flex items-center gap-2">
@@ -102,6 +114,16 @@ const StatusIndicator = ({ isConfigured }: { isConfigured: boolean }) => (
         </span>
     </div>
 );
+
+const TestStatusIndicator = ({ status }: { status: TestStatus }) => {
+    if (status === 'success') {
+        return <CheckCircle2 className="h-5 w-5 text-green-500" />;
+    }
+    if (status === 'failure') {
+        return <XCircle className="h-5 w-5 text-destructive" />;
+    }
+    return null;
+}
 
 const PasswordInput = ({ field, placeholder }: { field: any, placeholder?: string }) => {
     const [isVisible, setIsVisible] = useState(false);
@@ -130,6 +152,14 @@ export default function SettingsPage() {
   const [isTesting, setIsTesting] = useState<string | null>(null);
   const [testPhoneNumber, setTestPhoneNumber] = useState("");
   const { setBranding } = useBranding();
+  const [activeTab, setActiveTab] = useState<SectionType>('general');
+  const [testResults, setTestResults] = useState<Record<string, TestStatus>>({
+      nextcloud: 'untested',
+      bkash: 'untested',
+      piprapay: 'untested',
+      smtp: 'untested',
+      sms: 'untested'
+  });
   const [dbStatus, setDbStatus] = useState({
       nextcloud: false, bkash: false, piprapay: false, smtp: false, sms: false
   });
@@ -146,6 +176,8 @@ export default function SettingsPage() {
         whatsappLink: '',
       }
   });
+  
+  const { formState: { isDirty } } = form;
 
   useEffect(() => {
     async function loadInitialData() {
@@ -167,9 +199,6 @@ export default function SettingsPage() {
 
 
   const handleSave: SubmitHandler<SettingsFormValues> = async (data) => {
-    const activeTab = document.querySelector('[data-state="active"]')?.getAttribute('data-value') as SectionType | undefined;
-    if (!activeTab) return;
-
     let result;
     const sectionData = form.getValues();
 
@@ -196,11 +225,13 @@ export default function SettingsPage() {
     if (result.success) {
         const credsStatus = await checkDbCredentials();
         setDbStatus(credsStatus);
+        form.reset(form.getValues()); // Reset form to make it not dirty
     }
   };
 
   const handleTestConnection = async (type: string) => {
     setIsTesting(type);
+    setTestResults(prev => ({ ...prev, [type]: 'untested' }));
     let result;
     const formData = form.getValues();
     switch (type) {
@@ -216,6 +247,7 @@ export default function SettingsPage() {
       description: result.message,
       variant: result.success ? "default" : "destructive",
     });
+    setTestResults(prev => ({ ...prev, [type]: result.success ? 'success' : 'failure' }));
     setIsTesting(null);
   };
   
@@ -233,14 +265,36 @@ export default function SettingsPage() {
             {statusKey && <div className="pt-2"><StatusIndicator isConfigured={dbStatus[statusKey]} /></div>}
         </CardHeader>
         <CardContent className="space-y-6">{fields}</CardContent>
-        <CardFooter className="gap-2">
-            <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : <><Save className="mr-2" /> Save {title.split(' ')[0]} Settings</>}
-            </Button>
+        <CardFooter className="flex-wrap gap-2">
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button type="button" disabled={!isDirty || form.formState.isSubmitting}>
+                         {form.formState.isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : <><Save className="mr-2" /> Save {title.split(' ')[0]} Settings</>}
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Confirm Changes</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to save these changes? This may affect your application's functionality.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={form.handleSubmit(handleSave)}>
+                           Save
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
             {testKey && (
-            <Button type="button" onClick={() => handleTestConnection(testKey)} variant="outline" disabled={!!isTesting}>
-                {isTesting === testKey ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Testing...</> : `Test ${title.split(' ')[0]} Connection`}
-            </Button>
+            <div className="flex items-center gap-2">
+                <Button type="button" onClick={() => handleTestConnection(testKey)} variant="outline" disabled={!!isTesting}>
+                    {isTesting === testKey ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Testing...</> : `Test ${title.split(' ')[0]} Connection`}
+                </Button>
+                <TestStatusIndicator status={testResults[testKey]} />
+            </div>
             )}
         </CardFooter>
      </Card>
@@ -254,7 +308,7 @@ export default function SettingsPage() {
       </div>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSave)}>
-            <Tabs defaultValue="general">
+            <Tabs defaultValue="general" onValueChange={(value) => setActiveTab(value as SectionType)}>
                 <TabsList className="flex-wrap h-auto justify-start">
                     <TabsTrigger value="general">General</TabsTrigger>
                     <TabsTrigger value="nextcloud">Nextcloud</TabsTrigger>
@@ -268,7 +322,7 @@ export default function SettingsPage() {
                     {renderCard("General & Branding", "Customize the look, feel, and contact information.", null, null, (
                         <>
                             <FormField control={form.control} name="logoUrl" render={({ field }) => ( 
-                                <FormItem> 
+                                <FormItem className="space-y-2"> 
                                     <FormLabel>Custom Logo URL</FormLabel> 
                                      <div className="relative flex items-center">
                                         <LinkIcon className="absolute left-3 h-4 w-4 text-muted-foreground" />
@@ -282,7 +336,7 @@ export default function SettingsPage() {
                             )} />
                             <Separator />
                             <FormField control={form.control} name="whatsappLink" render={({ field }) => ( 
-                                <FormItem> 
+                                <FormItem className="space-y-2"> 
                                     <FormLabel>WhatsApp Link</FormLabel> 
                                     <div className="relative flex items-center">
                                         <LinkIcon className="absolute left-3 h-4 w-4 text-muted-foreground" />
@@ -345,15 +399,17 @@ export default function SettingsPage() {
                                 <Label htmlFor="test-phone-number">Test Phone Number</Label>
                                 <Input id="test-phone-number" placeholder="e.g., 01712345678" value={testPhoneNumber} onChange={(e) => setTestPhoneNumber(e.target.value)} />
                                 <FormDescription>Enter a number to send a test SMS to.</FormDescription>
-                                 <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => handleTestConnection('sms')}
-                                    disabled={!!isTesting || !testPhoneNumber}
-                                    className="mt-2"
-                                    >
-                                    {isTesting === 'sms' ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...</> : "Send Test SMS"}
-                                </Button>
+                                <div className="flex items-center gap-2 pt-2">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => handleTestConnection('sms')}
+                                        disabled={!!isTesting || !testPhoneNumber}
+                                        >
+                                        {isTesting === 'sms' ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...</> : "Send Test SMS"}
+                                    </Button>
+                                    <TestStatusIndicator status={testResults['sms']} />
+                                </div>
                             </div>
                         </>
                     ))}
@@ -364,5 +420,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-    
