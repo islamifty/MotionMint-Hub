@@ -5,75 +5,67 @@ import fs from 'fs/promises';
 import path from 'path';
 import type { DbData } from "@/types";
 
-const dbPath = path.join(process.cwd(), 'src', 'lib', 'db.json');
+// The new path for the data directory, outside of the `src` folder.
+const dataDir = path.join(process.cwd(), 'data');
+// The new path for the database file.
+const dbPath = path.join(dataDir, 'db.json');
+// The path to the initial/template database file inside the source code.
+const initialDbPath = path.join(process.cwd(), 'src', 'lib', 'db.json');
 
-// This function initializes the database with a default admin if it's empty.
-async function initializeDbWithAdmin(): Promise<DbData> {
-    const initialData: DbData = {
-        users: [
-            {
-              "id": "admin-main",
-              "name": "Md Iftekharul Islam",
-              "email": "mdiftekharulislamifty@gmail.com",
-              "phone": "01234567890",
-              "role": "admin",
-              "initials": "MI",
-              "password": "01@*#Mdiftu" // Plain text password for debugging
-            }
-        ],
-        clients: [],
-        projects: [],
-        settings: {
-            nextcloudUrl: "",
-            nextcloudUser: "",
-            nextcloudPassword: "",
-        }
-    };
+
+// This function ensures the data directory and db.json file exist.
+// If db.json doesn't exist, it copies it from the initial template.
+async function ensureDbExists(): Promise<void> {
     try {
-        await fs.writeFile(dbPath, JSON.stringify(initialData, null, 2), 'utf8');
-        console.log("Database initialized with default admin data.");
-        return initialData;
-    } catch (error) {
-        console.error("Failed to initialize database:", error);
-        throw new Error("Could not initialize database.");
+        // Ensure the 'data' directory exists.
+        await fs.mkdir(dataDir, { recursive: true });
+        // Check if the database file exists in the 'data' directory.
+        await fs.access(dbPath);
+    } catch (error: any) {
+        // If the file doesn't exist (ENOENT), copy the initial db.json.
+        if (error.code === 'ENOENT') {
+            try {
+                const initialData = await fs.readFile(initialDbPath, 'utf8');
+                await fs.writeFile(dbPath, initialData, 'utf8');
+                console.log("Database initialized in /data folder from template.");
+            } catch (copyError) {
+                console.error("Failed to create initial database in /data folder:", copyError);
+                // If template is also missing, create a minimal one to prevent crashes.
+                 const minimalData: DbData = {
+                    users: [],
+                    clients: [],
+                    projects: [],
+                    settings: {}
+                };
+                 await fs.writeFile(dbPath, JSON.stringify(minimalData, null, 2), 'utf8');
+            }
+        } else {
+            // For other errors, rethrow.
+            console.error("An unexpected error occurred while ensuring DB exists:", error);
+            throw error;
+        }
     }
 }
 
-export async function readDb(): Promise<DbData> {
-    try {
-        // Check if the file exists
-        await fs.access(dbPath);
-        const fileContents = await fs.readFile(dbPath, 'utf8');
-        
-        // If the file is empty, initialize it
-        if (!fileContents.trim()) {
-            console.log("Database file is empty. Initializing...");
-            return await initializeDbWithAdmin();
-        }
 
-        // Try to parse the contents
-        const data: DbData = JSON.parse(fileContents);
-        
-        // If there are no users, initialize it
-        if (!data.users || data.users.length === 0) {
-            console.log("No users found in database. Re-initializing...");
-            return await initializeDbWithAdmin();
+export async function readDb(): Promise<DbData> {
+    await ensureDbExists(); // Make sure the DB file is in place before reading.
+    try {
+        const fileContents = await fs.readFile(dbPath, 'utf8');
+        // If the file is empty for some reason, return a default structure.
+        if (!fileContents.trim()) {
+            return { users: [], clients: [], projects: [], settings: {} };
         }
-        
-        return data;
-    } catch (error: any) {
-        // If file doesn't exist (ENOENT) or is invalid JSON, create it
-        if (error.code === 'ENOENT' || error instanceof SyntaxError) {
-            console.log("Database file not found or invalid. Initializing...");
-            return await initializeDbWithAdmin();
-        }
-        // For other errors, rethrow
+        return JSON.parse(fileContents);
+    } catch (error) {
         console.error("An unexpected error occurred while reading the database:", error);
-        throw error;
+        // Return a safe default structure to prevent the app from crashing.
+        return { users: [], clients: [], projects: [], settings: {} };
     }
 }
 
 export async function writeDb(data: DbData): Promise<void> {
+    await ensureDbExists(); // Ensure directory is there before writing.
     try {
         await fs.writeFile(dbPath, JSON.stringify(data, null, 2), 'utf8');
     } catch (error) {
