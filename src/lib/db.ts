@@ -4,14 +4,12 @@
 import fs from 'fs/promises';
 import path from 'path';
 import type { DbData } from "@/types";
+import initialData from './db.json'; // Import the data directly
 
 // The new path for the data directory, outside of the `src` folder.
 const dataDir = path.join(process.cwd(), 'data');
 // The new path for the database file.
 const dbPath = path.join(dataDir, 'db.json');
-// The path to the initial/template database file inside the source code.
-const initialDbPath = path.join(process.cwd(), 'src', 'lib', 'db.json');
-
 
 // This function ensures the data directory and db.json file exist.
 // If db.json doesn't exist, it copies it from the initial template.
@@ -22,15 +20,15 @@ async function ensureDbExists(): Promise<void> {
         // Check if the database file exists in the 'data' directory.
         await fs.access(dbPath);
     } catch (error: any) {
-        // If the file doesn't exist (ENOENT), copy the initial db.json.
+        // If the file doesn't exist (ENOENT), create it using the imported data.
         if (error.code === 'ENOENT') {
             try {
-                const initialData = await fs.readFile(initialDbPath, 'utf8');
-                await fs.writeFile(dbPath, initialData, 'utf8');
-                console.log("Database initialized in /data folder from template.");
+                // Use the imported JSON data to create the new file
+                await fs.writeFile(dbPath, JSON.stringify(initialData, null, 2), 'utf8');
+                console.log("Database initialized in /data folder from imported template.");
             } catch (copyError) {
                 console.error("Failed to create initial database in /data folder:", copyError);
-                // If template is also missing, create a minimal one to prevent crashes.
+                // If template writing fails, create a minimal one to prevent crashes.
                  const minimalData: DbData = {
                     users: [],
                     clients: [],
