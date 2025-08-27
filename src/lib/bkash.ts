@@ -1,6 +1,5 @@
 
 import 'server-only';
-import { logger } from './logger';
 import type { AppSettings } from '@/types';
 
 async function getBkashToken(settings: AppSettings): Promise<string> {
@@ -13,7 +12,7 @@ async function getBkashToken(settings: AppSettings): Promise<string> {
     } = settings;
 
     if (!bKashAppKey || !bKashAppSecret || !bKashUsername || !bKashPassword) {
-        logger.error('bKash credentials are not configured.');
+        console.error('bKash credentials are not configured.');
         throw new Error('bKash credentials are not configured.');
     }
 
@@ -39,10 +38,10 @@ async function getBkashToken(settings: AppSettings): Promise<string> {
     const data = await response.json();
 
     if (!response.ok || !data.id_token) {
-        logger.error('bKash token grant failed:', data);
+        console.error('bKash token grant failed:', data);
         throw new Error(data.statusMessage || 'Failed to get bKash token.');
     }
-    logger.info('bKash token granted successfully.');
+    console.info('bKash token granted successfully.');
     return data.id_token;
 }
 
@@ -50,7 +49,7 @@ export async function createPayment(paymentRequest: any, settings: AppSettings) 
     const { bKashAppKey, bKashMode } = settings;
     
     if (!bKashAppKey) {
-        logger.error('bKash App Key is not configured.');
+        console.error('bKash App Key is not configured.');
         throw new Error('bKash App Key is not configured.');
     }
 
@@ -75,13 +74,13 @@ export async function createPayment(paymentRequest: any, settings: AppSettings) 
     const data = await response.json();
 
     if (response.ok && data.statusCode === '0000') {
-        logger.info('bKash payment creation successful.', { paymentID: data.paymentID });
+        console.info('bKash payment creation successful.', { paymentID: data.paymentID });
         return {
             bkashURL: data.bkashURL,
             paymentID: data.paymentID
         };
     } else {
-        logger.error("bKash create payment failed:", data);
+        console.error("bKash create payment failed:", data);
         throw new Error(data.statusMessage || 'Failed to create bKash payment.');
     }
 }
@@ -90,7 +89,7 @@ export async function executePayment(paymentID: string, settings: AppSettings) {
     const { bKashAppKey, bKashMode } = settings;
     
     if (!bKashAppKey) {
-         logger.error('bKash App Key is not configured.');
+         console.error('bKash App Key is not configured.');
         throw new Error('bKash App Key is not configured.');
     }
     
@@ -115,10 +114,10 @@ export async function executePayment(paymentID: string, settings: AppSettings) {
     const data = await response.json();
     
     if (response.ok && data.statusCode === '0000') {
-        logger.info('bKash payment execution successful.', { paymentID, transactionStatus: data.transactionStatus });
+        console.info('bKash payment execution successful.', { paymentID, transactionStatus: data.transactionStatus });
         return data;
     } else {
-        logger.error("bKash execute payment failed:", data);
+        console.error("bKash execute payment failed:", data);
         throw new Error(data.statusMessage || 'Failed to execute bKash payment.');
     }
 }

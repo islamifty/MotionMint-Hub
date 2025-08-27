@@ -6,7 +6,6 @@ import { readDb } from '@/lib/db';
 import { sendEmail } from '@/lib/email';
 import { sendSms } from '@/lib/sms';
 import { encrypt } from '@/lib/session'; 
-import { logger } from '@/lib/logger';
 import { getBaseUrl } from '@/lib/url';
 
 const resetSchema = z.object({
@@ -36,7 +35,7 @@ export async function sendPasswordResetNotification(data: unknown) {
 
         if (!user) {
             // Don't reveal if a user exists or not for security reasons
-            logger.warn(`Password reset requested for non-existent account: ${identifier}`);
+            console.warn(`Password reset requested for non-existent account: ${identifier}`);
             return { success: true };
         }
 
@@ -57,20 +56,20 @@ export async function sendPasswordResetNotification(data: unknown) {
                     <p>If you did not request this, please ignore this email.</p>
                 `,
             });
-            logger.info(`Password reset link sent to ${user.email}`);
+            console.info(`Password reset link sent to ${user.email}`);
         } else if (user.phone) {
             // For phone, sending a link via SMS is often better than OTP for this flow
              await sendSms({
                 to: user.phone,
                 message: `Hello ${user.name}, to reset your password, please visit this link: ${resetLink}`,
             });
-            logger.info(`Password reset link sent to ${user.phone}`);
+            console.info(`Password reset link sent to ${user.phone}`);
         }
 
         return { success: true };
 
     } catch (error: any) {
-        logger.error("Failed to send password reset notification:", { error: error.message, identifier });
+        console.error("Failed to send password reset notification:", { error: error.message, identifier });
         // Return success to avoid leaking information about system capabilities
         return { success: true };
     }

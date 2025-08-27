@@ -5,7 +5,6 @@ import { createPayment as createBkashPayment } from '@/lib/bkash';
 import { readDb } from '@/lib/db';
 import type { Project, User } from '@/types';
 import { getSession } from '@/lib/session';
-import { logger } from '@/lib/logger';
 import { getBaseUrl } from '@/lib/url';
 
 export async function getProjectDetails(projectId: string): Promise<{ project: Project | null, user: User | null }> {
@@ -43,18 +42,18 @@ export async function initiateBkashPayment(projectId: string) {
             merchantInvoiceNumber: project.orderId,
         };
         
-        logger.info('Initiating bKash payment', { projectId: project.id, orderId: project.orderId });
+        console.info('Initiating bKash payment', { projectId: project.id, orderId: project.orderId });
         const result = await createBkashPayment(paymentData, db.settings);
 
         if (result && result.bkashURL) {
-            logger.info('bKash payment initiated successfully', { projectId: project.id });
+            console.info('bKash payment initiated successfully', { projectId: project.id });
             return { success: true, paymentURL: result.bkashURL };
         } else {
-            logger.error('bKash payment initiation failed:', result);
+            console.error('bKash payment initiation failed:', result);
             return { success: false, error: 'Could not initiate bKash payment.' };
         }
     } catch (error: any) {
-        logger.error('Error in initiateBkashPayment:', { error: error.message, projectId });
+        console.error('Error in initiateBkashPayment:', { error: error.message, projectId });
         return { success: false, error: error.message || 'An unexpected error occurred.' };
     }
 }
@@ -74,7 +73,7 @@ export async function initiatePipraPayPayment(project: Project, user: User) {
             },
         };
 
-        logger.info('Initiating PipraPay payment', chargePayload);
+        console.info('Initiating PipraPay payment', chargePayload);
         const res = await fetch(`${appUrl}/api/payments/piprapay/charge`, {
             method: 'POST',
             headers: { 
@@ -87,14 +86,14 @@ export async function initiatePipraPayPayment(project: Project, user: User) {
         const data = await res.json();
 
         if (res.ok && data.ok && data.paymentUrl) {
-            logger.info('PipraPay payment initiated successfully', { projectId: project.id, paymentUrl: data.paymentUrl });
+            console.info('PipraPay payment initiated successfully', { projectId: project.id, paymentUrl: data.paymentUrl });
             return { success: true, paymentURL: data.paymentUrl };
         } else {
-            logger.error("Failed to create PipraPay charge:", data);
+            console.error("Failed to create PipraPay charge:", data);
             return { success: false, error: data.message || 'Could not initiate PipraPay payment.' };
         }
     } catch (error: any) {
-        logger.error('Error in initiatePipraPayPayment:', { error: error.message, projectId: project.id });
+        console.error('Error in initiatePipraPayPayment:', { error: error.message, projectId: project.id });
         return { success: false, error: error.message || 'An unexpected error occurred.' };
     }
 }

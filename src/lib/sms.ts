@@ -2,7 +2,6 @@
 'use server';
 
 import 'server-only';
-import { logger } from './logger';
 import { readDb } from './db';
 import type { AppSettings } from '@/types';
 
@@ -25,7 +24,7 @@ export async function sendSms(options: SmsOptions, testConfig?: SmsConfig): Prom
     const { greenwebSmsToken } = settings;
 
     if (!greenwebSmsToken) {
-        logger.error('SMS settings (Token) are not configured in the database.');
+        console.error('SMS settings (Token) are not configured in the database.');
         throw new Error('SMS settings are not configured.');
     }
 
@@ -50,14 +49,14 @@ export async function sendSms(options: SmsOptions, testConfig?: SmsConfig): Prom
         const responseText = await response.text();
         
         if (!response.ok) {
-            logger.error(`Failed to send SMS to ${options.to}`, { response: responseText, status: response.status });
+            console.error(`Failed to send SMS to ${options.to}`, { response: responseText, status: response.status });
             throw new Error(`Unknown error from SMS gateway. Status: ${response.status}. Response: ${responseText}`);
         }
 
-        logger.info(`SMS sent successfully to ${options.to}`, { response: responseText });
+        console.info(`SMS sent successfully to ${options.to}`, { response: responseText });
 
     } catch (error: any) {
-        logger.error('Error sending SMS via greenweb.com.bd', { 
+        console.error('Error sending SMS via greenweb.com.bd', { 
             errorMessage: error.message,
         });
         throw new Error('Could not send SMS.');

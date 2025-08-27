@@ -2,7 +2,6 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { readDb, writeDb } from "@/lib/db";
-import { logger } from "@/lib/logger";
 import { sendSms } from "@/lib/sms";
 
 export async function POST(req: Request) {
@@ -10,7 +9,7 @@ export async function POST(req: Request) {
   const { piprapayWebhookVerifyKey } = db.settings;
 
   if (!piprapayWebhookVerifyKey) {
-      logger.warn("PipraPay Webhook Verification Key is not set. Cannot process webhook.");
+      console.warn("PipraPay Webhook Verification Key is not set. Cannot process webhook.");
       return NextResponse.json({ status: false, message: "Webhook service not configured." }, { status: 500 });
   }
   
@@ -21,7 +20,7 @@ export async function POST(req: Request) {
     headers["http_mh_piprapay_api_key"];
 
   if (incomingKey !== piprapayWebhookVerifyKey) {
-    logger.warn("Unauthorized webhook attempt from PipraPay", {
+    console.warn("Unauthorized webhook attempt from PipraPay", {
       ip: req.headers.get('x-forwarded-for')
     });
     return NextResponse.json({ status: false, message: "Unauthorized" }, { status: 401 });
@@ -29,7 +28,7 @@ export async function POST(req: Request) {
 
   try {
     const payload = await req.json().catch(() => ({}));
-    logger.info("PipraPay webhook received.", payload);
+    console.info("PipraPay webhook received.", payload);
     const { status, metadata } = payload;
     const projectId = metadata?.projectId;
 
@@ -49,7 +48,7 @@ export async function POST(req: Request) {
                         message: `Dear ${client.name}, your payment for project "${project.title}" has been confirmed. You can now download the final video. Thank you!`,
                     });
                 } catch (smsError) {
-                    logger.error("Failed to send payment confirmation SMS via webhook:", smsError);
+                    console.error("Failed to send payment confirmation SMS via webhook:", smsError);
                 }
             }
             await writeDb(freshDb);
@@ -59,13 +58,13 @@ export async function POST(req: Request) {
             revalidatePath('/admin/projects');
             revalidatePath('/admin/dashboard');
 
-            logger.info(`Payment status updated to 'paid' for project ${projectId} via webhook.`);
+            console.info(`Payment status updated to 'paid' for project ${projectId} via webhook.`);
         }
     }
 
     return NextResponse.json({ status: true, message: "Webhook received" });
   } catch (error) {
-    logger.error("Error processing PipraPay webhook:", { error });
+    console.error("Error processing PipraPay webhook:", { error });
     return NextResponse.json({ status: false, message: "Internal Server Error" }, { status: 500 });
   }
 }

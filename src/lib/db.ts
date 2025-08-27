@@ -1,73 +1,36 @@
 
 'use server';
 
-import fs from 'fs/promises';
-import path from 'path';
+import { kv } from '@vercel/kv';
 import type { DbData } from "@/types";
-import initialData from './db.json'; // Import the data directly
+import initialData from './db.json';
 
-// The new path for the data directory, inside the writable /tmp folder for serverless environments.
-const dataDir = path.join('/tmp', 'data');
-// The new path for the database file.
-const dbPath = path.join(dataDir, 'db.json');
-
-// This function ensures the data directory and db.json file exist.
-// If db.json doesn't exist, it copies it from the initial template.
-async function ensureDbExists(): Promise<void> {
-    try {
-        // Ensure the 'data' directory exists in /tmp.
-        await fs.mkdir(dataDir, { recursive: true });
-        // Check if the database file exists in the 'data' directory.
-        await fs.access(dbPath);
-    } catch (error: any) {
-        // If the file doesn't exist (ENOENT), create it using the imported data.
-        if (error.code === 'ENOENT') {
-            try {
-                // Use the imported JSON data to create the new file
-                await fs.writeFile(dbPath, JSON.stringify(initialData, null, 2), 'utf8');
-                console.log("Database initialized in /tmp/data folder from imported template.");
-            } catch (copyError) {
-                console.error("Failed to create initial database in /tmp/data folder:", copyError);
-                // If template writing fails, create a minimal one to prevent crashes.
-                 const minimalData: DbData = {
-                    users: [],
-                    clients: [],
-                    projects: [],
-                    settings: {}
-                };
-                 await fs.writeFile(dbPath, JSON.stringify(minimalData, null, 2), 'utf8');
-            }
-        } else {
-            // For other errors, rethrow.
-            console.error("An unexpected error occurred while ensuring DB exists:", error);
-            throw error;
-        }
-    }
-}
-
+const DB_KEY = 'db';
 
 export async function readDb(): Promise<DbData> {
-    await ensureDbExists(); // Make sure the DB file is in place before reading.
     try {
-        const fileContents = await fs.readFile(dbPath, 'utf8');
-        // If the file is empty for some reason, return a default structure.
-        if (!fileContents.trim()) {
-            return { users: [], clients: [], projects: [], settings: {} };
+        let dbData: DbData | null = await kv.get(DB_KEY);
+        
+        if (!dbData) {
+            console.log("No data found in Vercel KV. Initializing from db.json template.");
+            // Set the initial data from the JSON file into KV
+            await kv.set(DB_KEY, initialData);
+            dbData = initialData;
         }
-        return JSON.parse(fileContents);
+        
+        return dbData;
     } catch (error) {
-        console.error("An unexpected error occurred while reading the database:", error);
+        console.error("An unexpected error occurred while reading from Vercel KV:", error);
         // Return a safe default structure to prevent the app from crashing.
         return { users: [], clients: [], projects: [], settings: {} };
     }
 }
 
 export async function writeDb(data: DbData): Promise<void> {
-    await ensureDbExists(); // Ensure directory is there before writing.
     try {
-        await fs.writeFile(dbPath, JSON.stringify(data, null, 2), 'utf8');
+        await kv.set(DB_KEY, data);
     } catch (error) {
-        console.error("Error writing to db.json:", error);
+        console.error("Error writing to Vercel KV:", error);
         throw new Error("Could not write to database.");
     }
 }

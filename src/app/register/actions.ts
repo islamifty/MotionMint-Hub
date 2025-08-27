@@ -7,7 +7,6 @@ import type { User, Client } from '@/types';
 import { revalidatePath } from "next/cache";
 import { createSession, getSession } from "@/lib/session";
 import { sendSms } from '@/lib/sms';
-import { logger } from '@/lib/logger';
 import { hashPassword } from '@/lib/password';
 
 const registerSchema = z.object({
@@ -35,10 +34,10 @@ export async function sendOtp(phone: string) {
             message: `Your MotionMint Hub verification code is: ${otp}`,
         });
         
-        logger.info(`OTP sent to ${phone}`);
+        console.info(`OTP sent to ${phone}`);
         return { success: true };
     } catch (error: any) {
-        logger.error('Failed to send OTP SMS', { error: error.message, phone });
+        console.error('Failed to send OTP SMS', { error: error.message, phone });
         return { success: false, error: "Could not send OTP. Please try again later." };
     }
 }
@@ -114,7 +113,7 @@ export async function addNewUser(userData: unknown) {
 
         return { success: true };
     } catch (error) {
-        logger.error("Error adding user/client to mock data: ", { error, email });
+        console.error("Error adding user/client to mock data: ", { error, email });
         return { success: false, error: "Failed to save user profile." };
     }
 }
