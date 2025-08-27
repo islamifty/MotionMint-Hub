@@ -1,22 +1,39 @@
 
 'use server';
 
-import { kv } from '@vercel/kv';
+import { createClient } from 'redis';
 import type { DbData } from "@/types";
 import initialData from './db.json';
+
+// Singleton pattern to ensure only one client is created
+let redisClient: ReturnType<typeof createClient> | null = null;
+
+async function getClient() {
+    if (!redisClient) {
+        if (!process.env.KV_URL) {
+            throw new Error("KV_URL environment variable is not set.");
+        }
+        redisClient = createClient({
+            url: process.env.KV_URL
+        });
+        redisClient.on('error', err => console.error('Redis Client Error', err));
+        await redisClient.connect();
+    }
+    return redisClient;
+}
 
 const DB_KEY = 'db';
 
 export async function readDb(): Promise<DbData> {
     try {
-        let dbData: any = await kv.hgetall(DB_KEY);
+        const client = await getClient();
+        let dbData: any = await client.hGetAll(DB_KEY);
         
         if (!dbData || Object.keys(dbData).length === 0) {
             console.log("No data found in Vercel KV. Initializing from db.json template.");
-            // Set the initial data from the JSON file into KV using hmset
             const initialDbData: DbData = initialData as DbData;
             
-            // Ensure all parts of the initial data are stringified for hmset
+            // Stringify each part of the initial data for hSet
             const preparedData: { [key: string]: string } = {
                 users: JSON.stringify(initialDbData.users || []),
                 clients: JSON.stringify(initialDbData.clients || []),
@@ -24,7 +41,7 @@ export async function readDb(): Promise<DbData> {
                 settings: JSON.stringify(initialDbData.settings || {}),
             };
 
-            await kv.hmset(DB_KEY, preparedData);
+            await client.hSet(DB_KEY, preparedData);
             dbData = preparedData;
         }
 
@@ -45,14 +62,15 @@ export async function readDb(): Promise<DbData> {
 
 export async function writeDb(data: DbData): Promise<void> {
     try {
+        const client = await getClient();
         // Stringify each part of the data before writing to the hash
-        const dataToWrite = {
+        const dataToWrite: { [key: string]: string } = {
             users: JSON.stringify(data.users || []),
             clients: JSON.stringify(data.clients || []),
             projects: JSON.stringify(data.projects || []),
             settings: JSON.stringify(data.settings || {}),
         };
-        await kv.hmset(DB_KEY, dataToWrite);
+        await client.hSet(DB_KEY, dataToWrite);
     } catch (error) {
         console.error("Error writing to Vercel KV:", error);
         throw new Error("Could not write to database.");
