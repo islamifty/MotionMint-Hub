@@ -49,7 +49,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import {
   Dialog,
@@ -242,13 +241,24 @@ function FileManagerComponent({
 
   const refreshFiles = () => {
     startTransition(async () => {
-      const { files: newFiles, error: newError } = await getDirectoryContents(
-        path
-      );
-      setFiles(newFiles);
-      setError(newError);
+      try {
+        const newFiles = await getDirectoryContents(path);
+        setFiles(newFiles);
+        setError(null);
+      } catch (e: any) {
+        setFiles([]);
+        setError(e.message);
+      }
     });
   };
+  
+  // This effect syncs the server-fetched data with the client state
+  // It's important for handling browser back/forward navigation correctly
+  React.useEffect(() => {
+    setFiles(initialFiles);
+    setError(initialError);
+  }, [initialFiles, initialError]);
+
 
   const handleCreateFolder = async () => {
     if (!newFolderName) return;
@@ -445,7 +455,8 @@ function FileManagerComponent({
   );
 }
 
-// A Suspense boundary is required for useSearchParams
+// This is the main component exported from this file.
+// It wraps the client component that uses searchParams in a Suspense boundary.
 export default function FileManager({
   initialFiles,
   initialError,
