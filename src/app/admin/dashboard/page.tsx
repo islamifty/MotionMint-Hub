@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -27,6 +28,13 @@ import { formatDistanceToNow } from "date-fns";
 
 type PaymentStatus = "pending" | "paid" | "overdue";
 
+const iconMap: { [key: string]: React.ElementType } = {
+  "Total Revenue": DollarSign,
+  "Active Projects": FolderKanban,
+  "Total Clients": Users,
+  "Pending Payments": CreditCard,
+};
+
 export default function DashboardPage() {
   const [stats, setStats] = useState<StatCardType[]>([]);
   const [recentProjects, setRecentProjects] = useState<Project[]>([]);
@@ -36,12 +44,17 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function loadData() {
-      const data = await getDashboardStats();
-      setStats(data.statCards);
-      setRecentProjects(data.recentProjects);
-      setOverdueProjects(data.overdueProjects);
-      setStatusCounts(data.statusCounts);
-      setLoading(false);
+      try {
+        const data = await getDashboardStats();
+        setStats(data.statCards);
+        setRecentProjects(data.recentProjects);
+        setOverdueProjects(data.overdueProjects);
+        setStatusCounts(data.statusCounts);
+      } catch (error) {
+        console.error("Failed to load dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
     }
     loadData();
   }, []);
@@ -81,7 +94,7 @@ export default function DashboardPage() {
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((card) => (
-          <StatCard key={card.title} {...card} />
+          <StatCard key={card.title} {...card} icon={iconMap[card.title]} />
         ))}
       </div>
 

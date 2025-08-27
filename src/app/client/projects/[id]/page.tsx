@@ -36,17 +36,22 @@ export default function ProjectDetailPage() {
   useEffect(() => {
     if (!id) return;
     async function fetchProject() {
+      try {
         const [projectData, pageSettings] = await Promise.all([
              getProjectDetails(id),
-             getSettings() // Fetch settings from the server action
+             getSettings()
         ]);
 
-        if (projectData.project && projectData.user) {
+        if (projectData && projectData.project && projectData.user) {
             setProject(projectData.project);
             setUser(projectData.user);
             setSettings(pageSettings);
         }
+      } catch (error) {
+        console.error("Failed to fetch project details:", error);
+      } finally {
         setLoading(false);
+      }
     }
     fetchProject();
   }, [id]);
