@@ -1,10 +1,11 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { File, PlusCircle, Trash2, Edit } from "lucide-react";
+import { File, PlusCircle, Trash2, Edit, Search } from "lucide-react";
 import { format } from "date-fns";
+import { useDebounce } from "use-debounce";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -40,6 +41,22 @@ import { Badge } from "@/components/ui/badge";
 import type { Project } from "@/types";
 import { deleteProjects, getProjects } from "./actions";
 import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+
+// Utility to generate CSV from data
+function generateCsv(data: Project[]) {
+    if (data.length === 0) return "";
+    const headers = "Project Title,Client Name,Status,Expiry Date,Amount (BDT),Created At\n";
+    const rows = data.map(p => 
+        `"${p.title.replace(/"/g, '""')}",` +
+        `"${p.clientName.replace(/"/g, '""')}",` +
+        `"${p.paymentStatus}",` +
+        `"${format(new Date(p.expiryDate), "yyyy-MM-dd")}",` +
+        `"${p.amount}",` +
+        `"${format(new Date(p.createdAt), "yyyy-MM-dd")}"`
+    ).join("\n");
+    return headers + rows;
+}
 
 const ProjectTable = ({ 
   projects,
@@ -71,7 +88,7 @@ const ProjectTable = ({
       </TableRow>
     </TableHeader>
     <TableBody>
-      {projects.map((project) => (
+      {projects.length > 0 ? projects.map((project) => (
         <TableRow key={project.id} data-state={selectedProjects.includes(project.id) && "selected"}>
           <TableCell>
             <Checkbox
@@ -98,7 +115,13 @@ const ProjectTable = ({
               </Button>
           </TableCell>
         </TableRow>
-      ))}
+      )) : (
+        <TableRow>
+          <TableCell colSpan={7} className="h-24 text-center">
+            No projects found for this filter.
+          </TableCell>
+        </TableRow>
+      )}
     </TableBody>
   </Table>
 );
@@ -106,6 +129,9 @@ const ProjectTable = ({
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
+  const [activeTab, setActiveTab] = useState("all");
   const { toast } = useToast();
   
   useEffect(() => {
@@ -116,18 +142,28 @@ export default function ProjectsPage() {
     loadProjects();
   }, []);
   
-  const [activeTab, setActiveTab] = useState("all");
-
   const handleSelectionChange = (id: string, checked: boolean) => {
     setSelectedProjects((prev) =>
       checked ? [...prev, id] : prev.filter((pId) => pId !== id)
     );
   };
 
+  const filteredProjects = useMemo(() => {
+    return projects
+      .filter(p => {
+        if (activeTab === "all") return true;
+        return p.paymentStatus === activeTab;
+      })
+      .filter(p => 
+        p.title.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        p.clientName.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+      );
+  }, [projects, activeTab, debouncedSearchTerm]);
+
+
   const handleSelectAll = (checked: boolean) => {
-    const currentProjects = getFilteredProjects(activeTab);
     if (checked) {
-      setSelectedProjects(currentProjects.map((p) => p.id));
+      setSelectedProjects(filteredProjects.map((p) => p.id));
     } else {
       setSelectedProjects([]);
     }
@@ -151,95 +187,105 @@ export default function ProjectsPage() {
     }
   };
   
-  const getFilteredProjects = (tab: string): Project[] => {
-    switch(tab) {
-      case 'paid': return projects.filter(p => p.paymentStatus === 'paid');
-      case 'pending': return projects.filter(p => p.paymentStatus === 'pending');
-      case 'overdue': return projects.filter(p => p.paymentStatus === 'overdue');
-      default: return projects;
+  const handleExport = () => {
+    const csvData = generateCsv(filteredProjects);
+    const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `projects-${activeTab}-${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
-  }
-  
-  const allProjects = getFilteredProjects("all");
-  const paidProjects = getFilteredProjects("paid");
-  const pendingProjects = getFilteredProjects("pending");
-  const overdueProjects = getFilteredProjects("overdue");
+  };
 
   return (
     <Tabs defaultValue="all" onValueChange={(value) => { setActiveTab(value); setSelectedProjects([]); }}>
-      <div className="flex items-center justify-between mb-4">
-        <div>
+      <div className="space-y-4">
+         <div>
           <h1 className="text-2xl font-headline font-bold tracking-tight">Projects</h1>
           <p className="text-muted-foreground">Manage your projects and view their status.</p>
         </div>
-        <div className="flex items-center gap-2">
-          {selectedProjects.length > 0 && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button size="sm" variant="destructive" className="h-8 gap-1">
-                  <Trash2 className="h-3.5 w-3.5" />
-                  <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                    Delete ({selectedProjects.length})
-                  </span>
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete the selected {selectedProjects.length} project(s) and their associated files from Nextcloud.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
-          <Button size="sm" variant="outline" className="h-8 gap-1">
-            <File className="h-3.5 w-3.5" />
-            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-              Export
-            </span>
-          </Button>
-          <Button size="sm" className="h-8 gap-1" asChild>
-            <Link href="/admin/projects/new">
-              <PlusCircle className="h-3.5 w-3.5" />
-              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                Add Project
-              </span>
-            </Link>
-          </Button>
+
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search by title or client..."
+                className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[300px]"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+             <TabsList>
+              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="paid">Paid</TabsTrigger>
+              <TabsTrigger value="pending">Pending</TabsTrigger>
+              <TabsTrigger value="overdue">Overdue</TabsTrigger>
+            </TabsList>
+          </div>
+          <div className="flex items-center gap-2">
+            {selectedProjects.length > 0 && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="sm" variant="destructive" className="h-9 gap-1">
+                    <Trash2 className="h-3.5 w-3.5" />
+                    <span>Delete ({selectedProjects.length})</span>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete the selected {selectedProjects.length} project(s) and their associated files from Nextcloud.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+            <Button size="sm" variant="outline" className="h-9 gap-1" onClick={handleExport}>
+              <File className="h-3.5 w-3.5" />
+              <span>Export</span>
+            </Button>
+            <Button size="sm" className="h-9 gap-1" asChild>
+              <Link href="/admin/projects/new">
+                <PlusCircle className="h-3.5 w-3.5" />
+                <span>Add Project</span>
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
-
-      <TabsList>
-        <TabsTrigger value="all">All</TabsTrigger>
-        <TabsTrigger value="paid">Paid</TabsTrigger>
-        <TabsTrigger value="pending">Pending</TabsTrigger>
-        <TabsTrigger value="overdue">Overdue</TabsTrigger>
-      </TabsList>
+     
 
       <Card className="mt-4">
-        <TabsContent value="all">
+        <TabsContent value="all" className="mt-0">
           <CardContent className="p-0">
-            <ProjectTable projects={allProjects} selectedProjects={selectedProjects} onSelectionChange={handleSelectionChange} onSelectAll={handleSelectAll} />
+            <ProjectTable projects={filteredProjects} selectedProjects={selectedProjects} onSelectionChange={handleSelectionChange} onSelectAll={handleSelectAll} />
           </CardContent>
         </TabsContent>
-        <TabsContent value="paid">
+        <TabsContent value="paid" className="mt-0">
           <CardContent className="p-0">
-            <ProjectTable projects={paidProjects} selectedProjects={selectedProjects} onSelectionChange={handleSelectionChange} onSelectAll={handleSelectAll} />
+            <ProjectTable projects={filteredProjects} selectedProjects={selectedProjects} onSelectionChange={handleSelectionChange} onSelectAll={handleSelectAll} />
           </CardContent>
         </TabsContent>
-        <TabsContent value="pending">
+        <TabsContent value="pending" className="mt-0">
           <CardContent className="p-0">
-            <ProjectTable projects={pendingProjects} selectedProjects={selectedProjects} onSelectionChange={handleSelectionChange} onSelectAll={handleSelectAll} />
+            <ProjectTable projects={filteredProjects} selectedProjects={selectedProjects} onSelectionChange={handleSelectionChange} onSelectAll={handleSelectAll} />
           </CardContent>
         </TabsContent>
-        <TabsContent value="overdue">
+        <TabsContent value="overdue" className="mt-0">
           <CardContent className="p-0">
-            <ProjectTable projects={overdueProjects} selectedProjects={selectedProjects} onSelectionChange={handleSelectionChange} onSelectAll={handleSelectAll} />
+            <ProjectTable projects={filteredProjects} selectedProjects={selectedProjects} onSelectionChange={handleSelectionChange} onSelectAll={handleSelectAll} />
           </CardContent>
         </TabsContent>
       </Card>

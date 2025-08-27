@@ -8,7 +8,8 @@ import type { Project } from '@/types';
 
 export async function getProjects(): Promise<Project[]> {
     const db = await readDb();
-    return db.projects;
+    // Sort by most recent first
+    return db.projects.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
 

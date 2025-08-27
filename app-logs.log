@@ -37,3 +37,37 @@
 }
 ---END DATA---
 
+2025-08-27T18:49:56.761Z [ERROR] - SMS settings (Token) are not configured in the database.
+
+2025-08-27T18:50:11.440Z [INFO] - User logged in successfully
+---DATA---
+{
+  "userId": "user-1756320555652",
+  "email": "test@test.com"
+}
+---END DATA---
+
+2025-08-27T18:50:37.166Z [INFO] - Initiating bKash payment
+---DATA---
+{
+  "projectId": "proj-1756320595226",
+  "orderId": "ORD-1756320595226"
+}
+---END DATA---
+
+2025-08-27T18:50:37.657Z [INFO] - bKash token granted successfully.
+
+2025-08-27T18:50:37.859Z [INFO] - bKash payment creation successful.
+---DATA---
+{
+  "paymentID": "TR0011wqc4sm71756320637822"
+}
+---END DATA---
+
+2025-08-27T18:50:37.859Z [INFO] - bKash payment initiated successfully
+---DATA---
+{
+  "projectId": "proj-1756320595226"
+}
+---END DATA---
+
