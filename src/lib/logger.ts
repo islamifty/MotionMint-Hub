@@ -1,7 +1,8 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-const logFilePath = path.join(process.cwd(), 'app-logs.log');
+// Use the /tmp directory for logs, as it's writable in serverless environments.
+const logFilePath = path.join('/tmp', 'app-logs.log');
 
 type LogLevel = 'INFO' | 'WARN' | 'ERROR';
 
