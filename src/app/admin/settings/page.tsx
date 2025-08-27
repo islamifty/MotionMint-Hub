@@ -47,7 +47,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useBranding } from "@/context/BrandingContext";
-import { Link as LinkIcon, Loader2, CheckCircle, AlertCircle, Save } from "lucide-react";
+import { Link as LinkIcon, Loader2, CheckCircle, AlertCircle, Save, Eye, EyeOff } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
 import {
@@ -103,6 +103,26 @@ const StatusIndicator = ({ isConfigured }: { isConfigured: boolean }) => (
     </div>
 );
 
+const PasswordInput = ({ field, placeholder }: { field: any, placeholder?: string }) => {
+    const [isVisible, setIsVisible] = useState(false);
+    return (
+        <div className="relative">
+            <FormControl>
+                <Input type={isVisible ? 'text' : 'password'} placeholder={placeholder} {...field} />
+            </FormControl>
+            <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 text-muted-foreground"
+                onClick={() => setIsVisible(!isVisible)}
+            >
+                {isVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </Button>
+        </div>
+    );
+};
+
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -113,7 +133,6 @@ export default function SettingsPage() {
   const [dbStatus, setDbStatus] = useState({
       nextcloud: false, bkash: false, piprapay: false, smtp: false, sms: false
   });
-  const [activeTab, setActiveTab] = useState<SectionType>('general');
   
   const form = useForm<SettingsFormValues>({
       resolver: zodResolver(settingsSchema),
@@ -148,19 +167,22 @@ export default function SettingsPage() {
 
 
   const handleSave: SubmitHandler<SettingsFormValues> = async (data) => {
-    let result;
-    const section = activeTab;
+    const activeTab = document.querySelector('[data-state="active"]')?.getAttribute('data-value') as SectionType | undefined;
+    if (!activeTab) return;
 
-    switch (section) {
-        case 'nextcloud': result = await saveNextcloudSettings(data); break;
-        case 'bkash': result = await saveBKashSettings(data); break;
-        case 'piprapay': result = await savePipraPaySettings(data); break;
-        case 'smtp': result = await saveSmtpSettings(data); break;
-        case 'sms': result = await saveSmsSettings(data); break;
+    let result;
+    const sectionData = form.getValues();
+
+    switch (activeTab) {
+        case 'nextcloud': result = await saveNextcloudSettings(sectionData); break;
+        case 'bkash': result = await saveBKashSettings(sectionData); break;
+        case 'piprapay': result = await savePipraPaySettings(sectionData); break;
+        case 'smtp': result = await saveSmtpSettings(sectionData); break;
+        case 'sms': result = await saveSmsSettings(sectionData); break;
         case 'general': 
-            result = await saveGeneralSettings(data);
-            if (result.success && data.logoUrl) {
-                setBranding({ logoUrl: data.logoUrl });
+            result = await saveGeneralSettings(sectionData);
+            if (result.success && sectionData.logoUrl) {
+                setBranding({ logoUrl: sectionData.logoUrl });
             }
             break;
         default: return;
@@ -204,26 +226,24 @@ export default function SettingsPage() {
     testKey: string | null,
     fields: React.ReactNode
   ) => (
-     <form onSubmit={form.handleSubmit(handleSave)}>
-        <Card>
-            <CardHeader>
-                <CardTitle>{title}</CardTitle>
-                <CardDescription>{description}</CardDescription>
-                {statusKey && <div className="pt-2"><StatusIndicator isConfigured={dbStatus[statusKey]} /></div>}
-            </CardHeader>
-            <CardContent className="space-y-6">{fields}</CardContent>
-            <CardFooter className="gap-2">
-                <Button type="submit" disabled={form.formState.isSubmitting}>
-                    {form.formState.isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : <><Save className="mr-2 h-4 w-4" /> Save {title.split(' ')[0]} Settings</>}
-                </Button>
-                {testKey && (
-                <Button type="button" onClick={() => handleTestConnection(testKey)} variant="outline" disabled={!!isTesting}>
-                    {isTesting === testKey ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Testing...</> : `Test ${title.split(' ')[0]} Connection`}
-                </Button>
-                )}
-            </CardFooter>
-        </Card>
-     </form>
+     <Card>
+        <CardHeader>
+            <CardTitle>{title}</CardTitle>
+            <CardDescription>{description}</CardDescription>
+            {statusKey && <div className="pt-2"><StatusIndicator isConfigured={dbStatus[statusKey]} /></div>}
+        </CardHeader>
+        <CardContent className="space-y-6">{fields}</CardContent>
+        <CardFooter className="gap-2">
+            <Button type="submit" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : <><Save className="mr-2" /> Save {title.split(' ')[0]} Settings</>}
+            </Button>
+            {testKey && (
+            <Button type="button" onClick={() => handleTestConnection(testKey)} variant="outline" disabled={!!isTesting}>
+                {isTesting === testKey ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Testing...</> : `Test ${title.split(' ')[0]} Connection`}
+            </Button>
+            )}
+        </CardFooter>
+     </Card>
   );
 
   return (
@@ -233,7 +253,8 @@ export default function SettingsPage() {
         <p className="text-muted-foreground">Manage your integration settings and application appearance.</p>
       </div>
       <Form {...form}>
-            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as SectionType)}>
+        <form onSubmit={form.handleSubmit(handleSave)}>
+            <Tabs defaultValue="general">
                 <TabsList className="flex-wrap h-auto justify-start">
                     <TabsTrigger value="general">General</TabsTrigger>
                     <TabsTrigger value="nextcloud">Nextcloud</TabsTrigger>
@@ -279,46 +300,46 @@ export default function SettingsPage() {
                 <TabsContent value="nextcloud">
                     {renderCard("Nextcloud Integration", "Configure your Nextcloud instance for file management.", 'nextcloud', 'nextcloud', (
                         <>
-                            <FormField control={form.control} name="nextcloudUrl" render={({ field }) => (<FormItem><FormLabel>WebDAV URL</FormLabel><FormControl><Input placeholder="https://your-nextcloud.com/remote.php/dav/files/username" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={form.control} name="nextcloudUser" render={({ field }) => (<FormItem><FormLabel>Username</FormLabel><FormControl><Input placeholder="nextcloud_user" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={form.control} name="nextcloudPassword" render={({ field }) => (<FormItem><FormLabel>App Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormDescription>Use a dedicated app password from your Nextcloud security settings.</FormDescription><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="nextcloudUrl" render={({ field }) => (<FormItem className="space-y-2"><FormLabel>WebDAV URL</FormLabel><FormControl><Input placeholder="https://your-nextcloud.com/remote.php/dav/files/username" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="nextcloudUser" render={({ field }) => (<FormItem className="space-y-2"><FormLabel>Username</FormLabel><FormControl><Input placeholder="nextcloud_user" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="nextcloudPassword" render={({ field }) => (<FormItem className="space-y-2"><FormLabel>App Password</FormLabel><PasswordInput field={field} /><FormDescription>Use a dedicated app password from your Nextcloud security settings.</FormDescription><FormMessage /></FormItem>)} />
                         </>
                     ))}
                 </TabsContent>
                 <TabsContent value="bkash">
                     {renderCard("bKash Gateway", "Configure bKash Tokenized Checkout credentials.", 'bkash', 'bkash', (
                         <>
-                            <FormField control={form.control} name="bKashAppKey" render={({ field }) => (<FormItem><FormLabel>App Key</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={form.control} name="bKashAppSecret" render={({ field }) => (<FormItem><FormLabel>App Secret</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={form.control} name="bKashUsername" render={({ field }) => (<FormItem><FormLabel>Username</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={form.control} name="bKashPassword" render={({ field }) => (<FormItem><FormLabel>Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={form.control} name="bKashMode" render={({ field }) => ( <FormItem><FormLabel>Mode</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select Mode" /></SelectTrigger></FormControl><SelectContent><SelectItem value="sandbox">Sandbox</SelectItem><SelectItem value="production">Production</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="bKashAppKey" render={({ field }) => (<FormItem className="space-y-2"><FormLabel>App Key</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="bKashAppSecret" render={({ field }) => (<FormItem className="space-y-2"><FormLabel>App Secret</FormLabel><PasswordInput field={field} /><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="bKashUsername" render={({ field }) => (<FormItem className="space-y-2"><FormLabel>Username</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="bKashPassword" render={({ field }) => (<FormItem className="space-y-2"><FormLabel>Password</FormLabel><PasswordInput field={field} /><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="bKashMode" render={({ field }) => ( <FormItem className="space-y-2"><FormLabel>Mode</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select Mode" /></SelectTrigger></FormControl><SelectContent><SelectItem value="sandbox">Sandbox</SelectItem><SelectItem value="production">Production</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
                         </>
                     ))}
                 </TabsContent>
                 <TabsContent value="piprapay">
                     {renderCard("PipraPay Gateway", "Configure your PipraPay credentials.", 'piprapay', 'piprapay', (
                          <>
-                            <FormField control={form.control} name="piprapayApiKey" render={({ field }) => (<FormItem><FormLabel>API Key</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={form.control} name="piprapayBaseUrl" render={({ field }) => (<FormItem><FormLabel>Base URL</FormLabel><FormControl><Input placeholder="https://sandbox.piprapay.com" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={form.control} name="piprapayWebhookVerifyKey" render={({ field }) => (<FormItem><FormLabel>Webhook Verification Key</FormLabel><FormControl><Input {...field} /></FormControl><FormDescription>A secret key to verify incoming webhooks from PipraPay.</FormDescription><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="piprapayApiKey" render={({ field }) => (<FormItem className="space-y-2"><FormLabel>API Key</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="piprapayBaseUrl" render={({ field }) => (<FormItem className="space-y-2"><FormLabel>Base URL</FormLabel><FormControl><Input placeholder="https://sandbox.piprapay.com" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="piprapayWebhookVerifyKey" render={({ field }) => (<FormItem className="space-y-2"><FormLabel>Webhook Verification Key</FormLabel><PasswordInput field={field} /><FormDescription>A secret key to verify incoming webhooks from PipraPay.</FormDescription><FormMessage /></FormItem>)} />
                         </>
                     ))}
                 </TabsContent>
                 <TabsContent value="smtp">
                     {renderCard("SMTP Settings", "Configure your SMTP server for sending emails.", 'smtp', 'smtp', (
                         <>
-                            <FormField control={form.control} name="smtpHost" render={({ field }) => (<FormItem><FormLabel>SMTP Host</FormLabel><FormControl><Input placeholder="smtp.example.com" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={form.control} name="smtpPort" render={({ field }) => (<FormItem><FormLabel>SMTP Port</FormLabel><FormControl><Input type="number" placeholder="587" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={form.control} name="smtpUser" render={({ field }) => (<FormItem><FormLabel>SMTP User</FormLabel><FormControl><Input placeholder="user@example.com" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={form.control} name="smtpPass" render={({ field }) => (<FormItem><FormLabel>SMTP Password</FormLabel><FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="smtpHost" render={({ field }) => (<FormItem className="space-y-2"><FormLabel>SMTP Host</FormLabel><FormControl><Input placeholder="smtp.example.com" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="smtpPort" render={({ field }) => (<FormItem className="space-y-2"><FormLabel>SMTP Port</FormLabel><FormControl><Input type="number" placeholder="587" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="smtpUser" render={({ field }) => (<FormItem className="space-y-2"><FormLabel>SMTP User</FormLabel><FormControl><Input placeholder="user@example.com" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="smtpPass" render={({ field }) => (<FormItem className="space-y-2"><FormLabel>SMTP Password</FormLabel><PasswordInput field={field} placeholder="••••••••" /><FormMessage /></FormItem>)} />
                         </>
                     ))}
                 </TabsContent>
                 <TabsContent value="sms">
                     {renderCard("SMS Gateway", "Configure Greenweb SMS gateway for sending notifications.", 'sms', null, (
                         <>
-                            <FormField control={form.control} name="greenwebSmsToken" render={({ field }) => (<FormItem><FormLabel>Token</FormLabel><FormControl><Input placeholder="Your greenweb.com.bd Token" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="greenwebSmsToken" render={({ field }) => (<FormItem className="space-y-2"><FormLabel>Token</FormLabel><PasswordInput field={field} placeholder="Your greenweb.com.bd Token" /><FormMessage /></FormItem>)} />
                              <Separator className="my-6" />
                             <div className="space-y-2">
                                 <Label htmlFor="test-phone-number">Test Phone Number</Label>
@@ -338,6 +359,7 @@ export default function SettingsPage() {
                     ))}
                 </TabsContent>
             </Tabs>
+        </form>
       </Form>
     </div>
   );
