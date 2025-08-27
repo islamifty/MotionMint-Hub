@@ -145,7 +145,7 @@ export default function SettingsPage() {
   }, [form]);
 
 
-  const handleSave = async (section: keyof AppSettings | 'general' | 'branding', data: Partial<SettingsFormValues>) => {
+  const handleSave = async (section: 'nextcloud' | 'bKash' | 'pipraPay' | 'smtp' | 'sms' | 'general', data: Partial<SettingsFormValues>) => {
     let result;
     switch (section) {
         case 'nextcloud': result = await saveNextcloudSettings(data); break;
@@ -209,7 +209,7 @@ export default function SettingsPage() {
       </CardHeader>
       <CardContent className="space-y-6">{fields}</CardContent>
       <CardFooter className="gap-2">
-        <Button onClick={() => handleSave(statusKey || 'general', form.getValues())} disabled={form.formState.isSubmitting}>
+        <Button onClick={() => handleSave(statusKey || 'general' as any, form.getValues())} disabled={form.formState.isSubmitting}>
           <Save className="mr-2 h-4 w-4" /> Save {title.split(' ')[0]} Settings
         </Button>
         {testKey && (
@@ -244,8 +244,8 @@ export default function SettingsPage() {
                         <FormField control={form.control} name="logoUrl" render={({ field }) => ( 
                             <FormItem> 
                                 <FormLabel>Custom Logo URL</FormLabel> 
-                                <div className="relative w-full"> 
-                                    <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /> 
+                                <div className="relative flex items-center">
+                                    <LinkIcon className="absolute left-3 h-4 w-4 text-muted-foreground" /> 
                                     <FormControl> 
                                         <Input placeholder="https://example.com/logo.png" className="pl-10" {...field} /> 
                                     </FormControl> 
@@ -258,8 +258,8 @@ export default function SettingsPage() {
                         <FormField control={form.control} name="whatsappLink" render={({ field }) => ( 
                             <FormItem> 
                                 <FormLabel>WhatsApp Link</FormLabel> 
-                                <div className="relative w-full"> 
-                                    <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /> 
+                                <div className="relative flex items-center">
+                                    <LinkIcon className="absolute left-3 h-4 w-4 text-muted-foreground" /> 
                                     <FormControl> 
                                         <Input placeholder="https://wa.me/1234567890" className="pl-10" {...field} /> 
                                     </FormControl> 
@@ -287,7 +287,7 @@ export default function SettingsPage() {
                         <FormField control={form.control} name="bKashAppSecret" render={({ field }) => (<FormItem><FormLabel>App Secret</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
                         <FormField control={form.control} name="bKashUsername" render={({ field }) => (<FormItem><FormLabel>Username</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                         <FormField control={form.control} name="bKashPassword" render={({ field }) => (<FormItem><FormLabel>Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name="bKاشMode" render={({ field }) => ( <FormItem><FormLabel>Mode</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select Mode" /></SelectTrigger></FormControl><SelectContent><SelectItem value="sandbox">Sandbox</SelectItem><SelectItem value="production">Production</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="bKashMode" render={({ field }) => ( <FormItem><FormLabel>Mode</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select Mode" /></SelectTrigger></FormControl><SelectContent><SelectItem value="sandbox">Sandbox</SelectItem><SelectItem value="production">Production</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
                     </>
                 ))}
             </TabsContent>
