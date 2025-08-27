@@ -254,10 +254,10 @@ function FileManagerComponent({
   
   // This effect syncs the server-fetched data with the client state
   // It's important for handling browser back/forward navigation correctly
-  React.useEffect(() => {
+  useState(() => {
     setFiles(initialFiles);
     setError(initialError);
-  }, [initialFiles, initialError]);
+  });
 
 
   const handleCreateFolder = async () => {
