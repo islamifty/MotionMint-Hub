@@ -6,5 +6,8 @@ export async function GET() {
   if (session?.user) {
     return NextResponse.json({ user: session.user });
   }
-  return NextResponse.json({ user: null }, { status: 401 });
+  // Return 200 with user: null for unauthenticated requests
+  // This prevents log warnings from automated probes (like Google's)
+  // while still correctly indicating no user is logged in.
+  return NextResponse.json({ user: null }, { status: 200 });
 }
