@@ -96,6 +96,7 @@ export default function SetupPage() {
   const onSubmit = async (data: SetupFormValues) => {
     setIsLoading(true);
     const result = await createFirstAdmin(data);
+    setIsLoading(false); // Stop loading indicator immediately after server response
 
     if (result.success) {
       toast({
@@ -109,7 +110,6 @@ export default function SetupPage() {
         title: "Setup Failed",
         description: result.error || "An unexpected error occurred.",
       });
-      setIsLoading(false);
     }
   };
 
