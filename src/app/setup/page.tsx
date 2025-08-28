@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ShieldCheck, Loader2, Server, ServerCrash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,7 +26,6 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { createFirstAdmin } from "./actions";
 import { Logo } from "@/components/shared/Logo";
-import { checkDbConnection } from "@/lib/db";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -38,11 +37,23 @@ const setupSchema = z.object({
 
 type SetupFormValues = z.infer<typeof setupSchema>;
 
-type ConnectionStatus = 'checking' | 'connected' | 'failed';
+type ConnectionStatus = 'checking' | 'connected' | 'failed' | 'unconfigured';
 
 function ConnectionStatusIndicator({ status }: { status: ConnectionStatus }) {
     if (status === 'checking') {
         return <Skeleton className="h-5 w-48" />;
+    }
+
+    if (status === 'unconfigured') {
+         return (
+            <Alert variant="destructive">
+                <ServerCrash className="h-4 w-4" />
+                <AlertTitle>Database Not Configured</AlertTitle>
+                <AlertDescription>
+                   Please set TURSO_DATABASE_URL and TURSO_AUTH_TOKEN in your Vercel environment variables.
+                </AlertDescription>
+            </Alert>
+        );
     }
 
     if (status === 'failed') {
@@ -51,7 +62,7 @@ function ConnectionStatusIndicator({ status }: { status: ConnectionStatus }) {
                 <ServerCrash className="h-4 w-4" />
                 <AlertTitle>Connection Failed</AlertTitle>
                 <AlertDescription>
-                   Could not connect to the database. Please check your Vercel KV configuration.
+                   Could not connect to the Turso database. Please check your credentials and network.
                 </AlertDescription>
             </Alert>
         );
@@ -68,21 +79,39 @@ function ConnectionStatusIndicator({ status }: { status: ConnectionStatus }) {
     );
 }
 
+// Dummy check function, real check happens in middleware and on form submit
+async function checkTursoConnection(): Promise<{ ok: boolean }> {
+  try {
+     const response = await fetch(`${process.env.NEXT_PUBLIC_TURSO_URL}/v2/pipeline`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.NEXT_PUBLIC_TURSO_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        statements: ["SELECT 1"],
+      }),
+    });
+    return { ok: response.ok };
+  } catch {
+    return { ok: false };
+  }
+}
+
 
 export default function SetupPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('checking');
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('connected');
 
 
   useEffect(() => {
-    async function checkConnection() {
-        const result = await checkDbConnection();
-        setConnectionStatus(result.ok ? 'connected' : 'failed');
+    if (searchParams.get('error') === 'db_not_configured') {
+        setConnectionStatus('unconfigured');
     }
-    checkConnection();
-  }, []);
+  }, [searchParams]);
 
   const form = useForm<SetupFormValues>({
     resolver: zodResolver(setupSchema),
@@ -96,20 +125,21 @@ export default function SetupPage() {
   const onSubmit = async (data: SetupFormValues) => {
     setIsLoading(true);
     const result = await createFirstAdmin(data);
-    setIsLoading(false); // Stop loading indicator immediately after server response
 
     if (result.success) {
       toast({
         title: "Admin Account Created",
-        description: "You can now log in with your new credentials.",
+        description: "Redirecting you to the login page.",
       });
-      router.push("/login");
+      // Use window.location to trigger a full refresh and middleware re-evaluation
+      window.location.href = "/login";
     } else {
       toast({
         variant: "destructive",
         title: "Setup Failed",
         description: result.error || "An unexpected error occurred.",
       });
+      setIsLoading(false);
     }
   };
 
