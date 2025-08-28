@@ -50,7 +50,7 @@ function ConnectionStatusIndicator({ status }: { status: ConnectionStatus }) {
                 <ServerCrash className="h-4 w-4" />
                 <AlertTitle>Database Not Configured</AlertTitle>
                 <AlertDescription>
-                   Please set TURSO_DATABASE_URL and TURSO_AUTH_TOKEN in your Vercel environment variables.
+                   Please set KV_TURSO_DATABASE_URL and KV_TURSO_AUTH_TOKEN in your Vercel environment variables.
                 </AlertDescription>
             </Alert>
         );
