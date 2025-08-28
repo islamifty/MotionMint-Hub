@@ -84,28 +84,6 @@ export async function checkDbConnection(): Promise<{ ok: boolean; error?: string
     }
 }
 
-export async function isSetupCompleted(): Promise<boolean> {
-  const client = await getClient();
-  if (client) {
-    try {
-      const usersJson = await client.hGet(DB_KEY, 'users');
-      if (usersJson) {
-        const users = JSON.parse(usersJson);
-        // Check if there is at least one user with the 'admin' role.
-        return Array.isArray(users) && users.some(u => u.role === 'admin');
-      }
-      return false; // No 'users' field in the hash.
-    } catch (error) {
-      console.error('Failed to check setup status from Vercel KV:', error);
-      return false; // Assume not completed on error.
-    }
-  }
-  // Fallback to file system
-  const db = await readFromFile();
-  return db.users.some(u => u.role === 'admin');
-}
-
-
 export async function readDb(): Promise<DbData> {
   const client = await getClient();
 
@@ -174,18 +152,5 @@ export async function writeDb(data: DbData): Promise<void> {
     }
   } else {
     await writeToFile(data);
-  }
-}
-
-export async function writeSetupCompleted(): Promise<void> {
-  const client = await getClient();
-  if (client) {
-    try {
-      // This is a more robust way to mark setup as complete without a separate key.
-      // The existence of an admin user is the source of truth.
-      console.log('Setup completion is determined by the presence of an admin user.');
-    } catch (error) {
-      console.error('Failed to write setup completion status to Vercel KV:', error);
-    }
   }
 }

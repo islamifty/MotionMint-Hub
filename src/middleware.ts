@@ -9,31 +9,10 @@ const setupRoute = '/setup';
 
 export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
-  const absoluteUrl = new URL(req.url);
 
-  // Use fetch to call our internal API route to check setup status
-  const statusApiUrl = new URL('/api/setup/status', absoluteUrl.origin);
-  
-  let setupCompleted = false;
-  try {
-    const response = await fetch(statusApiUrl, {
-      headers: {
-        'x-middleware-preflight': 'true',
-      },
-      // Disable caching to get the most up-to-date status
-      cache: 'no-store',
-    });
-    
-    if (response.ok) {
-        const data = await response.json();
-        setupCompleted = data.setupCompleted;
-    } else {
-        console.error(`Middleware: Failed to fetch setup status. API returned ${response.status}`);
-    }
-  } catch (error) {
-     console.error(`Middleware: Error fetching setup status.`, error);
-  }
-
+  // This is the most reliable way to check for setup completion.
+  // The user MUST set this environment variable in their Vercel dashboard.
+  const setupCompleted = process.env.SETUP_COMPLETED === 'true';
 
   if (!setupCompleted && path !== setupRoute) {
     return NextResponse.redirect(new URL(setupRoute, req.url));
@@ -43,6 +22,11 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL('/login', req.url));
   }
   
+  // If setup isn't complete, don't process other rules.
+  if (!setupCompleted) {
+    return NextResponse.next();
+  }
+
   const cookie = req.cookies.get('session')?.value;
   const session = cookie ? await decrypt(cookie) : null;
   const user = session?.user;
@@ -80,5 +64,5 @@ export default async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api/setup/status|_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/((?!api/|_next/static|_next/image|favicon.ico).*)'],
 };
