@@ -1,12 +1,29 @@
-
 'use server';
 
 import { createClient, type FileStat, type WebDAVClient } from 'webdav';
-import { readDb } from '@/lib/db';
+import { db } from '@/lib/turso';
+import { settings } from '@/lib/schema';
+import { eq } from 'drizzle-orm';
+
+async function getNextcloudCredentials() {
+    const credentials = await db.select().from(settings).where(
+        inArray(settings.key, ['nextcloudUrl', 'nextcloudUser', 'nextcloudPassword'])
+    );
+
+    const credsMap = credentials.reduce((acc, cred) => {
+        acc[cred.key] = cred.value;
+        return acc;
+    }, {} as Record<string, string | null>);
+    
+    return {
+        nextcloudUrl: credsMap.nextcloudUrl,
+        nextcloudUser: credsMap.nextcloudUser,
+        nextcloudPassword: credsMap.nextcloudPassword,
+    };
+}
 
 async function getClient(): Promise<WebDAVClient> {
-    const db = await readDb();
-    const { nextcloudUrl, nextcloudUser, nextcloudPassword } = db.settings;
+    const { nextcloudUrl, nextcloudUser, nextcloudPassword } = await getNextcloudCredentials();
 
     if (!nextcloudUrl || !nextcloudUser || !nextcloudPassword) {
         throw new Error('Nextcloud credentials are not configured in settings.');
@@ -76,10 +93,9 @@ export async function getDownloadLink(path: string): Promise<string> {
 }
 
 export async function getThumbnailBaseUrl(): Promise<string> {
-    const db = await readDb();
-    const { nextcloudUrl, nextcloudUser } = db.settings;
+    const { nextcloudUrl, nextcloudUser } = await getNextcloudCredentials();
     if (!nextcloudUrl || !nextcloudUser) {
         return '';
     }
-    return nextcloudUrl.replace('/remote.php/dav/files' + nextcloudUser, '') || '';
+    return nextcloudUrl.replace('/remote.php/dav/files/' + nextcloudUser, '') || '';
 }

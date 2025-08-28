@@ -1,12 +1,13 @@
-
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { readDb, writeDb } from "@/lib/db";
+import { db } from '@/lib/turso';
+import { projects, clients } from '@/lib/schema';
+import { getSettings } from "@/app/admin/settings/actions";
+import { eq } from 'drizzle-orm';
 import { sendSms } from "@/lib/sms";
 
 export async function POST(req: Request) {
-  const db = await readDb();
-  const { piprapayWebhookVerifyKey } = db.settings;
+  const { piprapayWebhookVerifyKey } = await getSettings();
 
   if (!piprapayWebhookVerifyKey) {
       console.warn("PipraPay Webhook Verification Key is not set. Cannot process webhook.");
@@ -33,14 +34,15 @@ export async function POST(req: Request) {
     const projectId = metadata?.projectId;
 
     if (status === "completed" && projectId) {
-        const freshDb = await readDb(); // Read fresh data to avoid race conditions
-        const projectIndex = freshDb.projects.findIndex(p => p.id === projectId);
+        const projectResult = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
+        const project = projectResult[0];
 
-        if (projectIndex !== -1 && freshDb.projects[projectIndex].paymentStatus !== 'paid') {
-            const project = freshDb.projects[projectIndex];
-            project.paymentStatus = 'paid';
+        if (project && project.paymentStatus !== 'paid') {
+            await db.update(projects).set({ paymentStatus: 'paid' }).where(eq(projects.id, projectId));
             
-            const client = freshDb.clients.find(c => c.id === project.clientId);
+            const clientResult = await db.select().from(clients).where(eq(clients.id, project.clientId)).limit(1);
+            const client = clientResult[0];
+
             if (client?.phone) {
                  try {
                     await sendSms({
@@ -51,7 +53,6 @@ export async function POST(req: Request) {
                     console.error("Failed to send payment confirmation SMS via webhook:", smsError);
                 }
             }
-            await writeDb(freshDb);
             
             revalidatePath(`/client/projects/${projectId}`);
             revalidatePath('/client/dashboard');

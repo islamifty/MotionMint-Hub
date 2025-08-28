@@ -1,12 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, type WebDAVClient } from 'webdav';
-import { readDb } from '@/lib/db';
+import { db } from '@/lib/turso';
+import { settings } from '@/lib/schema';
+import { inArray } from 'drizzle-orm';
 import { basename } from 'path';
 
 // Helper to get Nextcloud client
 async function getClient(): Promise<WebDAVClient> {
-    const db = await readDb();
-    const { nextcloudUrl, nextcloudUser, nextcloudPassword } = db.settings;
+    const credentials = await db.select().from(settings).where(
+        inArray(settings.key, ['nextcloudUrl', 'nextcloudUser', 'nextcloudPassword'])
+    );
+    const credsMap = credentials.reduce((acc, cred) => {
+        acc[cred.key] = cred.value;
+        return acc;
+    }, {} as Record<string, string | null>);
+    const { nextcloudUrl, nextcloudUser, nextcloudPassword } = credsMap;
 
     if (!nextcloudUrl || !nextcloudUser || !nextcloudPassword) {
         throw new Error('Nextcloud credentials are not configured.');

@@ -1,38 +1,42 @@
 'use server';
 
 import { revalidatePath } from "next/cache";
+import { db } from '@/lib/turso';
+import { users, clients } from '@/lib/schema';
+import { eq, inArray } from "drizzle-orm";
 import type { User } from '@/types';
 import { promoteUserToClient } from "@/lib/api"; 
-import { readDb, writeDb } from "@/lib/db";
 import { adminEmails } from "@/lib/data";
+import { unstable_noStore as noStore } from 'next/cache';
 
 export async function getUsers(currentUserEmail?: string | null): Promise<User[]> {
-    const db = await readDb();
-    return db.users;
+    noStore();
+    const userResults = await db.select().from(users);
+    return userResults as User[];
 }
 
 export async function updateUserRole(userId: string, newRole: 'admin' | 'client' | 'user') {
     try {
-        const db = await readDb();
-        const userToUpdate = db.users.find(u => u.id === userId);
+        const userToUpdateResult = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+        const userToUpdate = userToUpdateResult[0];
 
         if (!userToUpdate) {
             return { success: false, message: "User not found." };
         }
         
-        // Prevent changing the main admin's role
         if (adminEmails.includes(userToUpdate.email) && userToUpdate.email === adminEmails[0]) {
              return { success: false, message: "Cannot change the main administrator's role." };
         }
+        
+        await db.update(users).set({ role: newRole }).where(eq(users.id, userId));
 
-        userToUpdate.role = newRole;
-
-        // If user is promoted to client, ensure they exist in clients list
-        if (newRole === 'client' && !db.clients.some(c => c.id === userId)) {
-            promoteUserToClient(userId, db); // Pass db to avoid re-reading
+        if (newRole === 'client') {
+            const clientExists = await db.select().from(clients).where(eq(clients.id, userId)).limit(1);
+            if (clientExists.length === 0) {
+                await promoteUserToClient(userId);
+            }
         }
 
-        await writeDb(db);
         revalidatePath('/admin/users');
         return { success: true, message: `User role updated to ${newRole}.` };
     } catch (error) {
@@ -44,23 +48,22 @@ export async function updateUserRole(userId: string, newRole: 'admin' | 'client'
 
 export async function deleteUser(userId: string) {
     try {
-        const db = await readDb();
-        const userToDelete = db.users.find(u => u.id === userId);
+        const userToDeleteResult = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+        const userToDelete = userToDeleteResult[0];
 
         if (!userToDelete) {
             return { success: false, message: "User not found." };
         }
         
-        // Prevent deleting the main admin
         if (adminEmails.includes(userToDelete.email) && userToDelete.email === adminEmails[0]) {
             return { success: false, message: "The main administrator cannot be deleted." };
         }
         
-        // Filter out the user and their corresponding client entry
-        db.users = db.users.filter(u => u.id !== userId);
-        db.clients = db.clients.filter(c => c.id !== userId);
+        await db.transaction(async (tx) => {
+            await tx.delete(users).where(eq(users.id, userId));
+            await tx.delete(clients).where(eq(clients.id, userId));
+        });
         
-        await writeDb(db);
         revalidatePath('/admin/users');
         revalidatePath('/admin/clients');
         return { success: true, message: "User and associated client profile have been deleted." };

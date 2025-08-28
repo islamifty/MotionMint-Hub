@@ -1,32 +1,23 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { readDb, writeDb } from '@/lib/db';
+import { db } from '@/lib/turso';
+import { clients, users } from '@/lib/schema';
 import type { Client } from '@/types';
+import { inArray } from 'drizzle-orm';
+import { unstable_noStore as noStore } from 'next/cache';
 
 export async function getClients(): Promise<Client[]> {
-    const db = await readDb();
-    return db.clients;
+    noStore();
+    return db.select().from(clients);
 }
 
 export async function deleteClients(clientIds: string[]) {
     try {
-        const db = await readDb();
-
-        const initialUserCount = db.users.length;
-        const initialClientCount = db.clients.length;
-
-        // Filter out the clients and users to be deleted
-        const updatedUsers = db.users.filter(user => !clientIds.includes(user.id));
-        const updatedClients = db.clients.filter(client => !clientIds.includes(client.id));
-
-        // Check if any change was made
-        if (updatedUsers.length < initialUserCount || updatedClients.length < initialClientCount) {
-             await writeDb({ ...db, users: updatedUsers, clients: updatedClients });
-        } else {
-            // No clients found to delete, which could be an issue.
-            return { success: false, error: "No matching clients found to delete." };
-        }
+        await db.transaction(async (tx) => {
+            await tx.delete(users).where(inArray(users.id, clientIds));
+            await tx.delete(clients).where(inArray(clients.id, clientIds));
+        });
 
         revalidatePath('/admin/clients');
         revalidatePath('/admin/users');

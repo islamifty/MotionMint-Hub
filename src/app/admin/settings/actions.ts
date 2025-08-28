@@ -1,12 +1,14 @@
-
 'use server';
 
 import { z } from 'zod';
 import { createClient, type WebDAVClient } from 'webdav';
-import { readDb, writeDb } from '@/lib/db';
+import { db } from '@/lib/turso';
+import { settings as settingsSchemaTable } from '@/lib/schema';
+import { inArray, eq } from 'drizzle-orm';
 import { sendEmail } from '@/lib/email';
 import { sendSms } from '@/lib/sms';
 import type { AppSettings } from '@/types';
+import { unstable_noStore as noStore } from 'next/cache';
 
 // Schemas for saving settings
 const nextcloudSchema = z.object({
@@ -71,14 +73,19 @@ const smsTestSchema = smsSchema.extend({
     greenwebSmsToken: z.string().min(1, "Token is required."),
 });
 
-export async function getSettings(): Promise<AppSettings> {
-    const db = await readDb();
-    return db.settings || {};
+
+async function getSettingsFromDb(): Promise<AppSettings> {
+    noStore();
+    const settingsList = await db.select().from(settingsSchemaTable);
+    return settingsList.reduce((acc, setting) => {
+        acc[setting.key as keyof AppSettings] = setting.value as any;
+        return acc;
+    }, {} as AppSettings);
 }
+export { getSettingsFromDb as getSettings };
 
 export async function checkDbCredentials() {
-    const db = await readDb();
-    const settings = db.settings || {};
+    const settings = await getSettingsFromDb();
     return {
         nextcloud: !!(settings.nextcloudUrl && settings.nextcloudUser && settings.nextcloudPassword),
         bkash: !!(settings.bKashAppKey && settings.bKashAppSecret && settings.bKashUsername && settings.bKashPassword),
@@ -232,9 +239,13 @@ export async function verifySmsConnection(data: unknown, testPhoneNumber: string
 // Unified save function
 async function saveSettings(update: Partial<AppSettings>) {
     try {
-        const db = await readDb();
-        db.settings = { ...db.settings, ...update };
-        await writeDb(db);
+        for (const [key, value] of Object.entries(update)) {
+            if (value !== undefined && value !== null) {
+                await db.insert(settingsSchemaTable)
+                    .values({ key, value: String(value) })
+                    .onConflictDoUpdate({ target: settingsSchemaTable.key, set: { value: String(value) } });
+            }
+        }
         return { success: true, message: "Settings saved successfully." };
     } catch (error) {
         console.error("Failed to save settings:", error);
@@ -272,5 +283,3 @@ export async function saveGeneralSettings(data: unknown) {
     if (!result.success) return { success: false, message: "Invalid General settings data." };
     return saveSettings(result.data);
 }
-
-    

@@ -1,10 +1,8 @@
-
 import { NextResponse } from "next/server";
-import { readDb } from "@/lib/db";
+import { getSettings } from "@/app/admin/settings/actions";
 
 export async function POST(req: Request) {
-  const db = await readDb();
-  const { piprapayApiKey, piprapayBaseUrl } = db.settings;
+  const { piprapayApiKey, piprapayBaseUrl } = await getSettings();
 
   if (!piprapayApiKey || !piprapayBaseUrl) {
     return NextResponse.json({ ok: false, message: "PipraPay is not configured." }, { status: 500 });

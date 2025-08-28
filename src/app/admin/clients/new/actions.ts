@@ -1,11 +1,12 @@
-
 'use server';
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { readDb, writeDb } from '@/lib/db';
+import { db } from '@/lib/turso';
+import { users, clients } from '@/lib/schema';
 import type { Client, User } from '@/types';
 import { hashPassword } from '@/lib/password';
+import { eq } from 'drizzle-orm';
 
 const clientSchema = z.object({
   name: z.string().min(1, "Client name is required."),
@@ -24,18 +25,17 @@ export async function addClient(data: unknown) {
 
     try {
         const { name, email, password, phone, company } = result.data;
-        const db = await readDb();
+        
+        const existingUser = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
-        // Check if user already exists
-        if (db.users.some(u => u.email === email)) {
+        if (existingUser.length > 0) {
             return { success: false, error: { formErrors: ["This email address is already in use."], fieldErrors: {} }};
         }
 
         const newUserId = `user-${Date.now()}`;
         const hashedPassword = await hashPassword(password);
 
-        // 1. Create user
-        const newUser: User = {
+        const newUser: Omit<User, 'notificationSettings'> = {
             id: newUserId,
             name: name,
             email: email,
@@ -44,23 +44,22 @@ export async function addClient(data: unknown) {
             initials: (name || email).substring(0, 2).toUpperCase(),
             password: hashedPassword,
         };
-        db.users.unshift(newUser);
         
-        // 2. Add to clients list
         const newClient: Client = {
             id: newUserId,
             name: name,
             email: email,
             phone: phone,
             company: company,
-            projectIds: [],
+            projectIds: [], // This field is deprecated with SQL
             createdAt: new Date().toISOString(),
         };
-        db.clients.unshift(newClient);
 
-        // Write the updated data back to the file
-        await writeDb(db);
-
+        await db.transaction(async (tx) => {
+            await tx.insert(users).values(newUser as any);
+            await tx.insert(clients).values(newClient as any);
+        });
+        
         revalidatePath('/admin/clients');
         revalidatePath('/admin/users');
 

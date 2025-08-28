@@ -1,8 +1,9 @@
-
 'use server';
 
 import { z } from 'zod';
-import { readDb, writeDb } from "@/lib/db";
+import { db } from '@/lib/turso';
+import { users, clients } from '@/lib/schema';
+import { or, eq } from 'drizzle-orm';
 import type { User, Client } from '@/types';
 import { revalidatePath } from "next/cache";
 import { createSession, getSession } from "@/lib/session";
@@ -66,19 +67,19 @@ export async function addNewUser(userData: unknown) {
         return { success: false, error: "The OTP you entered is incorrect." };
     }
     
-    const db = await readDb();
+    const existingUsers = await db.select().from(users).where(or(eq(users.email, email), eq(users.phone, phone)));
 
-    if (db.users.some(u => u.email === email)) {
+    if (existingUsers.some(u => u.email === email)) {
         return { success: false, error: "An account with this email already exists." };
     }
-    if (db.users.some(u => u.phone === phone)) {
+    if (existingUsers.some(u => u.phone === phone)) {
         return { success: false, error: "An account with this phone number already exists." };
     }
 
     const newUserId = `user-${Date.now()}`;
     const hashedPassword = await hashPassword(password);
 
-    const newUser: User = {
+    const newUser: Omit<User, 'notificationSettings'> = {
         id: newUserId,
         name,
         email,
@@ -88,21 +89,20 @@ export async function addNewUser(userData: unknown) {
         password: hashedPassword,
     };
     
-    const newClient: Client = {
+    const newClient: Omit<Client, 'projectIds'> = {
         id: newUserId,
         name: name,
         email: email,
         phone: phone,
         company: "",
-        projectIds: [],
         createdAt: new Date().toISOString(),
     };
 
     try {
-        db.users.unshift(newUser);
-        db.clients.unshift(newClient);
-        
-        await writeDb(db);
+        await db.transaction(async (tx) => {
+            await tx.insert(users).values(newUser as any);
+            await tx.insert(clients).values(newClient as any);
+        });
 
         // Clear OTP from session after successful registration
         const { otp: _, otpExpiry: __, ...sessionWithoutOtp } = session;
@@ -113,7 +113,7 @@ export async function addNewUser(userData: unknown) {
 
         return { success: true };
     } catch (error) {
-        console.error("Error adding user/client to mock data: ", { error, email });
+        console.error("Error adding user/client to db: ", { error, email });
         return { success: false, error: "Failed to save user profile." };
     }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -79,27 +79,7 @@ function ConnectionStatusIndicator({ status }: { status: ConnectionStatus }) {
     );
 }
 
-// Dummy check function, real check happens in middleware and on form submit
-async function checkTursoConnection(): Promise<{ ok: boolean }> {
-  try {
-     const response = await fetch(`${process.env.NEXT_PUBLIC_TURSO_URL}/v2/pipeline`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${process.env.NEXT_PUBLIC_TURSO_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        statements: ["SELECT 1"],
-      }),
-    });
-    return { ok: response.ok };
-  } catch {
-    return { ok: false };
-  }
-}
-
-
-export default function SetupPage() {
+function SetupFormComponent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -131,7 +111,6 @@ export default function SetupPage() {
         title: "Admin Account Created",
         description: "Redirecting you to the login page.",
       });
-      // Use window.location to trigger a full refresh and middleware re-evaluation
       window.location.href = "/login";
     } else {
       toast({
@@ -144,7 +123,6 @@ export default function SetupPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
            <div className="mx-auto w-fit">
@@ -217,6 +195,16 @@ export default function SetupPage() {
           </Form>
         </CardContent>
       </Card>
-    </div>
   );
+}
+
+
+export default function SetupPage() {
+    return (
+        <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
+            <Suspense fallback={<Loader2 className="h-8 w-8 animate-spin" />}>
+                <SetupFormComponent />
+            </Suspense>
+        </div>
+    )
 }

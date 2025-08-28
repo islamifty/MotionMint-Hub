@@ -1,27 +1,38 @@
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { readDb, writeDb } from '@/lib/db';
 import { createClient, type WebDAVClient } from 'webdav';
+import { db } from '@/lib/turso';
+import { projects, settings } from '@/lib/schema';
+import { inArray, desc, eq } from 'drizzle-orm';
 import type { Project } from '@/types';
+import { unstable_noStore as noStore } from 'next/cache';
 
 export async function getProjects(): Promise<Project[]> {
-    const db = await readDb();
-    // Sort by most recent first
-    return db.projects.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    noStore();
+    const projectData = await db.select().from(projects).orderBy(desc(projects.createdAt));
+    return projectData as Project[];
 }
 
 
 export async function deleteProjects(projectIds: string[]) {
-    const db = await readDb();
+    noStore();
+    const settingsResult = await db.select().from(settings).where(
+        inArray(settings.key, ['nextcloudUrl', 'nextcloudUser', 'nextcloudPassword'])
+    );
+
+    const creds = settingsResult.reduce((acc, setting) => {
+        acc[setting.key] = setting.value;
+        return acc;
+    }, {} as Record<string, string | null>);
+    
     const { 
         nextcloudUrl, 
         nextcloudUser, 
         nextcloudPassword 
-    } = db.settings;
+    } = creds;
 
-    const projectsToDelete = db.projects.filter(p => projectIds.includes(p.id));
+    const projectsToDelete = await db.select().from(projects).where(inArray(projects.id, projectIds));
 
     if (nextcloudUrl && nextcloudUser && nextcloudPassword) {
         try {
@@ -53,18 +64,13 @@ export async function deleteProjects(projectIds: string[]) {
     }
 
     try {
-        const updatedProjects = db.projects.filter(p => !projectIds.includes(p.id));
+        const result = await db.delete(projects).where(inArray(projects.id, projectIds));
         
-        if (db.projects.length - updatedProjects.length === projectIds.length) {
-            await writeDb({ ...db, projects: updatedProjects });
-            revalidatePath('/admin/projects');
-            return { success: true };
-        } else {
-            throw new Error("Some projects could not be deleted from the database.");
-        }
+        revalidatePath('/admin/projects');
+        return { success: true };
 
     } catch (error) {
-        console.error("Failed to delete projects from db.json:", error);
+        console.error("Failed to delete projects from db:", error);
         return { success: false, error: "An unexpected error occurred during project deletion." };
     }
 }

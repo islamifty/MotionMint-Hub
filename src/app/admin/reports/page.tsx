@@ -1,4 +1,3 @@
-
 import {
     Card,
     CardContent,
@@ -14,36 +13,37 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { readDb } from "@/lib/db";
 import { ReportsChart } from "./ReportsChart";
-import { DollarSign, FolderKanban, AlertTriangle } from "lucide-react";
+import { DollarSign, AlertTriangle } from "lucide-react";
 import { StatCard } from "@/components/shared/StatCard";
+import { db } from "@/lib/turso";
+import { projects } from "@/lib/schema";
+import { eq, sql, gte, and } from "drizzle-orm";
 
 export const dynamic = 'force-dynamic';
 
 export default async function ReportsPage() {
-    const db = await readDb();
-    const { projects } = db;
+    const allProjects = await db.select().from(projects);
 
-    const totalRevenue = projects
+    const totalRevenue = allProjects
         .filter(p => p.paymentStatus === 'paid')
         .reduce((sum, p) => sum + p.amount, 0);
 
-    const pendingAmount = projects
+    const pendingAmount = allProjects
         .filter(p => p.paymentStatus === 'pending' || p.paymentStatus === 'overdue')
         .reduce((sum, p) => sum + p.amount, 0);
         
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
-    const revenueThisMonth = projects
+    const revenueThisMonth = allProjects
         .filter(p => p.paymentStatus === 'paid' && new Date(p.createdAt).getMonth() === currentMonth && new Date(p.createdAt).getFullYear() === currentYear)
         .reduce((sum, p) => sum + p.amount, 0);
 
-    const statusCounts = projects.reduce((acc, project) => {
-        acc[project.paymentStatus] = (acc[project.paymentStatus] || 0) + 1;
+    const statusCounts = allProjects.reduce((acc, project) => {
+        const status = project.paymentStatus as "pending" | "paid" | "overdue";
+        acc[status] = (acc[status] || 0) + 1;
         return acc;
-    }, {} as Record<"pending" | "paid" | "overdue", number>);
+    }, { paid: 0, pending: 0, overdue: 0 } as Record<"pending" | "paid" | "overdue", number>);
 
     const chartData = [
         { name: 'Paid', value: statusCounts.paid || 0, fill: "hsl(var(--primary))" },
@@ -51,7 +51,7 @@ export default async function ReportsPage() {
         { name: 'Overdue', value: statusCounts.overdue || 0, fill: "hsl(var(--destructive))" },
     ];
 
-    const recentPayments = projects
+    const recentPayments = allProjects
         .filter(p => p.paymentStatus === 'paid')
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, 10);

@@ -1,9 +1,10 @@
-
 'use server';
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { readDb, writeDb } from '@/lib/db';
+import { db } from '@/lib/turso';
+import { users, clients } from '@/lib/schema';
+import { eq } from 'drizzle-orm';
 import { getSession, createSession } from '@/lib/session';
 import { verifyPassword, hashPassword } from '@/lib/password';
 import type { User } from '@/types';
@@ -30,28 +31,23 @@ export async function updateProfile(data: unknown) {
     }
 
     try {
-        const db = await readDb();
-        const userIndex = db.users.findIndex(u => u.id === session.user.id);
-        
-        if (userIndex === -1) {
+        const userResult = await db.select().from(users).where(eq(users.id, session.user.id)).limit(1);
+        if (userResult.length === 0) {
             return { success: false, error: "User not found." };
         }
+        const userFromDb = userResult[0];
 
-        const userFromDb = db.users[userIndex];
-        const updatedUser: User = { ...userFromDb, name: result.data.name };
-        db.users[userIndex] = updatedUser;
+        await db.update(users).set({ name: result.data.name }).where(eq(users.id, session.user.id));
         
-        // Also update client name if user is a client
-        const clientIndex = db.clients.findIndex(c => c.id === session.user.id);
-        if (clientIndex !== -1) {
-            db.clients[clientIndex].name = result.data.name;
+        const clientResult = await db.select().from(clients).where(eq(clients.id, session.user.id)).limit(1);
+        if (clientResult.length > 0) {
+            await db.update(clients).set({ name: result.data.name }).where(eq(clients.id, session.user.id));
         }
         
-        await writeDb(db);
+        const updatedUser: User = { ...userFromDb, name: result.data.name };
         
-        // Update session, ensuring password is not included
         const { password, ...userForSession } = updatedUser;
-        await createSession({ user: userForSession });
+        await createSession({ user: userForSession as any });
 
         revalidatePath('/profile');
         revalidatePath('/admin/users');
@@ -78,14 +74,13 @@ export async function changePassword(data: unknown) {
     const { currentPassword, newPassword } = result.data;
 
     try {
-        const db = await readDb();
-        const user = db.users.find(u => u.id === session.user.id);
+        const userResult = await db.select().from(users).where(eq(users.id, session.user.id)).limit(1);
+        const user = userResult[0];
 
         if (!user || !user.password) {
             return { success: false, error: "User not found or has no password set." };
         }
         
-        // Since the DB might have plaintext passwords, we handle both cases.
         const isBcryptHash = (str: string) => /^\$2[aby]?\$\d{2}\$/.test(str);
         
         let isPasswordValid = false;
@@ -99,8 +94,8 @@ export async function changePassword(data: unknown) {
             return { success: false, error: { currentPassword: ["Incorrect current password."] }};
         }
 
-        user.password = await hashPassword(newPassword);
-        await writeDb(db);
+        const newHashedPassword = await hashPassword(newPassword);
+        await db.update(users).set({ password: newHashedPassword }).where(eq(users.id, session.user.id));
 
         return { success: true };
     } catch (e) {

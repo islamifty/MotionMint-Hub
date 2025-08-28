@@ -1,7 +1,8 @@
-
 'use server';
 import { createSession } from '@/lib/session';
-import { readDb, writeDb } from '@/lib/db';
+import { db } from '@/lib/turso';
+import { users } from '@/lib/schema';
+import { or, eq } from 'drizzle-orm';
 import { hashPassword, verifyPassword } from '@/lib/password';
 
 // Bcrypt hashes can be identified by their prefix
@@ -11,12 +12,9 @@ export async function login(credentials: {loginIdentifier: string, password: str
     const { loginIdentifier, password } = credentials;
 
     try {
-        const db = await readDb();
+        const userResult = await db.select().from(users).where(or(eq(users.email, loginIdentifier), eq(users.phone, loginIdentifier))).limit(1);
+        const user = userResult[0];
         
-        // Find user by either email or phone
-        const userIndex = db.users.findIndex((u) => u.email === loginIdentifier || u.phone === loginIdentifier);
-        const user = userIndex !== -1 ? db.users[userIndex] : null;
-
         if (!user) {
             console.warn('Login failed: User not found', { loginIdentifier });
             return { success: false, error: "Invalid credentials." };
@@ -41,8 +39,7 @@ export async function login(credentials: {loginIdentifier: string, password: str
             if (isPasswordValid) {
                 console.info('Plaintext password matched. Upgrading to hash.', { email: user.email });
                 const newHashedPassword = await hashPassword(password);
-                db.users[userIndex].password = newHashedPassword;
-                await writeDb(db); // Asynchronously write the update
+                await db.update(users).set({ password: newHashedPassword }).where(eq(users.id, user.id));
                 console.info('Password successfully upgraded to hash.', { email: user.email });
             }
         }
@@ -54,7 +51,7 @@ export async function login(credentials: {loginIdentifier: string, password: str
         
         // Create session with a user object that doesn't include the password
         const { password: _, ...userToSession } = user;
-        await createSession({ user: userToSession });
+        await createSession({ user: userToSession as any });
 
         console.info('User logged in successfully', { userId: user.id, email: user.email });
         

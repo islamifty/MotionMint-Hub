@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { executePayment } from '@/lib/bkash';
-import { readDb, writeDb } from '@/lib/db';
+import { db } from '@/lib/turso';
+import { projects, clients } from '@/lib/schema';
+import { getSettings } from '@/app/admin/settings/actions';
+import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { sendSms } from '@/lib/sms';
 import { getBaseUrl } from '@/lib/url';
@@ -32,20 +35,21 @@ export async function GET(request: NextRequest) {
 
 
     try {
-        const db = await readDb();
-        const executeResult = await executePayment(paymentID, db.settings);
+        const settings = await getSettings();
+        const executeResult = await executePayment(paymentID, settings);
 
         if (executeResult && executeResult.statusCode === '0000' && executeResult.transactionStatus === 'Completed') {
-            const projectIndex = db.projects.findIndex(p => p.orderId === executeResult.merchantInvoiceNumber);
+            
+            const projectResult = await db.select().from(projects).where(eq(projects.orderId, executeResult.merchantInvoiceNumber)).limit(1);
+            const project = projectResult[0];
 
-            if (projectIndex !== -1) {
-                const project = db.projects[projectIndex];
-                
+            if (project) {
                 if (project.paymentStatus !== 'paid') {
-                    project.paymentStatus = 'paid';
+                    await db.update(projects).set({ paymentStatus: 'paid' }).where(eq(projects.id, project.id));
                     
-                    
-                    const client = db.clients.find(c => c.id === project.clientId);
+                    const clientResult = await db.select().from(clients).where(eq(clients.id, project.clientId)).limit(1);
+                    const client = clientResult[0];
+
                     if (client?.phone) {
                         try {
                             await sendSms({
@@ -56,7 +60,6 @@ export async function GET(request: NextRequest) {
                             console.error("Failed to send payment confirmation SMS:", smsError);
                         }
                     }
-                    await writeDb(db); // Write after all updates
                 }
 
                 // Revalidate paths to reflect updated status

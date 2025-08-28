@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { readDb, writeDb } from "@/lib/db";
+import { db } from '@/lib/turso';
+import { projects } from '@/lib/schema';
+import { eq } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
   const invoice_id = req.nextUrl.searchParams.get("invoice_id");
@@ -23,15 +25,13 @@ export async function GET(req: NextRequest) {
   const paymentData = verificationResult?.data?.data;
   
   if (verificationResult.ok && paymentData && paymentData.status === "completed") {
-      const db = await readDb();
-      // The invoice_id from PipraPay is our project's orderId
-      const projectIndex = db.projects.findIndex(p => p.orderId === invoice_id);
+      
+      const projectResult = await db.select().from(projects).where(eq(projects.orderId, invoice_id)).limit(1);
+      const project = projectResult[0];
 
-      if (projectIndex !== -1) {
-          const project = db.projects[projectIndex];
+      if (project) {
           if (project.paymentStatus !== 'paid') {
-            project.paymentStatus = 'paid';
-            await writeDb(db);
+            await db.update(projects).set({ paymentStatus: 'paid' }).where(eq(projects.id, project.id));
             
             revalidatePath(`/client/projects/${project.id}`);
             revalidatePath('/client/dashboard');
@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
 
           const successUrl = new URL('/payment/success', req.url);
           successUrl.searchParams.set('projectId', project.id);
-          successUrl.searchParams.set('amount', project.amount.toString());
+          successUrl.searchParams.set('amount', String(project.amount));
           successUrl.searchParams.set('transactionId', invoice_id);
           return NextResponse.redirect(successUrl);
       } else {

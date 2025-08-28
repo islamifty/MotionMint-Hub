@@ -1,4 +1,3 @@
-
 import Link from "next/link";
 import {
   Card,
@@ -16,21 +15,24 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { readDb } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { db } from "@/lib/turso";
+import { clients, projects } from "@/lib/schema";
+import { eq } from "drizzle-orm";
 
 export default async function ClientDetailPage({ params }: { params: { id: string } }) {
   const { id } = params;
-  const db = await readDb();
-  const client = db.clients.find((c) => c.id === id);
+  
+  const clientResult = await db.select().from(clients).where(eq(clients.id, id)).limit(1);
+  const client = clientResult[0];
   
   if (!client) {
     notFound();
   }
   
-  const clientProjects = db.projects.filter((p) => p.clientId === client.id);
+  const clientProjects = await db.select().from(projects).where(eq(projects.clientId, client.id));
 
   return (
     <div className="space-y-6">

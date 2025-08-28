@@ -1,8 +1,7 @@
-
 'use server';
 
 import 'server-only';
-import { readDb } from './db';
+import { getSettings } from '@/app/admin/settings/actions';
 import type { AppSettings } from '@/types';
 
 interface SmsOptions {
@@ -14,11 +13,11 @@ type SmsConfig = Pick<AppSettings, 'greenwebSmsToken'>;
 
 export async function sendSms(options: SmsOptions, testConfig?: SmsConfig): Promise<void> {
     let settings: SmsConfig;
-    if (testConfig) {
+    if (testConfig && testConfig.greenwebSmsToken) {
         settings = testConfig;
     } else {
-        const db = await readDb();
-        settings = db.settings;
+        const dbSettings = await getSettings();
+        settings = { greenwebSmsToken: dbSettings.greenwebSmsToken };
     }
 
     const { greenwebSmsToken } = settings;

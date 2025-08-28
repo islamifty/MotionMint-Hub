@@ -1,8 +1,9 @@
-
 'use server';
 
 import { z } from 'zod';
-import { readDb } from '@/lib/db';
+import { db } from '@/lib/turso';
+import { users } from '@/lib/schema';
+import { or, eq } from 'drizzle-orm';
 import { sendEmail } from '@/lib/email';
 import { sendSms } from '@/lib/sms';
 import { encrypt } from '@/lib/session'; 
@@ -30,8 +31,8 @@ export async function sendPasswordResetNotification(data: unknown) {
     const isEmail = identifier.includes('@');
 
     try {
-        const db = await readDb();
-        const user = db.users.find(u => isEmail ? u.email === identifier : u.phone === identifier);
+        const userResult = await db.select().from(users).where(or(eq(users.email, identifier), eq(users.phone, identifier))).limit(1);
+        const user = userResult[0];
 
         if (!user) {
             // Don't reveal if a user exists or not for security reasons

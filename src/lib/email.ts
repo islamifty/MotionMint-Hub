@@ -1,7 +1,7 @@
-
+'use server';
 import 'server-only';
 import nodemailer from 'nodemailer';
-import { readDb } from './db';
+import { getSettings } from '@/app/admin/settings/actions';
 import type { AppSettings } from '@/types';
 
 interface MailOptions {
@@ -16,11 +16,16 @@ type SmtpConfig = Pick<AppSettings, 'smtpHost' | 'smtpPort' | 'smtpUser' | 'smtp
 export async function sendEmail(mailOptions: MailOptions, testConfig?: SmtpConfig): Promise<void> {
     let settings: SmtpConfig;
 
-    if (testConfig) {
+    if (testConfig && testConfig.smtpHost) {
         settings = testConfig;
     } else {
-        const db = await readDb();
-        settings = db.settings;
+        const dbSettings = await getSettings();
+        settings = {
+            smtpHost: dbSettings.smtpHost,
+            smtpPort: Number(dbSettings.smtpPort),
+            smtpUser: dbSettings.smtpUser,
+            smtpPass: dbSettings.smtpPass
+        };
     }
     
     const { smtpHost, smtpPort, smtpUser, smtpPass } = settings;

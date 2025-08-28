@@ -1,11 +1,13 @@
-
 'use server';
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { readDb, writeDb } from '@/lib/db';
+import { db } from '@/lib/turso';
+import { projects, clients } from '@/lib/schema';
+import { eq } from 'drizzle-orm';
 import type { Project } from '@/types';
 import { sendSms } from '@/lib/sms';
+import { unstable_noStore as noStore } from 'next/cache';
 
 const projectSchema = z.object({
   title: z.string().min(1, "Project title is required."),
@@ -19,9 +21,9 @@ const projectSchema = z.object({
 });
 
 export async function getProjectById(id: string): Promise<Project | null> {
-    const db = await readDb();
-    const project = db.projects.find(p => p.id === id);
-    return project || null;
+    noStore();
+    const result = await db.select().from(projects).where(eq(projects.id, id)).limit(1);
+    return (result[0] as Project) || null;
 }
 
 export async function updateProject(id: string, data: unknown) {
@@ -37,19 +39,18 @@ export async function updateProject(id: string, data: unknown) {
         return { success: false, error: result.error.flatten() };
     }
     
-    const db = await readDb();
-    const projectIndex = db.projects.findIndex(p => p.id === id);
+    const projectToUpdate = await db.select().from(projects).where(eq(projects.id, id)).limit(1);
 
-    if (projectIndex === -1) {
+    if (projectToUpdate.length === 0) {
         return { success: false, error: { formErrors: ["Project not found."], fieldErrors: {} }};
     }
     
     try {
-        const clientInfo = db.clients.find(c => c.id === result.data.clientId);
-        const previousStatus = db.projects[projectIndex].paymentStatus;
+        const clientResult = await db.select().from(clients).where(eq(clients.id, result.data.clientId)).limit(1);
+        const clientInfo = clientResult[0];
+        const previousStatus = projectToUpdate[0].paymentStatus;
 
-        const updatedProject: Project = {
-            ...db.projects[projectIndex], // Keep original id, orderId, createdAt
+        const updatedProjectData = {
             title: result.data.title,
             description: result.data.description,
             clientId: result.data.clientId,
@@ -61,20 +62,18 @@ export async function updateProject(id: string, data: unknown) {
             finalVideoUrl: result.data.finalVideoUrl,
         };
         
-        db.projects[projectIndex] = updatedProject;
-        await writeDb(db);
+        await db.update(projects).set(updatedProjectData).where(eq(projects.id, id));
         
         if (clientInfo?.phone && result.data.paymentStatus === 'paid' && previousStatus !== 'paid') {
              try {
                 await sendSms({
                     to: clientInfo.phone,
-                    message: `Dear ${clientInfo.name}, your payment for project "${updatedProject.title}" has been confirmed. You can now download the final video. Thank you!`,
+                    message: `Dear ${clientInfo.name}, your payment for project "${updatedProjectData.title}" has been confirmed. You can now download the final video. Thank you!`,
                 });
             } catch (smsError) {
                 console.error("Failed to send payment confirmation SMS:", smsError);
             }
         }
-
 
         // Revalidate all relevant paths
         revalidatePath('/admin/projects');

@@ -1,34 +1,39 @@
-
 'use server';
 
 import { createPayment as createBkashPayment } from '@/lib/bkash';
-import { readDb } from '@/lib/db';
+import { db } from '@/lib/turso';
+import { projects } from '@/lib/schema';
+import { eq, and } from 'drizzle-orm';
+import { getSettings } from '@/app/admin/settings/actions';
 import type { Project, User } from '@/types';
 import { getSession } from '@/lib/session';
 import { getBaseUrl } from '@/lib/url';
+import { unstable_noStore as noStore } from 'next/cache';
 
 export async function getProjectDetails(projectId: string): Promise<{ project: Project | null, user: User | null }> {
+    noStore();
     const session = await getSession();
     if (!session?.user) {
         return { project: null, user: null };
     }
 
-    const db = await readDb();
-    const project = db.projects.find((p) => p.id === projectId && p.clientId === session.user.id);
+    const projectResult = await db.select().from(projects).where(and(eq(projects.id, projectId), eq(projects.clientId, session.user.id))).limit(1);
+    const project = projectResult[0];
     
-    return { project: project || null, user: session.user };
+    return { project: (project as Project) || null, user: session.user };
 }
 
 
 export async function initiateBkashPayment(projectId: string) {
     try {
-        const db = await readDb();
-        const project = db.projects.find((p) => p.id === projectId);
-
+        const projectResult = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
+        const project = projectResult[0];
+        
         if (!project) {
             throw new Error('Project not found');
         }
         
+        const settings = await getSettings();
         const appUrl = getBaseUrl();
         const callbackUrl = `${appUrl}/api/bkash/callback`;
 
@@ -43,7 +48,7 @@ export async function initiateBkashPayment(projectId: string) {
         };
         
         console.info('Initiating bKash payment', { projectId: project.id, orderId: project.orderId });
-        const result = await createBkashPayment(paymentData, db.settings);
+        const result = await createBkashPayment(paymentData, settings);
 
         if (result && result.bkashURL) {
             console.info('bKash payment initiated successfully', { projectId: project.id });

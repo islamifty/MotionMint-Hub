@@ -1,9 +1,10 @@
-
 'use server';
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { readDb, writeDb } from '@/lib/db';
+import { db } from '@/lib/turso';
+import { projects, clients } from '@/lib/schema';
+import { eq } from 'drizzle-orm';
 import type { Project } from '@/types';
 import { sendEmail } from '@/lib/email';
 import { sendSms } from '@/lib/sms';
@@ -33,10 +34,10 @@ export async function addProject(data: unknown) {
         return { success: false, error: result.error.flatten() };
     }
     
-    const db = await readDb();
-    
     try {
-        const clientInfo = db.clients.find(c => c.id === result.data.clientId);
+        const clientResult = await db.select().from(clients).where(eq(clients.id, result.data.clientId)).limit(1);
+        const clientInfo = clientResult[0];
+
         if (!clientInfo) {
              return { success: false, error: { formErrors: ["Selected client not found."], fieldErrors: {} }};
         }
@@ -57,8 +58,7 @@ export async function addProject(data: unknown) {
             previewVideoUrl: result.data.previewVideoUrl,
             finalVideoUrl: result.data.finalVideoUrl, 
         };
-        db.projects.unshift(newProject);
-        await writeDb(db);
+        await db.insert(projects).values(newProject);
 
         // Revalidate paths
         revalidatePath('/admin/projects');

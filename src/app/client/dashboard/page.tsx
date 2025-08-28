@@ -1,6 +1,4 @@
-
 import { ProjectCard } from "@/components/client/ProjectCard";
-import { readDb } from "@/lib/db";
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import {
@@ -10,6 +8,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { db } from "@/lib/turso";
+import { projects } from "@/lib/schema";
+import { eq } from "drizzle-orm";
+import type { Project } from "@/types";
 
 export default async function ClientDashboard() {
   const session = await getSession();
@@ -17,8 +19,7 @@ export default async function ClientDashboard() {
     redirect('/login');
   }
   
-  const db = await readDb();
-  const clientProjects = db.projects.filter(p => p.clientId === session.user.id);
+  const clientProjects = await db.select().from(projects).where(eq(projects.clientId, session.user.id));
 
   return (
     <div className="container py-8">
@@ -31,7 +32,7 @@ export default async function ClientDashboard() {
       {clientProjects.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {clientProjects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
+            <ProjectCard key={project.id} project={project as Project} />
           ))}
         </div>
       ) : (
