@@ -1,7 +1,6 @@
 import 'server-only';
 import { drizzle } from 'drizzle-orm/libsql';
 import { createClient } from '@libsql/client';
-import { migrate } from 'drizzle-orm/libsql/migrator';
 import * as schema from './schema';
 
 const isTursoConfigured = process.env.KV_TURSO_DATABASE_URL && process.env.KV_TURSO_AUTH_TOKEN;
@@ -15,22 +14,6 @@ if (isTursoConfigured) {
   });
   
   db = drizzle(turso, { schema });
-  
-  // This function will automatically run migrations on the first connection
-  // in a new environment. This avoids race conditions in the setup action.
-  const runMigrations = async () => {
-    try {
-        console.log("Checking for migrations...");
-        await migrate(db, { migrationsFolder: 'drizzle' });
-        console.log("Migrations completed successfully.");
-    } catch (error) {
-        console.error("Error running migrations:", error);
-        // We don't want to crash the app if migrations fail, but we log the error.
-        // The setup/API check will still work correctly.
-    }
-  };
-
-  runMigrations();
 
 } else {
   // During build time or if not configured, provide a dummy client.

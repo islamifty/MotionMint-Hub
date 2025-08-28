@@ -5,6 +5,7 @@ import { hashPassword } from "@/lib/password";
 import { db } from '@/lib/turso';
 import { users } from '@/lib/schema';
 import { sql, eq } from 'drizzle-orm';
+import { migrate } from 'drizzle-orm/libsql/migrator';
 
 const setupSchema = z.object({
   name: z.string().min(1, "Name is required."),
@@ -20,14 +21,19 @@ export async function createFirstAdmin(data: unknown) {
   }
   
   try {
-    // The migration is now handled automatically in turso.ts
-    // We just need to check if an admin already exists.
+    // Step 1: Run migrations to ensure tables exist.
+    console.log("Applying database schema...");
+    await migrate(db, { migrationsFolder: 'drizzle' });
+    console.log("Schema applied successfully.");
+
+    // Step 2: Check if an admin already exists.
     const existingAdminsResult = await db.select().from(users).where(eq(users.role, 'admin')).limit(1);
     
     if (existingAdminsResult.length > 0) {
       return { success: false, error: "An admin account already exists." };
     }
-
+    
+    // Step 3: Create the new admin user.
     const { name, email, password } = result.data;
     const hashedPassword = await hashPassword(password);
     const newAdminId = `admin-${Date.now()}`;
@@ -43,6 +49,7 @@ export async function createFirstAdmin(data: unknown) {
     };
 
     await db.insert(users).values(newAdmin);
+    console.log("First admin account created successfully.");
     
     return { success: true };
   } catch (error) {
