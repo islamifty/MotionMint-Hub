@@ -1,3 +1,4 @@
+
 'use server';
 
 import { createClient } from 'redis';
@@ -12,7 +13,7 @@ const DB_KEY = 'db';
 
 async function getClient() {
   if (!isKvEnabled) {
-    return null; 
+    return null;
   }
 
   if (!redisClient) {
@@ -28,9 +29,9 @@ async function getClient() {
     try {
       await redisClient.connect();
     } catch (error) {
-       console.error('Failed to connect to Redis:', error);
-       redisClient = null;
-       return null;
+      console.error('Failed to connect to Redis:', error);
+      redisClient = null;
+      return null;
     }
   }
   return redisClient;
@@ -50,38 +51,38 @@ async function ensureDbFileExists() {
 }
 
 async function readFromFile(): Promise<DbData> {
-    await ensureDbFileExists();
-    const fileContent = await fs.readFile(dbFilePath, 'utf-8');
-    return JSON.parse(fileContent) as DbData;
+  await ensureDbFileExists();
+  const fileContent = await fs.readFile(dbFilePath, 'utf-8');
+  return JSON.parse(fileContent) as DbData;
 }
 
 async function writeToFile(data: DbData): Promise<void> {
-    await ensureDbFileExists();
-    await fs.writeFile(dbFilePath, JSON.stringify(data, null, 2), 'utf8');
+  await ensureDbFileExists();
+  await fs.writeFile(dbFilePath, JSON.stringify(data, null, 2), 'utf8');
 }
 
 export async function checkDbConnection(): Promise<{ ok: boolean; error?: string; driver: 'kv' | 'file' }> {
-    if (isKvEnabled) {
-        try {
-            const client = await getClient();
-            if (!client) throw new Error("KV client failed to initialize.");
-            const response = await client.ping();
-            if (response === 'PONG') {
-                return { ok: true, driver: 'kv' };
-            }
-            return { ok: false, error: 'Ping command did not return PONG.', driver: 'kv' };
-        } catch (error: any) {
-            console.error('KV connection check failed:', error);
-            return { ok: false, error: error.message, driver: 'kv' };
-        }
-    } else {
-        try {
-            await ensureDbFileExists();
-            return { ok: true, driver: 'file' };
-        } catch(error: any) {
-             return { ok: false, error: error.message, driver: 'file' };
-        }
+  if (isKvEnabled) {
+    try {
+      const client = await getClient();
+      if (!client) throw new Error("KV client failed to initialize.");
+      const response = await client.ping();
+      if (response === 'PONG') {
+        return { ok: true, driver: 'kv' };
+      }
+      return { ok: false, error: 'Ping command did not return PONG.', driver: 'kv' };
+    } catch (error: any) {
+      console.error('KV connection check failed:', error);
+      return { ok: false, error: error.message, driver: 'kv' };
     }
+  } else {
+    try {
+      await ensureDbFileExists();
+      return { ok: true, driver: 'file' };
+    } catch (error: any) {
+      return { ok: false, error: error.message, driver: 'file' };
+    }
+  }
 }
 
 export async function readDb(): Promise<DbData> {
@@ -89,39 +90,24 @@ export async function readDb(): Promise<DbData> {
 
   if (client) {
     try {
-      const dbExists = await client.exists(DB_KEY);
-
-      if (!dbExists) {
-        console.log('No data in Vercel KV. Initializing from template.');
-        const preparedData = Object.fromEntries(
-          Object.entries(initialData).map(([key, value]) => [
-            key,
-            JSON.stringify(value),
-          ])
-        );
-        await client.hSet(DB_KEY, preparedData);
-        return initialData as DbData;
-      }
-      
       const dbData = await client.hGetAll(DB_KEY);
-       if (Object.keys(dbData).length === 0) {
-        console.log('KV store is empty. Re-initializing from template.');
-        const preparedData = Object.fromEntries(
-          Object.entries(initialData).map(([key, value]) => [
-            key,
-            JSON.stringify(value),
-          ])
-        );
-        await client.hSet(DB_KEY, preparedData);
+      
+      // If the hash is empty, it means it's a fresh setup. Return the initial template.
+      if (Object.keys(dbData).length === 0) {
+        console.log('No data in Vercel KV. Initializing from template.');
+        // We do NOT write here, just return the template for the current operation.
+        // The first write operation (e.g., creating an admin) will populate it.
         return initialData as DbData;
       }
 
+      // If data exists, parse it.
       const parsedData: Partial<DbData> = {};
       for (const key in initialData) {
-          if (Object.prototype.hasOwnProperty.call(initialData, key)) {
-              const value = dbData[key];
-              (parsedData as any)[key] = value ? JSON.parse(value) : (initialData as any)[key];
-          }
+        if (Object.prototype.hasOwnProperty.call(initialData, key)) {
+          const value = dbData[key];
+          // Use stored value if it exists, otherwise fallback to the template's structure (e.g., for new fields)
+          (parsedData as any)[key] = value ? JSON.parse(value) : (initialData as any)[key];
+        }
       }
       return parsedData as DbData;
 
@@ -130,6 +116,7 @@ export async function readDb(): Promise<DbData> {
       return readFromFile();
     }
   } else {
+    // Fallback to file system if KV is not enabled
     return readFromFile();
   }
 }
@@ -145,12 +132,14 @@ export async function writeDb(data: DbData): Promise<void> {
           JSON.stringify(value),
         ])
       );
+      // Using hSet to write all fields of the hash at once
       await client.hSet(DB_KEY, dataToWrite);
     } catch (error: any) {
       console.error('Error writing to Vercel KV, falling back to file system:', error);
       await writeToFile(data);
     }
   } else {
+    // Fallback to file system if KV is not enabled
     await writeToFile(data);
   }
 }
