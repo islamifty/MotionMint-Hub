@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { decrypt } from '@/lib/session';
-import { isSetupCompleted } from '@/lib/db';
 
 const protectedAdminRoutes = ['/admin'];
 const protectedClientRoutes = ['/client'];
@@ -10,14 +9,23 @@ const setupRoute = '/setup';
 
 export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
+  const absoluteUrl = new URL(req.url);
 
-  const setupComplete = await isSetupCompleted();
+  // Use fetch to call our internal API route to check setup status
+  // This avoids importing Node.js modules into the middleware
+  const statusApiUrl = new URL('/api/setup/status', absoluteUrl.origin);
+  const response = await fetch(statusApiUrl, {
+    headers: {
+      'x-middleware-preflight': 'true' // Optional: header to identify request from middleware
+    }
+  });
+  const { setupCompleted } = await response.json();
 
-  if (!setupComplete && path !== setupRoute) {
+  if (!setupCompleted && path !== setupRoute) {
     return NextResponse.redirect(new URL(setupRoute, req.url));
   }
 
-  if (setupComplete && path === setupRoute) {
+  if (setupCompleted && path === setupRoute) {
     return NextResponse.redirect(new URL('/login', req.url));
   }
   
@@ -58,5 +66,5 @@ export default async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/((?!api/setup/status|_next/static|_next/image|favicon.ico).*)'],
 };

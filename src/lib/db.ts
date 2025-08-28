@@ -1,4 +1,3 @@
-
 'use server';
 
 import { createClient } from 'redis';
@@ -89,21 +88,16 @@ export async function isSetupCompleted(): Promise<boolean> {
   const client = await getClient();
   if (client) {
     try {
-      const userCount = await client.exists('users');
-      // Check if the 'users' field exists in the hash.
-      // If it exists and has users, setup is complete.
-      if(userCount > 0) {
-        const users = await client.hGet(DB_KEY, 'users');
-        return !!users && JSON.parse(users).length > 0;
+      const userCount = await client.hGet(DB_KEY, 'users');
+      if (userCount) {
+        return JSON.parse(userCount).length > 0;
       }
       return false;
     } catch (error) {
       console.error('Failed to check setup status from Vercel KV:', error);
-      // Fallback to false if there's an error, forcing setup.
       return false;
     }
   }
-  // Fallback for local file system
   const db = await readFromFile();
   return db.users.some(u => u.role === 'admin');
 }
@@ -129,6 +123,18 @@ export async function readDb(): Promise<DbData> {
       }
       
       const dbData = await client.hGetAll(DB_KEY);
+       if (Object.keys(dbData).length === 0) {
+        console.log('KV store is empty. Re-initializing from template.');
+        const preparedData = Object.fromEntries(
+          Object.entries(initialData).map(([key, value]) => [
+            key,
+            JSON.stringify(value),
+          ])
+        );
+        await client.hSet(DB_KEY, preparedData);
+        return initialData as DbData;
+      }
+
       const parsedData: Partial<DbData> = {};
       for (const key in dbData) {
           if (Object.prototype.hasOwnProperty.call(dbData, key)) {
@@ -171,8 +177,9 @@ export async function writeSetupCompleted(): Promise<void> {
   const client = await getClient();
   if (client) {
     try {
-      await client.set('setupCompleted', 'true');
-      console.log('Setup completion status saved to Vercel KV.');
+      // This is a more robust way to mark setup as complete without a separate key.
+      // The existence of an admin user is the source of truth.
+      console.log('Setup completion is determined by the presence of an admin user.');
     } catch (error) {
       console.error('Failed to write setup completion status to Vercel KV:', error);
     }
