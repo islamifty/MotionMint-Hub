@@ -4,14 +4,14 @@ import { createClient } from '@libsql/client';
 import * as schema from './schema';
 
 // Check if the required environment variables are set.
-const isTursoConfigured = process.env.TURSO_DATABASE_URL && process.env.TURSO_AUTH_TOKEN;
+const isTursoConfigured = process.env.KV_TURSO_DATABASE_URL && process.env.KV_TURSO_AUTH_TOKEN;
 
 let db: ReturnType<typeof drizzle>;
 
 if (isTursoConfigured) {
   const turso = createClient({
-    url: process.env.TURSO_DATABASE_URL!,
-    authToken: process.env.TURSO_AUTH_TOKEN!,
+    url: process.env.KV_TURSO_DATABASE_URL!,
+    authToken: process.env.KV_TURSO_AUTH_TOKEN!,
   });
   db = drizzle(turso, { schema });
 } else {

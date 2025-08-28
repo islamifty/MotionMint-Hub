@@ -29,7 +29,7 @@ async function isSetupComplete(req: NextRequest): Promise<boolean> {
 export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
   
-  if (!process.env.TURSO_DATABASE_URL || !process.env.TURSO_AUTH_TOKEN) {
+  if (!process.env.KV_TURSO_DATABASE_URL || !process.env.KV_TURSO_AUTH_TOKEN) {
       if (path !== setupRoute) {
         const url = new URL(setupRoute, req.url);
         url.searchParams.set('error', 'db_not_configured');
