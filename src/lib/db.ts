@@ -88,16 +88,19 @@ export async function isSetupCompleted(): Promise<boolean> {
   const client = await getClient();
   if (client) {
     try {
-      const userCount = await client.hGet(DB_KEY, 'users');
-      if (userCount) {
-        return JSON.parse(userCount).length > 0;
+      const usersJson = await client.hGet(DB_KEY, 'users');
+      if (usersJson) {
+        const users = JSON.parse(usersJson);
+        // Check if there is at least one user with the 'admin' role.
+        return Array.isArray(users) && users.some(u => u.role === 'admin');
       }
-      return false;
+      return false; // No 'users' field in the hash.
     } catch (error) {
       console.error('Failed to check setup status from Vercel KV:', error);
-      return false;
+      return false; // Assume not completed on error.
     }
   }
+  // Fallback to file system
   const db = await readFromFile();
   return db.users.some(u => u.role === 'admin');
 }
@@ -136,9 +139,10 @@ export async function readDb(): Promise<DbData> {
       }
 
       const parsedData: Partial<DbData> = {};
-      for (const key in dbData) {
-          if (Object.prototype.hasOwnProperty.call(dbData, key)) {
-              (parsedData as any)[key] = JSON.parse(dbData[key]);
+      for (const key in initialData) {
+          if (Object.prototype.hasOwnProperty.call(initialData, key)) {
+              const value = dbData[key];
+              (parsedData as any)[key] = value ? JSON.parse(value) : (initialData as any)[key];
           }
       }
       return parsedData as DbData;

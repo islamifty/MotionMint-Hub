@@ -19,7 +19,16 @@ export default async function middleware(req: NextRequest) {
       'x-middleware-preflight': 'true' // Optional: header to identify request from middleware
     }
   });
-  const { setupCompleted } = await response.json();
+  
+  // Default to setup not completed if API fails, to be safe.
+  let setupCompleted = false;
+  if (response.ok) {
+      const data = await response.json();
+      setupCompleted = data.setupCompleted;
+  } else {
+      console.error(`Middleware: Failed to fetch setup status. API returned ${response.status}`);
+  }
+
 
   if (!setupCompleted && path !== setupRoute) {
     return NextResponse.redirect(new URL(setupRoute, req.url));
