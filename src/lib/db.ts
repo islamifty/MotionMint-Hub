@@ -1,3 +1,4 @@
+
 'use server';
 
 import { createClient } from 'redis';
@@ -106,19 +107,21 @@ export async function readDb(): Promise<DbData> {
           ])
         );
         await client.hSet(DB_KEY, preparedData);
-        dbData = preparedData;
+        // After initializing, return the initial data directly
+        return initialData as DbData;
       }
       
-      // Safely parse each key
-      return {
-        users: dbData.users ? JSON.parse(dbData.users) : [],
-        clients: dbData.clients ? JSON.parse(dbData.clients) : [],
-        projects: dbData.projects ? JSON.parse(dbData.projects) : [],
-        settings: dbData.settings ? JSON.parse(dbData.settings) : {},
-      };
+      // If data exists, parse it and return
+      const parsedData: Partial<DbData> = {};
+      for (const key in dbData) {
+          if (Object.prototype.hasOwnProperty.call(dbData, key)) {
+              (parsedData as any)[key] = JSON.parse(dbData[key]);
+          }
+      }
+      return parsedData as DbData;
 
-    } catch (error) {
-      console.error('Error reading from Vercel KV, falling back to file system:', error);
+    } catch (error: any) {
+      console.error('An unexpected error occurred while reading from Vercel KV, falling back to file system:', error);
       return readFromFile();
     }
   } else {
@@ -139,8 +142,8 @@ export async function writeDb(data: DbData): Promise<void> {
         ])
       );
       await client.hSet(DB_KEY, dataToWrite);
-    } catch (error) {
-      console.error('Error writing to Vercel KV, falling back to file system:', error);
+    } catch (error: any) {
+      console.error('An unexpected error occurred while writing to Vercel KV, falling back to file system:', error);
       await writeToFile(data);
     }
   } else {
@@ -157,11 +160,9 @@ export async function writeSetupCompleted(): Promise<void> {
       console.log('Setup completion status saved to Vercel KV.');
     } catch (error) {
       console.error('Failed to write setup completion status to Vercel KV:', error);
-      // As a fallback, we can try to handle this, but for now, we just log it.
-      // In a real-world scenario, you might want to have a more robust fallback.
     }
   }
-  // No file-based fallback for this as it's tied to the middleware's env var check.
+  // No file-based fallback needed here.
 }
 
 
