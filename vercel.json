@@ -1,0 +1,3 @@
+{
+  "buildCommand": "drizzle-kit generate && next build"
+}

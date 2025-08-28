@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { decrypt } from '@/lib/session';
 
@@ -14,7 +13,7 @@ async function isSetupComplete(req: NextRequest): Promise<boolean> {
     const response = await fetch(url.toString(), { 
         cache: 'no-store',
         headers: {
-            // Forward cookie to bypass Vercel's deployment protection for internal API calls
+            // Forward headers to bypass Vercel's deployment protection for internal API calls
             'cookie': req.headers.get('cookie') || '',
         }
     });
