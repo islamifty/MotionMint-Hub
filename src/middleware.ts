@@ -12,21 +12,26 @@ export default async function middleware(req: NextRequest) {
   const absoluteUrl = new URL(req.url);
 
   // Use fetch to call our internal API route to check setup status
-  // This avoids importing Node.js modules into the middleware
   const statusApiUrl = new URL('/api/setup/status', absoluteUrl.origin);
-  const response = await fetch(statusApiUrl, {
-    headers: {
-      'x-middleware-preflight': 'true' // Optional: header to identify request from middleware
-    }
-  });
   
-  // Default to setup not completed if API fails, to be safe.
   let setupCompleted = false;
-  if (response.ok) {
-      const data = await response.json();
-      setupCompleted = data.setupCompleted;
-  } else {
-      console.error(`Middleware: Failed to fetch setup status. API returned ${response.status}`);
+  try {
+    const response = await fetch(statusApiUrl, {
+      headers: {
+        'x-middleware-preflight': 'true',
+      },
+      // Disable caching to get the most up-to-date status
+      cache: 'no-store',
+    });
+    
+    if (response.ok) {
+        const data = await response.json();
+        setupCompleted = data.setupCompleted;
+    } else {
+        console.error(`Middleware: Failed to fetch setup status. API returned ${response.status}`);
+    }
+  } catch (error) {
+     console.error(`Middleware: Error fetching setup status.`, error);
   }
 
 

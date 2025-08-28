@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { isSetupCompleted } from '@/lib/db';
 
+// Ensure this route is never cached
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
