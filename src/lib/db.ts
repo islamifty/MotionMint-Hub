@@ -7,13 +7,13 @@ import initialData from './db.json';
 import fs from 'fs/promises';
 import path from 'path';
 
-// --- Vercel KV (Redis) Configuration ---
 let redisClient: ReturnType<typeof createClient> | null = null;
 const isKvEnabled = !!process.env.KV_URL;
+const DB_KEY = 'db';
 
 async function getClient() {
   if (!isKvEnabled) {
-    return null; // Return null if KV is not configured
+    return null; 
   }
 
   if (!redisClient) {
@@ -37,7 +37,6 @@ async function getClient() {
   return redisClient;
 }
 
-// --- Local File Fallback Configuration ---
 const dataDir = path.join('/tmp', 'data');
 const dbFilePath = path.join(dataDir, 'db.json');
 
@@ -62,9 +61,6 @@ async function writeToFile(data: DbData): Promise<void> {
     await fs.writeFile(dbFilePath, JSON.stringify(data, null, 2), 'utf8');
 }
 
-
-// --- Unified DB Functions ---
-
 export async function checkDbConnection(): Promise<{ ok: boolean; error?: string; driver: 'kv' | 'file' }> {
     if (isKvEnabled) {
         try {
@@ -80,7 +76,6 @@ export async function checkDbConnection(): Promise<{ ok: boolean; error?: string
             return { ok: false, error: error.message, driver: 'kv' };
         }
     } else {
-        // For file system, "connection" is just writability.
         try {
             await ensureDbFileExists();
             return { ok: true, driver: 'file' };
@@ -90,15 +85,38 @@ export async function checkDbConnection(): Promise<{ ok: boolean; error?: string
     }
 }
 
+export async function isSetupCompleted(): Promise<boolean> {
+  const client = await getClient();
+  if (client) {
+    try {
+      const userCount = await client.exists('users');
+      // Check if the 'users' field exists in the hash.
+      // If it exists and has users, setup is complete.
+      if(userCount > 0) {
+        const users = await client.hGet(DB_KEY, 'users');
+        return !!users && JSON.parse(users).length > 0;
+      }
+      return false;
+    } catch (error) {
+      console.error('Failed to check setup status from Vercel KV:', error);
+      // Fallback to false if there's an error, forcing setup.
+      return false;
+    }
+  }
+  // Fallback for local file system
+  const db = await readFromFile();
+  return db.users.some(u => u.role === 'admin');
+}
+
 
 export async function readDb(): Promise<DbData> {
   const client = await getClient();
 
   if (client) {
     try {
-      let dbData = await client.hGetAll(DB_KEY);
+      const dbExists = await client.exists(DB_KEY);
 
-      if (!dbData || Object.keys(dbData).length === 0) {
+      if (!dbExists) {
         console.log('No data in Vercel KV. Initializing from template.');
         const preparedData = Object.fromEntries(
           Object.entries(initialData).map(([key, value]) => [
@@ -107,11 +125,10 @@ export async function readDb(): Promise<DbData> {
           ])
         );
         await client.hSet(DB_KEY, preparedData);
-        // After initializing, return the initial data directly
         return initialData as DbData;
       }
       
-      // If data exists, parse it and return
+      const dbData = await client.hGetAll(DB_KEY);
       const parsedData: Partial<DbData> = {};
       for (const key in dbData) {
           if (Object.prototype.hasOwnProperty.call(dbData, key)) {
@@ -125,7 +142,6 @@ export async function readDb(): Promise<DbData> {
       return readFromFile();
     }
   } else {
-    // Fallback to local file if KV is not enabled
     return readFromFile();
   }
 }
@@ -143,11 +159,10 @@ export async function writeDb(data: DbData): Promise<void> {
       );
       await client.hSet(DB_KEY, dataToWrite);
     } catch (error: any) {
-      console.error('An unexpected error occurred while writing to Vercel KV, falling back to file system:', error);
+      console.error('Error writing to Vercel KV, falling back to file system:', error);
       await writeToFile(data);
     }
   } else {
-    // Fallback to local file if KV is not enabled
     await writeToFile(data);
   }
 }
@@ -162,8 +177,4 @@ export async function writeSetupCompleted(): Promise<void> {
       console.error('Failed to write setup completion status to Vercel KV:', error);
     }
   }
-  // No file-based fallback needed here.
 }
-
-
-const DB_KEY = 'db';

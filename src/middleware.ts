@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { decrypt } from '@/lib/session';
+import { isSetupCompleted } from '@/lib/db';
 
 const protectedAdminRoutes = ['/admin'];
 const protectedClientRoutes = ['/client'];
@@ -10,20 +11,16 @@ const setupRoute = '/setup';
 export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
 
-  // Check if setup has been completed using an environment variable.
-  // This avoids hitting the database from the middleware.
-  const isSetupComplete = process.env.setupCompleted === 'true';
+  const setupComplete = await isSetupCompleted();
 
-  if (!isSetupComplete && path !== setupRoute) {
-    // If setup is not complete, redirect everything to the setup page
+  if (!setupComplete && path !== setupRoute) {
     return NextResponse.redirect(new URL(setupRoute, req.url));
   }
 
-  if (isSetupComplete && path === setupRoute) {
-    // If setup is complete, don't allow access to the setup page
+  if (setupComplete && path === setupRoute) {
     return NextResponse.redirect(new URL('/login', req.url));
   }
-
+  
   const cookie = req.cookies.get('session')?.value;
   const session = cookie ? await decrypt(cookie) : null;
   const user = session?.user;
