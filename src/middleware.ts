@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { decrypt } from '@/lib/session';
 import { readDb } from './lib/db';
@@ -5,7 +6,7 @@ import { readDb } from './lib/db';
 const protectedAdminRoutes = ['/admin'];
 const protectedClientRoutes = ['/client'];
 const protectedSharedRoutes = ['/profile', '/settings'];
-const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
+const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password', '/setup'];
 const setupRoute = '/setup';
 
 export default async function middleware(req: NextRequest) {
