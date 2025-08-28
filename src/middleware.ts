@@ -3,7 +3,7 @@ import { decrypt } from '@/lib/session';
 
 const protectedAdminRoutes = ['/admin'];
 const protectedClientRoutes = ['/client'];
-const protectedSharedRoutes = ['/profile', ' /settings'];
+const protectedSharedRoutes = ['/profile', '/settings'];
 const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password', '/setup'];
 const setupRoute = '/setup';
 
