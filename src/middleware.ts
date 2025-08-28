@@ -1,7 +1,5 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { decrypt } from '@/lib/session';
-import { readDb } from './lib/db';
 
 const protectedAdminRoutes = ['/admin'];
 const protectedClientRoutes = ['/client'];
@@ -12,20 +10,19 @@ const setupRoute = '/setup';
 export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
 
-  // Check if setup has been completed
-  const db = await readDb();
-  const adminExists = db.users.some(user => user.role === 'admin');
+  // Check if setup has been completed using an environment variable.
+  // This avoids hitting the database from the middleware.
+  const isSetupComplete = process.env.setupCompleted === 'true';
 
-  if (!adminExists && path !== setupRoute) {
+  if (!isSetupComplete && path !== setupRoute) {
     // If setup is not complete, redirect everything to the setup page
     return NextResponse.redirect(new URL(setupRoute, req.url));
   }
-  
-  if (adminExists && path === setupRoute) {
+
+  if (isSetupComplete && path === setupRoute) {
     // If setup is complete, don't allow access to the setup page
     return NextResponse.redirect(new URL('/login', req.url));
   }
-
 
   const cookie = req.cookies.get('session')?.value;
   const session = cookie ? await decrypt(cookie) : null;

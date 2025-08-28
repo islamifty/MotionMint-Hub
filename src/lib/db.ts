@@ -8,7 +8,7 @@ import path from 'path';
 
 // --- Vercel KV (Redis) Configuration ---
 let redisClient: ReturnType<typeof createClient> | null = null;
-let isKvEnabled = !!process.env.KV_URL;
+const isKvEnabled = !!process.env.KV_URL;
 
 async function getClient() {
   if (!isKvEnabled) {
@@ -30,7 +30,6 @@ async function getClient() {
     } catch (error) {
        console.error('Failed to connect to Redis:', error);
        redisClient = null;
-       isKvEnabled = false; // Disable KV on connection failure
        return null;
     }
   }
@@ -100,12 +99,12 @@ export async function readDb(): Promise<DbData> {
 
       if (!dbData || Object.keys(dbData).length === 0) {
         console.log('No data in Vercel KV. Initializing from template.');
-        const preparedData: { [key: string]: string } = {
-          users: JSON.stringify(initialData.users || []),
-          clients: JSON.stringify(initialData.clients || []),
-          projects: JSON.stringify(initialData.projects || []),
-          settings: JSON.stringify(initialData.settings || {}),
-        };
+        const preparedData = Object.fromEntries(
+          Object.entries(initialData).map(([key, value]) => [
+            key,
+            JSON.stringify(value),
+          ])
+        );
         await client.hSet(DB_KEY, preparedData);
         dbData = preparedData;
       }
@@ -120,7 +119,6 @@ export async function readDb(): Promise<DbData> {
 
     } catch (error) {
       console.error('Error reading from Vercel KV, falling back to file system:', error);
-      isKvEnabled = false; // Disable KV for subsequent operations on error
       return readFromFile();
     }
   } else {
@@ -134,13 +132,15 @@ export async function writeDb(data: DbData): Promise<void> {
 
   if (client) {
     try {
-      const dataToWrite: { [key: string]: string } = Object.fromEntries(
-          Object.entries(data).map(([key, value]) => [key, JSON.stringify(value)])
+      const dataToWrite = Object.fromEntries(
+        Object.entries(data).map(([key, value]) => [
+          key,
+          JSON.stringify(value),
+        ])
       );
       await client.hSet(DB_KEY, dataToWrite);
     } catch (error) {
       console.error('Error writing to Vercel KV, falling back to file system:', error);
-      isKvEnabled = false; // Disable KV for subsequent operations on error
       await writeToFile(data);
     }
   } else {
@@ -148,5 +148,21 @@ export async function writeDb(data: DbData): Promise<void> {
     await writeToFile(data);
   }
 }
+
+export async function writeSetupCompleted(): Promise<void> {
+  const client = await getClient();
+  if (client) {
+    try {
+      await client.set('setupCompleted', 'true');
+      console.log('Setup completion status saved to Vercel KV.');
+    } catch (error) {
+      console.error('Failed to write setup completion status to Vercel KV:', error);
+      // As a fallback, we can try to handle this, but for now, we just log it.
+      // In a real-world scenario, you might want to have a more robust fallback.
+    }
+  }
+  // No file-based fallback for this as it's tied to the middleware's env var check.
+}
+
 
 const DB_KEY = 'db';

@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { readDb, writeDb } from "@/lib/db";
+import { readDb, writeDb, writeSetupCompleted } from "@/lib/db";
 import { hashPassword } from "@/lib/password";
 import type { User } from "@/types";
 
@@ -43,6 +43,9 @@ export async function createFirstAdmin(data: unknown) {
 
     db.users.unshift(newAdmin);
     await writeDb(db);
+    
+    // Mark setup as completed in the database
+    await writeSetupCompleted();
 
     return { success: true };
   } catch (error) {
