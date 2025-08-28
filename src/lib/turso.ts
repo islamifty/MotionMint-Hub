@@ -19,7 +19,7 @@ if (isTursoConfigured) {
   // We provide a dummy client to allow the build to pass.
   // The middleware will handle redirects if the app is run without config.
   console.warn("Turso environment variables not found. Using a dummy database client for build process.");
-  const dummyClient = createClient({ url: "file:dummy.db", syncUrl: undefined, authToken: undefined });
+  const dummyClient = createClient({ url: "file:dummy.db" });
   db = drizzle(dummyClient, { schema });
 }
 
