@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
-import { ShieldCheck, Loader2 } from "lucide-react";
+import { ShieldCheck, Loader2, Server, ServerCrash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -26,6 +26,9 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { createFirstAdmin } from "./actions";
 import { Logo } from "@/components/shared/Logo";
+import { checkDbConnection } from "@/lib/db";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const setupSchema = z.object({
   name: z.string().min(1, "Name is required."),
@@ -35,10 +38,51 @@ const setupSchema = z.object({
 
 type SetupFormValues = z.infer<typeof setupSchema>;
 
+type ConnectionStatus = 'checking' | 'connected' | 'failed';
+
+function ConnectionStatusIndicator({ status }: { status: ConnectionStatus }) {
+    if (status === 'checking') {
+        return <Skeleton className="h-5 w-48" />;
+    }
+
+    if (status === 'failed') {
+        return (
+            <Alert variant="destructive">
+                <ServerCrash className="h-4 w-4" />
+                <AlertTitle>Connection Failed</AlertTitle>
+                <AlertDescription>
+                   Could not connect to the database. Please check your Vercel KV configuration.
+                </AlertDescription>
+            </Alert>
+        );
+    }
+    
+    return (
+        <Alert>
+            <Server className="h-4 w-4" />
+            <AlertTitle>Database Connected</AlertTitle>
+             <AlertDescription>
+                Ready to create the administrator account.
+            </AlertDescription>
+        </Alert>
+    );
+}
+
+
 export default function SetupPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('checking');
+
+
+  useEffect(() => {
+    async function checkConnection() {
+        const result = await checkDbConnection();
+        setConnectionStatus(result.ok ? 'connected' : 'failed');
+    }
+    checkConnection();
+  }, []);
 
   const form = useForm<SetupFormValues>({
     resolver: zodResolver(setupSchema),
@@ -81,10 +125,13 @@ export default function SetupPage() {
             Welcome to MotionMint Hub Setup
           </CardTitle>
           <CardDescription>
-            No admin account found. Please create the first administrator account to get started.
+            Please create the first administrator account to get started.
           </CardDescription>
         </CardHeader>
         <CardContent>
+           <div className="mb-4">
+             <ConnectionStatusIndicator status={connectionStatus} />
+          </div>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
@@ -126,7 +173,7 @@ export default function SetupPage() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button type="submit" className="w-full" disabled={isLoading || connectionStatus !== 'connected'}>
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
