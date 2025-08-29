@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
-import { BrandingProvider } from "@/context/BrandingContext";
-import { AuthProvider } from "@/context/AuthContext";
 import { NextNProgress } from "@/components/shared/NextNProgress";
+import { Providers } from "@/components/shared/Providers";
 
 export const metadata: Metadata = {
   title: "MotionMint Hub",
@@ -30,13 +29,11 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <AuthProvider>
-          <BrandingProvider>
-            <NextNProgress />
-            {children}
-            <Toaster />
-          </BrandingProvider>
-        </AuthProvider>
+        <Providers>
+          <NextNProgress />
+          {children}
+          <Toaster />
+        </Providers>
       </body>
     </html>
   );
