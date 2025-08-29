@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { decrypt } from '@/lib/session';
-import { db } from '@/lib/turso';
-import { users } from '@/lib/schema';
-import { sql } from 'drizzle-orm';
 
 const protectedAdminRoutes = ['/admin'];
 const protectedClientRoutes = ['/client'];
@@ -10,22 +7,29 @@ const protectedSharedRoutes = ['/profile', '/settings'];
 const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password', '/setup'];
 const setupRoute = '/setup';
 
-// This function checks if the initial setup (first admin creation) has been completed.
-async function isSetupComplete(): Promise<boolean> {
+async function isSetupComplete(req: NextRequest): Promise<boolean> {
   try {
-    // A simple way to check is to see if any admin user exists.
-    const adminUser = await db.select({ id: users.id }).from(users).where(sql`${users.role} = 'admin'`).limit(1);
-    return adminUser.length > 0;
-  } catch (error: any) {
-    // This can happen if the 'users' table doesn't exist yet.
-    // In that case, setup is definitely not complete.
-    if (error.message?.includes('no such table') || error.message?.includes('NOT_FOUND')) {
-      console.warn("Setup check: 'users' table not found. Setup is not complete.");
-      return false;
+    const url = new URL('/api/setup/status', req.url);
+    const response = await fetch(url.toString(), { 
+        cache: 'no-store',
+        headers: {
+            // Forward headers to bypass Vercel's deployment protection for internal API calls
+            'cookie': req.headers.get('cookie') || '',
+        }
+    });
+    
+    if (!response.ok) {
+        // Log the authentication issue but don't crash
+        console.error("Middleware: Failed to fetch setup status", await response.text());
+        return false; // Fail safe
     }
-    // For other errors, log them but assume setup isn't complete to be safe.
-    console.error("Error checking setup status in middleware:", error);
-    return false;
+
+    const data = await response.json();
+    return data.setupCompleted;
+
+  } catch (error) {
+    console.error("Middleware: Error fetching setup status:", error);
+    return false; // Fail safe
   }
 }
 
@@ -44,9 +48,9 @@ export default async function middleware(req: NextRequest) {
   }
 
   // If credentials exist, check if the setup process (first admin) is complete
-  const setupCompleted = await isSetupComplete();
+  const setupCompleted = await isSetupComplete(req);
 
-  // If setup is NOT complete, redirect any page (except the setup page itself) to the setup page
+  // If setup is NOT complete, redirect any page to the setup page
   if (!setupCompleted && path !== setupRoute) {
     return NextResponse.redirect(new URL(setupRoute, req.url));
   }
