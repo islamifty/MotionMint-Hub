@@ -21,12 +21,10 @@ export async function createFirstAdmin(data: unknown) {
   }
   
   try {
-    // Step 1: Run migrations to ensure tables exist. This is the most reliable place.
     console.log("Applying database schema during setup...");
     await migrate(db, { migrationsFolder: 'drizzle' });
     console.log("Schema applied successfully.");
 
-    // Step 2: Check if an admin already exists.
     const existingAdminsResult = await db.select().from(users).where(eq(users.role, 'admin')).limit(1);
     
     if (existingAdminsResult.length > 0) {
@@ -34,7 +32,6 @@ export async function createFirstAdmin(data: unknown) {
       return { success: false, error: "An admin account already exists." };
     }
     
-    // Step 3: Create the new admin user.
     const { name, email, password } = result.data;
     const hashedPassword = await hashPassword(password);
     const newAdminId = `admin-${Date.now()}`;
@@ -43,7 +40,7 @@ export async function createFirstAdmin(data: unknown) {
       id: newAdminId,
       name,
       email,
-      phone: "", // Phone can be optional for admin
+      phone: "",
       role: "admin" as const,
       initials: name.substring(0, 2).toUpperCase(),
       password: hashedPassword,
@@ -55,7 +52,6 @@ export async function createFirstAdmin(data: unknown) {
     return { success: true };
   } catch (error: any) {
     console.error("Failed to create first admin:", error);
-    // Provide a more specific error if available
     const errorMessage = error.message?.includes("_journal.json")
       ? "Migration files are missing. Ensure the 'drizzle' folder is correctly deployed."
       : "Could not create admin account due to a server error.";
