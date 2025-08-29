@@ -4,7 +4,7 @@ import { z } from "zod";
 import { hashPassword } from "@/lib/password";
 import { db } from '@/lib/turso';
 import { users } from '@/lib/schema';
-import { sql, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { migrate } from 'drizzle-orm/libsql/migrator';
 
 const setupSchema = z.object({
@@ -21,8 +21,8 @@ export async function createFirstAdmin(data: unknown) {
   }
   
   try {
-    // Step 1: Run migrations to ensure tables exist.
-    console.log("Applying database schema...");
+    // Step 1: Run migrations to ensure tables exist. This is the most reliable place.
+    console.log("Applying database schema during setup...");
     await migrate(db, { migrationsFolder: 'drizzle' });
     console.log("Schema applied successfully.");
 
@@ -30,6 +30,7 @@ export async function createFirstAdmin(data: unknown) {
     const existingAdminsResult = await db.select().from(users).where(eq(users.role, 'admin')).limit(1);
     
     if (existingAdminsResult.length > 0) {
+      console.warn("Setup attempt failed: An admin account already exists.");
       return { success: false, error: "An admin account already exists." };
     }
     
@@ -52,8 +53,12 @@ export async function createFirstAdmin(data: unknown) {
     console.log("First admin account created successfully.");
     
     return { success: true };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Failed to create first admin:", error);
-    return { success: false, error: "Could not create admin account due to a server error." };
+    // Provide a more specific error if available
+    const errorMessage = error.message?.includes("_journal.json")
+      ? "Migration files are missing. Ensure the 'drizzle' folder is correctly deployed."
+      : "Could not create admin account due to a server error.";
+    return { success: false, error: errorMessage };
   }
 }
