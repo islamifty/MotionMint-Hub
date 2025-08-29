@@ -1,3 +1,3 @@
 {
-  "buildCommand": "next build"
+  "buildCommand": "npm run drizzle:generate && next build"
 }
